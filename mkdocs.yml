@@ -42,3 +42,4 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - toc:
       permalink: true
+      slugify: !!python/name:markdown.extensions.toc.slugify_unicode
