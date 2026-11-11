@@ -1,0 +1,13 @@
+﻿4. Authentication Testing
+	1. [Credentials Transported over an Encrypted Channel](01.%20Credentials%20Transported%20over%20an%20Encrypted%20Channel.md)
+	2. [Default Credentials](02.%20Default%20Credentials.md)
+	3. [Weak Lock Out Mechanism](03.%20Weak%20Lock%20Out%20Mechanism.md)
+	4. [Bypassing Authentication Schema](04.%20Bypassing%20Authentication%20Schema.md)
+	5. [Vulnerable Remember Password](05.%20Vulnerable%20Remember%20Password.md)
+	6. [Browser Cache Weaknesses](06.%20Browser%20Cache%20Weaknesses.md)
+	7. [Weak Authentication Methods](07.%20Weak%20Authentication%20Methods.md)
+	8. [Weak Security Question Answer](08.%20Weak%20Security%20Question%20Answer.md)
+	9. [Weak Password Change or Reset Functionalities](09.%20Weak%20Password%20Change%20or%20Reset%20Functionalities.md)
+	10. [Weaker Authentication in Alternative Channel](10.%20Weaker%20Authentication%20in%20Alternative%20Channel.md)
+	11. [Multi-Factor Authentication](11.%20Multi-Factor%20Authentication.md)
+	12. [SAML Authentication](12.%20SAML%20Authentication.md)

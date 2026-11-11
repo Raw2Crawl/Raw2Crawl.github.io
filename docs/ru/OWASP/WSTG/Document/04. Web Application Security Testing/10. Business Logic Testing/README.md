@@ -1,0 +1,12 @@
+﻿10. Business Logic Testing
+	1. [Introduction to Business Logic](00.%20Introduction%20to%20Business%20Logic.md)
+	2. [Business Logic Data Validation](01.%20Business%20Logic%20Data%20Validation.md)
+	3. [Ability to Forge Requests](02.%20Ability%20to%20Forge%20Requests.md)
+	4. [Integrity Checks](03.%20Integrity%20Checks.md)
+	5. [Process Timing](04.%20Process%20Timing.md)
+	6. [Number of Times a Function Can Be Used Limits](05.%20Number%20of%20Times%20a%20Function%20Can%20Be%20Used%20Limits.md)
+	7. [Circumvention of Work Flows](06.%20Circumvention%20of%20Work%20Flows.md)
+	8. [Defenses Against Application Misuse](07.%20Defenses%20Against%20Application%20Misuse.md)
+	9. [Upload of Unexpected File Types](08.%20Upload%20of%20Unexpected%20File%20Types.md)
+	10. [Upload of Malicious Files](09.%20Upload%20of%20Malicious%20Files.md)
+	11. [Payment Functionality](10.%20Payment%20Functionality.md)
