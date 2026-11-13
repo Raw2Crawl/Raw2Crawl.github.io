@@ -2,9 +2,11 @@ import { GUIDE, ORIGIN } from './paths.mjs';
 
 const escape = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 export function page({ title, description = 'Security testing documentation.', url, body, document = false }) {
-  const series = url.startsWith('/en/OWASP/CheatSheetSeries');
-  const collection = series ? 'Cheat Sheet Series' : 'WSTG';
-  const source = series ? 'CheatSheetSeries' : 'wstg';
+  const series = /^\/en\/OWASP\/CheatSheetSeries(?:\/|$)/.test(url);
+  const wstg = url === GUIDE || url.startsWith(GUIDE + '/');
+  const attribution = series || wstg
+    ? `<span>${series ? 'Cheat Sheet Series' : 'WSTG'} © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/${series ? 'CheatSheetSeries' : 'wstg'}">Source</a></span>`
+    : '';
   return `<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -18,7 +20,7 @@ export function page({ title, description = 'Security testing documentation.', u
 <header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
 <div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
 ${body}
-<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>${collection} © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/${source}">Source</a></span></footer>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span>${attribution}</footer>
 </body></html>`;
 }
 
