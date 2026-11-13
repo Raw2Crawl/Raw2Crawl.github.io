@@ -1,0 +1,17 @@
+﻿# 02. Тестирование управления конфигурацией и развертыванием
+
+- **01.** [Конфигурация сетевой инфраструктуры](01.%20Network%20Infrastructure%20Configuration.md)
+- **02.** [Конфигурация платформы приложений](02.%20Application%20Platform%20Configuration.md)
+- **03.** [Обработка расширений файлов на предмет конфиденциальной информации](03.%20File%20Extensions%20Handling%20for%20Sensitive%20Information.md)
+- **04.** [Проверка старых резервных копий и неиспользуемых файлов на наличие конфиденциальной информации](04.%20Review%20Old%20Backup%20and%20Unreferenced%20Files%20for%20Sensitive%20Information.md)
+- **05.** [Перечисление административных интерфейсов инфраструктуры и приложения](05.%20Enumerate%20Infrastructure%20and%20Application%20Admin%20Interfaces.md)
+- **06.** [HTTP-методы](06.%20HTTP%20Methods.md)
+- **07.** [HTTP Strict Transport Security (HSTS)](07.%20HTTP%20Strict%20Transport%20Security.md)
+- **08.** [Политика междоменного взаимодействия RIA (Cross-Domain Policy)](08.%20RIA%20Cross%20Domain%20Policy.md)
+- **09.** [Права доступа к файлам](09.%20File%20Permissions.md)
+- **10.** [Захват поддоменов (Subdomain Takeover)](10.%20Subdomain%20Takeover.md)
+- **11.** [Облачное хранилище](11.%20Cloud%20Storage.md)
+- **12.** [Политика безопасности контента (CSP)](12.%20Content%20Security%20Policy.md)
+- **13.** [Путаница путей (Path Confusion)](13.%20Path%20Confusion.md)
+- **14.** [Другие ошибки конфигурации защитных HTTP-заголовков](14.%20Other%20HTTP%20Security%20Header%20Misconfigurations.md)
+- **15.** [Обход механизмов безопасности флагов функциональности (Feature Flags)](15.%20Feature%20Flag%20Security%20Bypass.md)
