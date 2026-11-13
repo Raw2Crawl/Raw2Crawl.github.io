@@ -1,4 +1,21 @@
-site/
+/site/
 .obsidian/
 private/
 docs.bak/
+test/
+dist/
+.upstream/
+.preview/
+node_modules/
+
+# Local documentation and upstream templates unused by the snapshot build.
+/README.md
+/vendor/wstg/website/
+/vendor/wstg/site/assets/
+
+# Local editor and operating system metadata.
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini

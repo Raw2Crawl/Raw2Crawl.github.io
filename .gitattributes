@@ -1,0 +1,5 @@
+* text=auto eol=lf
+
+# Preserve upstream snapshots byte for byte, including their line endings.
+content/** -text
+vendor/** -text
