@@ -16,14 +16,19 @@ const brokenFragments = [];
 for (const file of htmlFiles) {
   const html = await fs.readFile(file, 'utf8');
   const relative = '/' + path.relative(DIST, file).split(path.sep).join('/');
-  const references = [...html.matchAll(/\b(href|src)="([^"]+)"/g)];
+  const visibleHtml = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<pre\b[^>]*>[\s\S]*?<\/pre>/gi, '').replace(/<code\b[^>]*>[\s\S]*?<\/code>/gi, '');
+  const references = [...visibleHtml.matchAll(/\b(href|src)="([^"]+)"/g)];
   for (const match of html.matchAll(/(?:content="\d+;url=|(?:window\.)?location\.replace\(")([^"]+)/g)) references.push(['', 'redirect', match[1]]);
   for (const m of references) {
     const value = decode(m[2]);
-    if (/^(?:mailto:|tel:|javascript:|data:)/.test(value)) continue;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(value) && !/^https?:/i.test(value)) continue;
     const u = new URL(value, ORIGIN + relative);
     if (u.origin !== ORIGIN) {
-      if (/^https:\/\/(?:wstg\.owasp\.org\/(?:v4\.2|stable|v42)\/|owasp\.org\/www-project-web-security-testing-guide\/(?:v42|stable)\/)/.test(u.href)) errors.push(`${relative}: nonlocal WSTG link ${value}`);
+      if (/^https:\/\/(?:wstg\.owasp\.org\/(?:v4\.2|stable|v42)\/|owasp\.org\/www-project-web-security-testing-guide\/(?:v42|v4\.2|stable)\/)/.test(u.href)) errors.push(`${relative}: nonlocal WSTG link ${value}`);
+      if (/^https:\/\/cheatsheetseries\.owasp\.org\/cheatsheets\//.test(u.href)) {
+        try { await fs.access(path.join(ROOT, 'vendor/cheatsheets/site', u.pathname)); errors.push(`${relative}: nonlocal Cheat Sheet link ${value}`); }
+        catch (error) { if (error.code !== 'ENOENT') throw error; }
+      }
       continue;
     }
     links++;
@@ -70,6 +75,31 @@ for (const file of sourceDocs.filter(f => f.endsWith('.md'))) {
   try { await fs.access(path.join(DIST, GUIDE, page)); }
   catch { errors.push(`Release page missing: ${rel}`); }
 }
+const cheatsheetRoot = path.join(ROOT, 'content/en/OWASP/CheatSheetSeries/cheatsheets');
+const cheatsheetSources = (await files(cheatsheetRoot)).filter(f => f.endsWith('.md'));
+for (const file of cheatsheetSources) {
+  const rel = path.basename(file, '.md') + '.html';
+  try { await fs.access(path.join(DIST, 'en/OWASP/CheatSheetSeries/cheatsheets', rel)); }
+  catch { errors.push(`Published Cheat Sheet missing: ${rel}`); }
+}
+if (!htmlFiles.some(f => f.replaceAll('\\', '/').includes('en/OWASP/CheatSheetSeries/index.html'))) errors.push('Cheat Sheet Series catalog missing');
+let seriesCompared = 0;
+for (const original of (await files(path.join(ROOT, 'vendor/cheatsheets/site'))).filter(f => f.endsWith('.html'))) {
+  const rel = path.relative(path.join(ROOT, 'vendor/cheatsheets/site'), original);
+  const before = await fs.readFile(original, 'utf8');
+  const after = await fs.readFile(path.join(DIST, 'en/OWASP/CheatSheetSeries', rel), 'utf8');
+  const a = before.match(/<article class="md-content__inner md-typeset">([\s\S]*?)<\/article>/)?.[1]?.trim();
+  const b = after.match(/<article class="doc-content">([\s\S]*?)<\/article>/)?.[1]?.trim();
+  if (!a || ignoreDestinations(a) !== ignoreDestinations(b || '')) errors.push(`Cheat Sheet article changed: ${rel}`);
+  seriesCompared++;
+}
+const seriesManifest = JSON.parse(await fs.readFile(path.join(ROOT, 'vendor/cheatsheets/provenance.json'), 'utf8'));
+for (const [relative, expected] of Object.entries(seriesManifest.sha256)) {
+  const actual = crypto.createHash('sha256').update(await fs.readFile(path.join(ROOT, relative))).digest('hex');
+  if (actual !== expected) errors.push(`Cheat Sheet checksum mismatch: ${relative}`);
+}
+const seriesSourceFiles = await files(path.join(ROOT, 'content/en/OWASP/CheatSheetSeries'));
+if (seriesSourceFiles.length !== seriesManifest.source_count) errors.push('Cheat Sheet source file count differs from provenance');
 // Image bytes must remain identical to the release, not just have matching names.
 for (const file of sourceDocs.filter(f => !f.endsWith('.md'))) {
   const rel = path.relative(docRoot, file);
@@ -90,5 +120,7 @@ if (brokenFragments.length) {
 }
 console.log(`Checked ${htmlFiles.length} HTML files and ${links} local links; ${sourceDocs.filter(f => f.endsWith('.md')).length} release documents; ${sourceDocs.filter(f => !f.endsWith('.md')).length} release images; ${Object.keys(manifest.sha256).length} source checksums.`);
 console.log(`Compared ${compared} mirrored pages with original article/navigation markup and verified the custom design assets.`);
+console.log(`Checked ${cheatsheetSources.length} Cheat Sheet source files against the published pages.`);
+console.log(`Compared ${seriesCompared} Cheat Sheet articles and ${Object.keys(seriesManifest.sha256).length} source checksums.`);
 if (errors.length) throw Error([...new Set(errors)].join('\n'));
 console.log('All checks passed.');

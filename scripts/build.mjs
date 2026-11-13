@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { ROOT, DIST, GUIDE, ORIGIN, SNAPSHOT, files, write } from './paths.mjs';
 import { documentPage, catalogPage, page } from './layout.mjs';
+import { buildCheatSheets } from './cheatsheets.mjs';
 
 // Only dist is disposable. Source snapshots are never modified by the build.
 if (path.resolve(DIST) !== path.join(ROOT, 'dist')) throw Error('Unsafe output path');
@@ -11,6 +12,7 @@ await fs.cp(path.join(ROOT, 'assets'), path.join(DIST, 'assets'), { recursive: t
 
 const sourceFiles = await files(path.join(SNAPSHOT, 'v4.2'));
 const sourcePaths = new Set(sourceFiles.map(f => '/' + path.relative(SNAPSHOT, f).split(path.sep).join('/')));
+const sheetPaths = new Set((await files(path.join(ROOT, 'vendor/cheatsheets/site'))).map(f => '/' + path.relative(path.join(ROOT, 'vendor/cheatsheets/site'), f).split(path.sep).join('/')));
 function existingPage(p) {
   let candidate = p.replace(/\.md$/i, '').replace(/\/README$/i, '/');
   if (sourcePaths.has(candidate)) return candidate;
@@ -32,6 +34,12 @@ function localize(value, sourceUrl) {
     const original = new URL(decoded, 'https://wstg.owasp.org');
     u.hash = original.hash;
     u.search = original.search;
+  }
+  if (u.hostname === 'cheatsheetseries.owasp.org' && (u.pathname.startsWith('/cheatsheets/') || /^\/(?:Glossary|IndexASVS|IndexMASVS|IndexProactiveControls|IndexTopTen)\.html$/.test(u.pathname))) {
+    // This old page was retired upstream and is absent from the current series.
+    if (!sheetPaths.has(u.pathname)) return value;
+    if (u.pathname.endsWith('/Transport_Layer_Protection_Cheat_Sheet.html') && u.hash === '#carefully-consider-the-use-of-wildcard-certificates') u.pathname = u.pathname.replace('Transport_Layer_Protection', 'Transport_Layer_Security');
+    return '/en/OWASP/CheatSheetSeries' + u.pathname + u.search + u.hash;
   }
   if (u.hostname !== 'wstg.owasp.org') return value;
   u.pathname = u.pathname.replace(/^\/(?:v42|stable)(?=\/|$)/, '/v4.2');
@@ -74,10 +82,11 @@ for (const source of sourceFiles) {
 
 await write('en/index.html', catalogPage());
 await write('en/OWASP/index.html', catalogPage(true));
+const cheatSheets = await buildCheatSheets();
 await write('index.html', '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=/en/"><title>Raw2Crawl</title><link rel="canonical" href="' + ORIGIN + '/en/"></head><body><a href="/en/">English library</a></body></html>');
 await write('404.html', page({ title: 'Page not found', url: '/404.html', body: '<main id="main-content" class="catalog"><h1>Page not found</h1><p><a href="/en/">Return to the library</a></p></main>' }));
 await write('.nojekyll', '');
 await write('robots.txt', `User-agent: *\nAllow: /\nSitemap: ${ORIGIN}/sitemap.xml\n`);
-const pages = (await files(DIST)).filter(f => f.endsWith('index.html')).map(f => '/' + path.relative(DIST, f).split(path.sep).join('/').replace(/index\.html$/, ''));
+const pages = (await files(DIST)).filter(f => f.endsWith('.html') && path.basename(f) !== '404.html').map(f => '/' + path.relative(DIST, f).split(path.sep).join('/').replace(/index\.html$/, ''));
 await write('sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + pages.map(p => `<url><loc>${ORIGIN}${p}</loc></url>`).join('') + '</urlset>');
-console.log(`Built ${htmlCount} WSTG HTML pages, ${sourceFiles.length - htmlCount} guide images, and the English library in dist/.`);
+console.log(`Built ${htmlCount} WSTG HTML pages, ${sourceFiles.length - htmlCount} guide images, ${cheatSheets.pages} Cheat Sheets, and the English library in dist/.`);

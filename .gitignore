@@ -10,6 +10,9 @@ node_modules/
 
 # Local documentation and upstream templates unused by the snapshot build.
 /README.md
+/CODEX.md
+/AGENTS.md
+/ANTIGRAVITY.md
 /vendor/wstg/website/
 /vendor/wstg/site/assets/
 

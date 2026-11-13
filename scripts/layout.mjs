@@ -2,6 +2,9 @@ import { GUIDE, ORIGIN } from './paths.mjs';
 
 const escape = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 export function page({ title, description = 'Security testing documentation.', url, body, document = false }) {
+  const series = url.startsWith('/en/OWASP/CheatSheetSeries');
+  const collection = series ? 'Cheat Sheet Series' : 'WSTG';
+  const source = series ? 'CheatSheetSeries' : 'wstg';
   return `<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -15,7 +18,7 @@ export function page({ title, description = 'Security testing documentation.', u
 <header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
 <div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
 ${body}
-<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>WSTG © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/wstg">Source</a></span></footer>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>${collection} © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/${source}">Source</a></span></footer>
 </body></html>`;
 }
 
@@ -36,7 +39,7 @@ export function documentPage(html, url) {
 export function catalogPage(owasp = false) {
   const title = owasp ? 'OWASP' : 'Security library';
   const card = owasp
-    ? `<a class="catalog-card" href="${GUIDE}/"><span class="card-meta">WEB APPLICATION SECURITY</span><h2>Web Security Testing Guide</h2><p>A comprehensive framework for testing the security of web applications and web services.</p><span class="card-bottom"><span>WSTG v4.2 <span class="badge">Stable</span></span><span aria-hidden="true">→</span></span></a>`
-    : '<a class="catalog-card" href="/en/OWASP/"><span class="card-meta">ORGANIZATION</span><h2>OWASP</h2><p>Open Worldwide Application Security Project. Guides and methods for application security testing.</p><span class="card-bottom"><span>1 guide</span><span aria-hidden="true">→</span></span></a>';
-  return page({ title, url: owasp ? '/en/OWASP/' : '/en/', body: `<main id="main-content" class="catalog"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a>${owasp ? '<span>/</span><span>OWASP</span>' : ''}</nav><div class="catalog-heading"><span class="eyebrow">RAW2CRAWL / REFERENCE LIBRARY</span><h1>${title}</h1><p>${owasp ? 'Application security standards and testing guidance.' : 'Security testing guides, organized for careful reading.'}</p></div><div class="catalog-grid">${card}</div><p class="catalog-note">English edition</p></main>` });
+    ? `<div class="catalog-grid"><a class="catalog-card" href="${GUIDE}/"><span class="card-meta">WEB APPLICATION SECURITY</span><h2>Web Security Testing Guide</h2><p>A comprehensive framework for testing the security of web applications and web services.</p><span class="card-bottom"><span>WSTG v4.2 <span class="badge">Stable</span></span><span aria-hidden="true">→</span></span></a><a class="catalog-card" href="/en/OWASP/CheatSheetSeries/"><span class="card-meta">PRACTICAL SECURITY GUIDANCE</span><h2>OWASP Cheat Sheet Series</h2><p>The complete English series: 137 concise cheat sheets on application security.</p><span class="card-bottom"><span>English · 137 resources</span><span aria-hidden="true">→</span></span></a></div>`
+    : '<a class="catalog-card" href="/en/OWASP/"><span class="card-meta">ORGANIZATION</span><h2>OWASP</h2><p>Open Worldwide Application Security Project. Guides and methods for application security testing.</p><span class="card-bottom"><span>2 resources</span><span aria-hidden="true">→</span></span></a>';
+  return page({ title, url: owasp ? '/en/OWASP/' : '/en/', body: `<main id="main-content" class="catalog"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a>${owasp ? '<span>/</span><span>OWASP</span>' : ''}</nav><div class="catalog-heading"><span class="eyebrow">RAW2CRAWL / REFERENCE LIBRARY</span><h1>${title}</h1><p>${owasp ? 'Application security standards and testing guidance.' : 'Security testing guides, organized for careful reading.'}</p></div>${owasp ? '' : '<div class="catalog-grid">'}${card}${owasp ? '' : '</div>'}<p class="catalog-note">English edition</p></main>` });
 }
