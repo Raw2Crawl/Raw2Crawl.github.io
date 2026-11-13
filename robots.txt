@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://raw2crawl.github.io/sitemap.xml
