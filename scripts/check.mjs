@@ -83,6 +83,20 @@ for (const file of cheatsheetSources) {
   catch { errors.push(`Published Cheat Sheet missing: ${rel}`); }
 }
 if (!htmlFiles.some(f => f.replaceAll('\\', '/').includes('en/OWASP/CheatSheetSeries/index.html'))) errors.push('Cheat Sheet Series catalog missing');
+// Every series page uses the documentation shell, including its introduction.
+for (const file of htmlFiles.filter(f => f.replaceAll('\\', '/').includes('/en/OWASP/CheatSheetSeries/'))) {
+  const html = await fs.readFile(file, 'utf8');
+  const sidebar = html.match(/<aside id="doc-sidebar"[\s\S]*?<\/aside>/)?.[0] || '';
+  const outline = html.match(/<nav id="page-toc">([\s\S]*?)<\/nav>/)?.[1] || '';
+  const article = html.match(/<article class="doc-content">([\s\S]*?)<\/article>/)?.[1] || '';
+  if (!html.includes('class="docs-layout"') || !sidebar.includes('id="series-filter"')) errors.push(`Series documentation layout missing: ${file}`);
+  if (/\bid="(?:sheet|series)-filter"/.test(article)) errors.push(`Contents search inside series article: ${file}`);
+  for (const source of cheatsheetSources) {
+    const slug = path.basename(source, '.md') + '.html';
+    if (!sidebar.includes(`href="/en/OWASP/CheatSheetSeries/cheatsheets/${slug}"`)) errors.push(`Sidebar missing ${slug}: ${file}`);
+  }
+  if (/<h[23]\b[^>]*\bid="/.test(article) && !outline.includes('<a ')) errors.push(`Series outline empty: ${file}`);
+}
 let seriesCompared = 0;
 for (const original of (await files(path.join(ROOT, 'vendor/cheatsheets/site'))).filter(f => f.endsWith('.html'))) {
   const rel = path.relative(path.join(ROOT, 'vendor/cheatsheets/site'), original);

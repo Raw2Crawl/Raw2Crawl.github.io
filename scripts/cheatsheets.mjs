@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { ROOT, DIST, ORIGIN, files, write } from './paths.mjs';
+import { ROOT, DIST, files, write } from './paths.mjs';
 import { page } from './layout.mjs';
 
 const seriesUrl = 'https://cheatsheetseries.owasp.org/';
@@ -85,52 +85,50 @@ function titleOf(html, fallback) {
   return (html.match(/<title>([^<]+?)\s+-\s+OWASP Cheat Sheet Series<\/title>/)?.[1] || fallback.replace(/_Cheat_Sheet$/, '').replace(/_/g, ' ')).trim();
 }
 
-function textOf(html, selector) { return html.match(selector)?.[1]?.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').trim() || ''; }
+function navigation(items, currentUrl) {
+  const link = item => `<li class="wstg-nav-item" data-title="${escape(item.title)}"><a data-nav-url="${item.url}" href="${item.url}"${item.url === currentUrl ? ' aria-current="page"' : ''}>${escape(item.title)}</a></li>`;
+  const group = (title, pages, open) => `<li class="wstg-nav-item" data-title="${title}"><details${open ? ' open' : ''}><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><span>${title}</span></span></summary><ul>${pages.map(link).join('')}</ul></details></li>`;
+  return `<nav class="wstg-nav series-nav" aria-label="Cheat Sheet Series contents"><label class="wstg-nav-filter-label" for="series-filter">Search contents</label><input id="series-filter" class="wstg-nav-filter" type="search" placeholder="Find a cheat sheet…" autocomplete="off"><div class="wstg-nav-filter-controls"><button type="button" class="wstg-nav-filter-clear" hidden>Clear</button><p class="wstg-nav-filter-count" aria-live="polite" hidden></p></div><div class="wstg-nav-controls"><button type="button" data-wstg-expand>Expand all</button><button type="button" data-wstg-collapse>Collapse all</button></div><ul class="wstg-nav-list">${link({ title: 'Introduction', url: ROOT_URL + '/' })}${group('Cheat Sheets', items.filter(i => i.sheet), true)}${group('Indexes', items.filter(i => !i.sheet && i.base !== 'Glossary.html'), items.some(i => !i.sheet && i.url === currentUrl))}${items.filter(i => i.base === 'Glossary.html').map(link).join('')}</ul></nav>`;
+}
 
-function readerPage(html, url, title, toc = true, wstgPaths = new Set()) {
-  const article = renderedArticle(html);
-  if (article == null) throw Error('Cheat Sheet published page has no article: ' + url);
-  const cleanArticle = rewriteLinks(article, new URL(url, 'https://cheatsheetseries.owasp.org').pathname, wstgPaths);
-  const nav = toc ? '<aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside>' : '';
-  const body = `<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="${ROOT_URL}/">Cheat Sheet Series</a></nav><article class="doc-content">${cleanArticle}</article></main>${nav}</div>`;
-  return page({ title, description: 'OWASP Cheat Sheet Series · ' + title, url, document: toc, body })
+function outline(article) {
+  return [...article.matchAll(/<h([23])\b[^>]*\bid="([^"]+)"[^>]*>([\s\S]*?)<\/h\1>/g)].map(([, level, id, html]) => {
+    const text = html.replace(/<a\b[^>]*class="headerlink"[^>]*>[\s\S]*?<\/a>/g, '').replace(/<[^>]*>/g, '').trim();
+    return `<a href="#${encodeURIComponent(id)}"${level === '3' ? ' class="toc-sub"' : ''}>${text}</a>`;
+  }).join('');
+}
+
+function readerPage(article, sourcePath, url, title, items, wstgPaths) {
+  const cleanArticle = rewriteLinks(article, sourcePath, wstgPaths);
+  const body = `<div class="mobile-toolbar"><button id="contents-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Contents</button><span>Cheat Sheet Series</span></div><div class="docs-layout"><aside id="doc-sidebar" class="sidebar" aria-label="Series contents"><div class="sidebar-book"><span class="eyebrow">OWASP</span><a href="${ROOT_URL}/">Cheat Sheet Series</a><span class="edition">English edition · ${items.filter(i => i.sheet).length} cheat sheets</span></div>${navigation(items, url)}</aside><main id="main-content" class="reading-pane"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="${ROOT_URL}/">Cheat Sheet Series</a></nav><article class="doc-content">${cleanArticle}</article><nav class="page-navigation" aria-label="Previous and next page"></nav></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc">${outline(cleanArticle)}</nav><a class="back-top" href="#top">Back to top ↑</a></aside></div>`;
+  return page({ title, description: 'OWASP Cheat Sheet Series · ' + title, url, document: true, body })
     .replace('<body class="documentation">', '<body id="top" class="documentation series-document">');
 }
 
 export async function buildCheatSheets() {
   const wstgPaths = new Set((await files(path.join(ROOT, 'vendor/wstg/site/v4.2'))).map(f => '/' + path.relative(path.join(ROOT, 'vendor/wstg/site'), f).split(path.sep).join('/')));
   const sourceSheets = (await files(SOURCES)).filter(f => f.endsWith('.md'));
-  const htmlFiles = (await files(path.join(STATIC, 'cheatsheets'))).filter(f => f.endsWith('.html'));
-  const bySlug = new Map(htmlFiles.map(f => [path.basename(f), f]));
-  const sheets = sourceSheets.flatMap(f => {
-    const slug = path.basename(f, '.md') + '.html';
-    const htmlPath = bySlug.get(slug);
-    if (!htmlPath) throw Error('Missing published Cheat Sheet: ' + slug);
-    return [{ slug, htmlPath, sourcePath: f }];
-  });
-  const sheetCards = [];
-  for (const [i, item] of sheets.entries()) {
-    const original = await fs.readFile(item.htmlPath, 'utf8');
-    const title = titleOf(original, path.basename(item.slug, '.html'));
-    const description = textOf(original, /<meta name="description" content="([^"]*)"/);
-    const relative = 'cheatsheets/' + item.slug;
-    const url = ROOT_URL + '/' + relative;
-    await copyReferencedAssets(renderedArticle(original), '/cheatsheets/' + item.slug);
-    const pageHtml = readerPage(original, url, title, true, wstgPaths);
-    await write('en/OWASP/CheatSheetSeries/' + relative, pageHtml);
-    sheetCards.push(`<a class="resource-card" data-sheet-title="${escape(title.toLowerCase())}" href="${ROOT_URL}/${relative}"><span class="eyebrow">CHEAT SHEET ${String(i + 1).padStart(3, '0')}</span><h2>${escape(title)}</h2><p>${escape(description || 'Practical OWASP application security guidance.')}</p><span class="resource-link">Read cheat sheet <span aria-hidden="true">→</span></span></a>`);
+  const items = [];
+  for (const source of sourceSheets) {
+    const base = path.basename(source, '.md') + '.html';
+    const original = await fs.readFile(path.join(STATIC, 'cheatsheets', base), 'utf8');
+    items.push({ base, original, title: titleOf(original, path.basename(base, '.html')), sourcePath: '/cheatsheets/' + base, relative: 'cheatsheets/' + base, url: ROOT_URL + '/cheatsheets/' + base, sheet: true });
   }
   for (const originalPath of await files(STATIC)) {
     const base = path.basename(originalPath);
     if (!/^(?:Glossary|IndexASVS|IndexMASVS|IndexProactiveControls|IndexTopTen)\.html$/i.test(base)) continue;
     const original = await fs.readFile(originalPath, 'utf8');
-    const title = titleOf(original, base.replace(/\.html$/i, ''));
-    await copyReferencedAssets(renderedArticle(original), '/' + base);
-    await write('en/OWASP/CheatSheetSeries/' + base, readerPage(original, ROOT_URL + '/' + base, title, true, wstgPaths));
+    items.push({ base, original, title: titleOf(original, base.replace(/\.html$/i, '')), sourcePath: '/' + base, relative: base, url: ROOT_URL + '/' + base, sheet: false });
   }
-
-  const body = `<main id="main-content" class="catalog resource-catalog"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><span>Cheat Sheet Series</span></nav><div class="catalog-heading"><span class="eyebrow">OWASP / PRACTICAL SECURITY GUIDANCE</span><h1>OWASP Cheat Sheet Series</h1><p>Concise, practical security guidance for developers and application security professionals.</p><p class="resource-notice">Complete English series snapshot: ${sheets.length} cheat sheets. Source repository: <a href="https://github.com/OWASP/CheatSheetSeries">OWASP/CheatSheetSeries</a>. Published snapshot: <a href="${seriesUrl}">official OWASP website</a>. This is a dated mirror; check OWASP for newer revisions.</p><p class="resource-notice">Content is licensed under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>. This independent mirror preserves the source and license notices.</p><label for="sheet-filter" class="sheet-filter-label">Find a cheat sheet</label><input id="sheet-filter" class="sheet-filter" type="search" placeholder="Search the ${sheets.length} English cheat sheets" autocomplete="off"><p id="sheet-count" class="catalog-note" aria-live="polite">${sheets.length} cheat sheets</p></div><div class="resource-grid" id="sheet-list">${sheetCards.join('\n')}</div><p class="license-note">OWASP, the OWASP logo, and related marks belong to their respective owners. <a href="${ROOT_URL}/LICENSE.md">View the source license</a>.</p></main>`;
-  await write('en/OWASP/CheatSheetSeries/index.html', page({ title: 'OWASP Cheat Sheet Series', description: 'The English OWASP Cheat Sheet Series in the Raw2Crawl security library.', url: ROOT_URL + '/', body }));
+  for (const item of items) {
+    const article = renderedArticle(item.original);
+    if (!article) throw Error('Missing Cheat Sheet article: ' + item.base);
+    await copyReferencedAssets(article, item.sourcePath);
+    await write('en/OWASP/CheatSheetSeries/' + item.relative, readerPage(article, item.sourcePath, item.url, item.title, items, wstgPaths));
+  }
+  const indexes = items.filter(i => !i.sheet).map(i => `<li><a href="${i.url}">${escape(i.title)}</a></li>`).join('');
+  const intro = `<h1 id="cheat-sheet-series">OWASP Cheat Sheet Series</h1><p>Concise, practical application security guidance for developers and security professionals.</p><h2 id="about-the-series">About the series</h2><p>Each cheat sheet focuses on a specific security topic, with recommendations, implementation details, and examples. This English edition contains ${sourceSheets.length} cheat sheets.</p><h2 id="cheat-sheets">Cheat sheets</h2><p>Browse the complete alphabetical list in the contents panel, or search it by topic. On smaller screens, open <strong>Contents</strong> to find a page.</p><ul><li><a href="${ROOT_URL}/cheatsheets/Authentication_Cheat_Sheet.html">Authentication</a></li><li><a href="${ROOT_URL}/cheatsheets/Authorization_Cheat_Sheet.html">Authorization</a></li><li><a href="${ROOT_URL}/cheatsheets/Input_Validation_Cheat_Sheet.html">Input Validation</a></li><li><a href="${ROOT_URL}/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html">SQL Injection Prevention</a></li></ul><h2 id="indexes">Indexes and glossary</h2><p>Find guidance by security standard, control, or terminology.</p><ul>${indexes}</ul><h2 id="sources-and-license">Sources and license</h2><p>Source: <a href="https://github.com/OWASP/CheatSheetSeries">OWASP/CheatSheetSeries</a>. Original publication: <a href="${seriesUrl}">OWASP Cheat Sheet Series</a>. Content is licensed under <a href="${ROOT_URL}/LICENSE.md">CC BY-SA 4.0</a>.</p>`;
+  await write('en/OWASP/CheatSheetSeries/index.html', readerPage(intro, '/index.html', ROOT_URL + '/', 'OWASP Cheat Sheet Series', items, wstgPaths));
   await write('en/OWASP/CheatSheetSeries/LICENSE.md', await fs.readFile(path.join(ROOT, 'content/en/OWASP/CheatSheetSeries/LICENSE.md'), 'utf8'));
-  return { pages: sheets.length, sheets };
+  return { pages: sourceSheets.length };
 }

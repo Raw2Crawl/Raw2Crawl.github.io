@@ -33,22 +33,6 @@
     if (document.body.classList.contains('contents-open') && !event.target.closest('#doc-sidebar, #contents-toggle')) closeContents();
   });
 
-  const seriesFilter = document.querySelector('#sheet-filter');
-  if (seriesFilter) {
-    const cards = [...document.querySelectorAll('[data-sheet-title]')];
-    const count = document.querySelector('#sheet-count');
-    seriesFilter.addEventListener('input', () => {
-      const query = seriesFilter.value.trim().toLowerCase();
-      let visible = 0;
-      for (const card of cards) {
-        const match = !query || (card.dataset.sheetTitle + ' ' + card.textContent).toLowerCase().includes(query);
-        card.hidden = !match;
-        if (match) visible++;
-      }
-      if (count) count.textContent = `${visible} of ${cards.length} cheat sheets`;
-    });
-  }
-
   const nav = document.querySelector('.wstg-nav');
   if (nav) {
   const normalize = value => new URL(value, location.href).pathname.replace(/\/index\.html$|\/$/g, '');
@@ -100,7 +84,7 @@
   }
   const toc = document.querySelector('#page-toc');
   const headings = [...document.querySelectorAll('.doc-content h2[id], .doc-content h3[id]')];
-  for (const heading of headings) {
+  if (toc && !toc.children.length) for (const heading of headings) {
     const a = document.createElement('a');
     a.href = '#' + encodeURIComponent(heading.id);
     a.textContent = heading.textContent;

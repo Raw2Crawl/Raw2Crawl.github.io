@@ -1,4 +1,10 @@
 import { GUIDE, ORIGIN } from './paths.mjs';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+
+const assetVersion = name => createHash('sha256').update(readFileSync(new URL('../assets/' + name, import.meta.url))).digest('hex').slice(0, 12);
+const cssVersion = assetVersion('site.css');
+const jsVersion = assetVersion('site.js');
 
 const escape = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 export function page({ title, description = 'Security testing documentation.', url, body, document = false }) {
@@ -14,7 +20,7 @@ export function page({ title, description = 'Security testing documentation.', u
 <link rel="canonical" href="${ORIGIN}${url}"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
 <meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
 <script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
-<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+<link rel="stylesheet" href="/assets/site.css?v=${cssVersion}"><script src="/assets/site.js?v=${jsVersion}" defer></script>
 </head><body${document ? ' class="documentation"' : ''}>
 <a class="skip-link" href="#main-content">Skip to content</a>
 <header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
