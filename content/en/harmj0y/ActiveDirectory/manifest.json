@@ -1,0 +1,1105 @@
+{
+  "source": "https://blog.harmj0y.net/",
+  "category": {
+    "id": 38,
+    "name": "ActiveDirectory",
+    "url": "https://blog.harmj0y.net/category/activedirectory/",
+    "reported_count": 10
+  },
+  "imported_at": "2026-11-13T20:22:08.841Z",
+  "permission": "The site owner confirmed author permission in this conversation. Original author copyright is retained; no OWASP license applies.",
+  "articles": [
+    {
+      "id": 5343,
+      "slug": "certified-pre-owned",
+      "title": "Certified Pre-Owned",
+      "url": "https://blog.harmj0y.net/activedirectory/certified-pre-owned/",
+      "date": "2021-06-17T09:56:53",
+      "modified": "2021-06-22T16:05:41",
+      "author": "harmj0y",
+      "source": "articles/certified-pre-owned.html",
+      "sha256": "3d0f7e5c00850b60397da9bec3f8f327e5f82ab51c98060387267207c393f89f"
+    },
+    {
+      "id": 4880,
+      "slug": "a-case-study-in-wagging-the-dog-computer-takeover",
+      "title": "A Case Study in Wagging the Dog: Computer Takeover",
+      "url": "https://blog.harmj0y.net/activedirectory/a-case-study-in-wagging-the-dog-computer-takeover/",
+      "date": "2019-02-28T14:08:02",
+      "modified": "2019-02-28T14:17:10",
+      "author": "harmj0y",
+      "source": "articles/a-case-study-in-wagging-the-dog-computer-takeover.html",
+      "sha256": "52bd27c0857f0a3630e11d6c16eefe3a87567bb51089dc20e7bacd87e5100794"
+    },
+    {
+      "id": 4515,
+      "slug": "remote-hash-extraction-on-demand-via-host-security-descriptor-modification",
+      "title": "Remote Hash Extraction On Demand Via Host Security Descriptor Modification",
+      "url": "https://blog.harmj0y.net/activedirectory/remote-hash-extraction-on-demand-via-host-security-descriptor-modification/",
+      "date": "2018-04-10T13:08:40",
+      "modified": "2018-04-10T13:08:40",
+      "author": "harmj0y",
+      "source": "articles/remote-hash-extraction-on-demand-via-host-security-descriptor-modification.html",
+      "sha256": "6572a646d17809312129cae3b5321cdd3524a983c7603214b976bc759fd60ef6"
+    },
+    {
+      "id": 4080,
+      "slug": "a-guide-to-attacking-domain-trusts",
+      "title": "A Guide to Attacking Domain Trusts",
+      "url": "https://blog.harmj0y.net/redteaming/a-guide-to-attacking-domain-trusts/",
+      "date": "2017-10-30T14:25:19",
+      "modified": "2021-05-10T13:37:50",
+      "author": "harmj0y",
+      "source": "articles/a-guide-to-attacking-domain-trusts.html",
+      "sha256": "2db0ba02d587a956e42698f4d7bf9d41eb0952e9c0639a35fdc8f4b30dcc6650"
+    },
+    {
+      "id": 3966,
+      "slug": "hunting-with-active-directory-replication-metadata",
+      "title": "Hunting With Active Directory Replication Metadata",
+      "url": "https://blog.harmj0y.net/defense/hunting-with-active-directory-replication-metadata/",
+      "date": "2017-09-06T12:32:28",
+      "modified": "2017-09-06T12:32:28",
+      "author": "harmj0y",
+      "source": "articles/hunting-with-active-directory-replication-metadata.html",
+      "sha256": "f6556875b808a41f58f2b346218b57beb3ceea7cf9396427f20f61ab9c9bad6e"
+    },
+    {
+      "id": 2901,
+      "slug": "a-pentesters-guide-to-group-scoping",
+      "title": "A Pentester’s Guide to Group Scoping",
+      "url": "https://blog.harmj0y.net/activedirectory/a-pentesters-guide-to-group-scoping/",
+      "date": "2017-06-20T12:32:33",
+      "modified": "2017-06-21T16:41:10",
+      "author": "harmj0y",
+      "source": "articles/a-pentesters-guide-to-group-scoping.html",
+      "sha256": "b89fd23dc918b26574ffa5ed40298e52a9267db3da5e6ac451cb14fc11070a0b"
+    },
+    {
+      "id": 3749,
+      "slug": "targeted-kerberoasting",
+      "title": "Targeted Kerberoasting",
+      "url": "https://blog.harmj0y.net/activedirectory/targeted-kerberoasting/",
+      "date": "2017-01-19T15:31:46",
+      "modified": "2017-01-19T15:31:46",
+      "author": "harmj0y",
+      "source": "articles/targeted-kerberoasting.html",
+      "sha256": "62a2aadc859fd6210247d5c560eecefc5940c7922a98fb9056e282795473cbd7"
+    },
+    {
+      "id": 3680,
+      "slug": "roasting-as-reps",
+      "title": "Roasting AS-REPs",
+      "url": "https://blog.harmj0y.net/activedirectory/roasting-as-reps/",
+      "date": "2017-01-17T14:29:11",
+      "modified": "2017-08-07T01:40:05",
+      "author": "harmj0y",
+      "source": "articles/roasting-as-reps.html",
+      "sha256": "643610704c9a672d12525e3d7a3ad4036b03c6a2920a42b8b498e45a8857d1d1"
+    },
+    {
+      "id": 3571,
+      "slug": "the-most-dangerous-user-right-you-probably-have-never-heard-of",
+      "title": "The Most Dangerous User Right You (Probably) Have Never Heard Of",
+      "url": "https://blog.harmj0y.net/activedirectory/the-most-dangerous-user-right-you-probably-have-never-heard-of/",
+      "date": "2017-01-10T12:53:48",
+      "modified": "2017-01-10T12:53:48",
+      "author": "harmj0y",
+      "source": "articles/the-most-dangerous-user-right-you-probably-have-never-heard-of.html",
+      "sha256": "ee7eaee269d6dee98114589a9c7efd310e436fbd77020021188abbfd39031be1"
+    },
+    {
+      "id": 3537,
+      "slug": "s4u2pwnage",
+      "title": "S4U2Pwnage",
+      "url": "https://blog.harmj0y.net/activedirectory/s4u2pwnage/",
+      "date": "2017-01-05T14:35:11",
+      "modified": "2018-09-29T02:12:31",
+      "author": "harmj0y",
+      "source": "articles/s4u2pwnage.html",
+      "sha256": "f0a19df0cab360e28cd1bb2e20826028ca5ed65ada046acf560fb77bacb22460"
+    }
+  ],
+  "assets": [
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/1_ad_cs_slaps.png",
+      "file": "assets/75d96f85e859-1_ad_cs_slaps.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/1_ad_cs_slaps.png",
+      "sha256": "1f357eae8f3d8d8ef4d46e6587c3352b436cfea81448e53b2d6bf3a129d1cdaf",
+      "bytes": 475982
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/2_certificate_enrollment_overview-1024x460.png",
+      "file": "assets/f432baf0d7c7-2_certificate_enrollment_overview-1024x460.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/2_certificate_enrollment_overview-1024x460.png",
+      "sha256": "3747beb32885b88aae932d2eb5f2f8b89b1befe169f8c2e31cd07129f4b3d652",
+      "bytes": 229930
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/3_certificate_template_properties.png",
+      "file": "assets/f7c57e7983b5-3_certificate_template_properties.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/3_certificate_template_properties.png",
+      "sha256": "8126d3e5737e048ebb3661b28526347172de51a6b0362effd047e59d945780f0",
+      "bytes": 17635
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/4_rubeus_asktgt_pkinit.png",
+      "file": "assets/5430fb0654da-4_rubeus_asktgt_pkinit.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/4_rubeus_asktgt_pkinit.png",
+      "sha256": "2459e339d933897f8b8918ec6afd0587c095b363cb5d6eb471ada4cc4a6755a3",
+      "bytes": 53502
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/5_get_ldapcurrentuser.png",
+      "file": "assets/b94dae36b0ea-5_get_ldapcurrentuser.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/5_get_ldapcurrentuser.png",
+      "sha256": "94c5dd48137cf90683e6a8efeb31468fa2bb0f2dd5aa7bc39670a8ee61b0a0f3",
+      "bytes": 29541
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/6_certify_find_client_auth-1024x341.png",
+      "file": "assets/5e678c90d22b-6_certify_find_client_auth-1024x341.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/6_certify_find_client_auth-1024x341.png",
+      "sha256": "617c3205940dc0bfbfddbef54a7749c3ddf2cd6e13ca80df666b809e77174274",
+      "bytes": 261166
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/7_pspkiaudit_find_client_auth-1024x366.png",
+      "file": "assets/dc7da895d569-7_pspkiaudit_find_client_auth-1024x366.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/7_pspkiaudit_find_client_auth-1024x366.png",
+      "sha256": "105799ab11b4be1e53cf81f52ddf1bd50544aa686dcb7a4b4a6906c4ce2e9b80",
+      "bytes": 238225
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/8_certify_request.png",
+      "file": "assets/fb54ca985cb6-8_certify_request.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/8_certify_request.png",
+      "sha256": "cd9cde5444aa38700072fb57f647167f789154f90abd9fc82b3e5d553b333f30",
+      "bytes": 41653
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/9_drake_meme.png",
+      "file": "assets/26fa59682799-9_drake_meme.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/9_drake_meme.png",
+      "sha256": "cf974746fe0ab703dec50376fb8a55b2e7b02f7ddbc0cc0e9679bf3c47a546d0",
+      "bytes": 341419
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/10_xzibit_meme.png",
+      "file": "assets/ee7d8d5b7156-10_xzibit_meme.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/10_xzibit_meme.png",
+      "sha256": "39adb97c234fb1a65a0eab8c9c51589f10737a1d84ee82ebf54184e40089fb26",
+      "bytes": 439260
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/11_pepe_silvia.png",
+      "file": "assets/cbf42994eff9-11_pepe_silvia.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/11_pepe_silvia.png",
+      "sha256": "e3800afaf32a63b1b01601e52e78ceaf753da246fc141ddb9f6652b6dfebec33",
+      "bytes": 582425
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/13_suspicious_fry.png",
+      "file": "assets/eed347b3a71e-13_suspicious_fry.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/13_suspicious_fry.png",
+      "sha256": "f82394828e43b30ad3624d53302a335cc31834a56c50579abd75bd0ffcc2dbc8",
+      "bytes": 307281
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/14_anything_kid.png",
+      "file": "assets/e9e22a025e3f-14_anything_kid.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/14_anything_kid.png",
+      "sha256": "2d9fd25c4106005be350a549568e907f7150de32e17cb91abb7de5b907865c56",
+      "bytes": 681543
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/15_sharpdpapi-1024x489.png",
+      "file": "assets/1c722fff38f6-15_sharpdpapi-1024x489.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/15_sharpdpapi-1024x489.png",
+      "sha256": "a37ff47718ddc0d4ced2b5510e95d969968cd4ca2799926a36c5be5f77e46ad3",
+      "bytes": 240475
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/16_forgecert-1024x666.png",
+      "file": "assets/0365ae4278da-16_forgecert-1024x666.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/16_forgecert-1024x666.png",
+      "sha256": "a533db422fbc2dca95d673786dea830251874b7f115a6a300ac8dfe8c96e012b",
+      "bytes": 374102
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/17_delpy_quote.png",
+      "file": "assets/2414c42763e2-17_delpy_quote.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/17_delpy_quote.png",
+      "sha256": "fd8e4b7c9b240ec36bdbd10c7271a5636f9a21fe3b86a8f627a33cdfa4d0e4ae",
+      "bytes": 34235
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2021/06/18_invoke_pkiaudit-1024x436.png",
+      "file": "assets/83d8f733fe9f-18_invoke_pkiaudit-1024x436.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2021/06/18_invoke_pkiaudit-1024x436.png",
+      "sha256": "02c762c329f3a18e8d5e51f6aef3f85ec2dc13ecc788e087c96b54ab93ead0e6",
+      "bytes": 419531
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2019/02/rbcd1-1024x775.png",
+      "file": "assets/8dd5a56e4e43-rbcd1-1024x775.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd1-1024x775.png",
+      "sha256": "0571a8ee387424ddd8d924295ba98de7cc19129d7514b3f2f1227de3432d1b4d",
+      "bytes": 243921
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2019/02/rbcd2-1024x67.png",
+      "file": "assets/19f45579fbf0-rbcd2-1024x67.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd2-1024x67.png",
+      "sha256": "0d02995e13a4625c1b00bde02b6667d2592f3d4b5279c84a15f3028d8230aad3",
+      "bytes": 33329
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2019/02/rbcd3-1024x168.png",
+      "file": "assets/ac7ec64a600c-rbcd3-1024x168.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd3-1024x168.png",
+      "sha256": "7e527fd2fecaa2cf9621f9e6798cac109068f6dce38f38fba024b72512449e61",
+      "bytes": 90585
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2019/02/rbcd4-1024x213.png",
+      "file": "assets/f6fcc1766c19-rbcd4-1024x213.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd4-1024x213.png",
+      "sha256": "45601ccc3941da8b82ac1929c300118e6eee93dd97bf9c67d139d7ccbc6a4235",
+      "bytes": 69819
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2019/02/rbcd5-1024x646.png",
+      "file": "assets/e5ebe19d23cf-rbcd5-1024x646.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd5-1024x646.png",
+      "sha256": "4ca110f3491368d3a4f2398a1e32c13ac59c492ab1f670491d27f704b1df393a",
+      "bytes": 179696
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2019/02/rbcd6-1024x669.png",
+      "file": "assets/7e9b2f307bb3-rbcd6-1024x669.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd6-1024x669.png",
+      "sha256": "6d97603572e718bdd4e4ae98251f57cf6d0a31711f04eaa2bb9666dfcbc75532",
+      "bytes": 392631
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2019/02/rbcd7-1024x650.png",
+      "file": "assets/5d28acce99a5-rbcd7-1024x650.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd7-1024x650.png",
+      "sha256": "e68a829aa31205f2b5c5f0e094677ad19b991acd2e1328b7c941aec6ed967244",
+      "bytes": 254600
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2018/04/sd_breakout-1024x753.png",
+      "file": "assets/cf1afded600b-sd_breakout-1024x753.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2018/04/sd_breakout-1024x753.png",
+      "sha256": "8bbf243f7e531307d06f297b8580f5535e09b3ec50ffe6d854419ca9e3cec9f5",
+      "bytes": 184870
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2018/04/remote_reg_key_access-1024x313.png",
+      "file": "assets/7c609075fb32-remote_reg_key_access-1024x313.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2018/04/remote_reg_key_access-1024x313.png",
+      "sha256": "f74f980d9f778400afa6ee41d573d9eb608b17e0ca75eb81122887f476b995ce",
+      "bytes": 111898
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2018/04/dwight_yes.jpg",
+      "file": "assets/a5ede81b9f5d-dwight_yes.jpg",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2018/04/dwight_yes.jpg",
+      "sha256": "da888708d568687d4d234aa42ff03cc187521d6046d3c69e66a73b85bd81ed5f",
+      "bytes": 35428
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2018/04/add_remote_reg_backdoor-1024x511.png",
+      "file": "assets/1062aca0f827-add_remote_reg_backdoor-1024x511.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2018/04/add_remote_reg_backdoor-1024x511.png",
+      "sha256": "2870e8373ce1fd8f4071e001034d55f9f106130c6ef923628b1d8db59de43f99",
+      "bytes": 324458
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2018/04/gpo_reg_key-1024x657.png",
+      "file": "assets/efefe53d18f3-gpo_reg_key-1024x657.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2018/04/gpo_reg_key-1024x657.png",
+      "sha256": "36db55b2d2bce4645d104c26b9c9eb82b92745e15442b9931746475c08310175",
+      "bytes": 221252
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2018/04/gpo_reg_key_permissions-1024x626.png",
+      "file": "assets/4d9e29b6fd63-gpo_reg_key_permissions-1024x626.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2018/04/gpo_reg_key_permissions-1024x626.png",
+      "sha256": "af273a20caa8621fa99cd8f5ab0331dd3ccee7a631baf48756c1aa39066ffdac",
+      "bytes": 203431
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2018/04/gpo_reg_key_result-1024x356.png",
+      "file": "assets/ebb6d4df37a1-gpo_reg_key_result-1024x356.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2018/04/gpo_reg_key_result-1024x356.png",
+      "sha256": "e5b537afb88f454b77122b9cbc3471e627f326d6a09d53f16f081c83e50c6c99",
+      "bytes": 144261
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2018/04/gpo_GptTmpl_permission-1024x672.png",
+      "file": "assets/692046447bc7-gpo_GptTmpl_permission-1024x672.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2018/04/gpo_GptTmpl_permission-1024x672.png",
+      "sha256": "3d0b30a3842743b74bce97136fa94db1f333a9a6de2bc93c2dcd2ea5d25d6587",
+      "bytes": 326613
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2018/04/get_RemoteMachineAccountHash-1024x348.png",
+      "file": "assets/7a46244fb8f2-get_RemoteMachineAccountHash-1024x348.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2018/04/get_RemoteMachineAccountHash-1024x348.png",
+      "sha256": "dd03514423bcdff45c81ec2ae9a623393ec914688ddf334f0144e65c1cd18e0b",
+      "bytes": 40934
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2018/04/get_RemoteLocalAccountHash-1024x427.png",
+      "file": "assets/b44fdf5e60bd-get_RemoteLocalAccountHash-1024x427.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2018/04/get_RemoteLocalAccountHash-1024x427.png",
+      "sha256": "211ec4c14f188d15ca0847cb06e69d05fee3f45b40c0b612d2e4c050ec6993cc",
+      "bytes": 109850
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2018/04/get_RemoteCachedCredential-1024x668.png",
+      "file": "assets/ab904bf93364-get_RemoteCachedCredential-1024x668.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2018/04/get_RemoteCachedCredential-1024x668.png",
+      "sha256": "2a4d0bfd8b91ba11a78d8f78ff245f339c764389e6d96e4593f2b8a96f4b1528",
+      "bytes": 80910
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/kerberos_key_diagram_updated-1024x662.png",
+      "file": "assets/541458bac89e-kerberos_key_diagram_updated-1024x662.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/kerberos_key_diagram_updated-1024x662.png",
+      "sha256": "fe5d8137b73bc8066d3ab6193b65455f5ea17a035f22b1eab3e36c5d2c34e478",
+      "bytes": 287636
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/trust_meme.jpg",
+      "file": "assets/5591a1d10f75-trust_meme.jpg",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/trust_meme.jpg",
+      "sha256": "f02539fe091ffd4fa3d7ee966a342964cba26a6dbfddb6ab2ff18849e98052d8",
+      "bytes": 44111
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/trust_direction_one_way-1024x465.png",
+      "file": "assets/ac9ea7c0e76a-trust_direction_one_way-1024x465.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/trust_direction_one_way-1024x465.png",
+      "sha256": "bebbe24c97a486d8ca02b32cebcdf718368b4ad24a089dd25e35f430e8bd95e3",
+      "bytes": 162392
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/sample_trust_architecture.png",
+      "file": "assets/57aece71e156-sample_trust_architecture.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/sample_trust_architecture.png",
+      "sha256": "c924d5b06fa2c316ad286310fc72f182a06a83c2b10580be2d6c714cf132003d",
+      "bytes": 6360
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/net_from_sub-1024x216.png",
+      "file": "assets/ba71d405fc1b-net_from_sub-1024x216.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/net_from_sub-1024x216.png",
+      "sha256": "29f094b0dfc04614f73ad9a5d38cb633c008a29a173216757952b6d644223af3",
+      "bytes": 116611
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/sub_forest_trust-1024x308.png",
+      "file": "assets/d046fe56a7cb-sub_forest_trust-1024x308.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/sub_forest_trust-1024x308.png",
+      "sha256": "6551fee3ce012103c5bee37e5413967da3a0741ad122334fca0f1e48a7a02406",
+      "bytes": 108649
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/sub_domain_trust_api-1024x965.png",
+      "file": "assets/06256e0153e0-sub_domain_trust_api-1024x965.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/sub_domain_trust_api-1024x965.png",
+      "sha256": "f0b5ae8251fc6e1e756f867ed5e51418f1a8565d7e530292c62f10c239873e5f",
+      "bytes": 425777
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/sub_nltest-1024x137.png",
+      "file": "assets/d8cdd9deacf6-sub_nltest-1024x137.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/sub_nltest-1024x137.png",
+      "sha256": "be0a38b9f809a3e9769fbbf2f9d94c0ed47697417f20d92c65a5ac1eeaab6094",
+      "bytes": 104236
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/sub_dsquery-1024x576.png",
+      "file": "assets/9985c82b0d72-sub_dsquery-1024x576.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/sub_dsquery-1024x576.png",
+      "sha256": "ae60e48e6d432c72e26b75641643ccc1209a4e6f70912e571cd1faf1f93f4d12",
+      "bytes": 307005
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/sub_get_domain_trust_ldap-1024x583.png",
+      "file": "assets/d48806f7e5aa-sub_get_domain_trust_ldap-1024x583.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/sub_get_domain_trust_ldap-1024x583.png",
+      "sha256": "b62339a0ee7a1faa36cb652ab052f8e29387095cd79432bad4816b958446637e",
+      "bytes": 235306
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/sub_get_computer_across_trust-1024x530.png",
+      "file": "assets/5213850c166f-sub_get_computer_across_trust-1024x530.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/sub_get_computer_across_trust-1024x530.png",
+      "sha256": "2d4f8e502585d9c8c5707d5e1fda9bc759790c02444809243bbf71f8944509d7",
+      "bytes": 327809
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/klist_inter_realm_tgts-1024x631.png",
+      "file": "assets/001a2f3ae959-klist_inter_realm_tgts-1024x631.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/klist_inter_realm_tgts-1024x631.png",
+      "sha256": "4b180f9e47c9deec13d930a3a40951303e8c386ab7a12399cf305936a09293e8",
+      "bytes": 387452
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/sub_trust_global_catalog-1024x713.png",
+      "file": "assets/3eab390331c1-sub_trust_global_catalog-1024x713.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/sub_trust_global_catalog-1024x713.png",
+      "sha256": "38c474f626ebfc14d9d53399847aa6927bcd4735617ee4a50e3190844595ab6b",
+      "bytes": 315510
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/trust_visualizer-1024x169.png",
+      "file": "assets/ccc6c203e96d-trust_visualizer-1024x169.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/trust_visualizer-1024x169.png",
+      "sha256": "d2d9d4b185acb1a2f1d25a6a6ce7603de725a6066d6da0f077c79e1932d26efa",
+      "bytes": 124896
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/bloodhound_trust_graph.png",
+      "file": "assets/297317f92a74-bloodhound_trust_graph.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/bloodhound_trust_graph.png",
+      "sha256": "60c09372ff6bee7b503d879b159fd87bde504ca130f8f4264552f180b45cc11e",
+      "bytes": 65895
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/foreign_security_principal.png",
+      "file": "assets/04d723e99e48-foreign_security_principal.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/foreign_security_principal.png",
+      "sha256": "5b7d8241b4e405e7376d303f5240e365a8df09d9000e6380168c887dcf8309f7",
+      "bytes": 88566
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/dev_universal_group-1024x267.png",
+      "file": "assets/2c37b908c076-dev_universal_group-1024x267.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/dev_universal_group-1024x267.png",
+      "sha256": "9211e9e8ab395bfde52e0563b6c881265bffdd0943be0ac33fd9c1e7c4c982b5",
+      "bytes": 127715
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/dev_foreign_group_member-1024x635.png",
+      "file": "assets/c481a3593518-dev_foreign_group_member-1024x635.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/dev_foreign_group_member-1024x635.png",
+      "sha256": "61e7da8c292b9285fb3153543999f5b3414f699ab146d9beeb552b82dc0a10ee",
+      "bytes": 337556
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/localgroup_foreign_memberships-1024x467.png",
+      "file": "assets/6341f5971a1a-localgroup_foreign_memberships-1024x467.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/localgroup_foreign_memberships-1024x467.png",
+      "sha256": "406da1f05a7ddd6b9a0cce5fbdb844f0639a871911ecbd8c7d50bb3500b0ece3",
+      "bytes": 315736
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2015/06/delpy_trust_tweet2-988x1024.png",
+      "file": "assets/365957b14f2a-delpy_trust_tweet2-988x1024.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2015/06/delpy_trust_tweet2-988x1024.png",
+      "sha256": "ce005fdcd480a558093cf0fe816cf7d47767b7ca9a5dce474c955a2ea87b133f",
+      "bytes": 545442
+    },
+    {
+      "url": "https://media.tenor.com/images/fc63d5c22822973d74335e16a5401fd0/tenor.gif",
+      "file": "assets/a13e26534076-tenor.gif",
+      "download_url": "https://media.tenor.com/images/fc63d5c22822973d74335e16a5401fd0/tenor.gif",
+      "sha256": "0ba09a4b8adee46fd38d7499dcbe8a802cf51f1cb46506e6c8fcab2314b00e00",
+      "bytes": 23910603
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/sub_trust_from_external2-1024x715.png",
+      "file": "assets/ddc11fb70e1a-sub_trust_from_external2-1024x715.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/sub_trust_from_external2-1024x715.png",
+      "sha256": "3c34faf7017b54394f271462d87503e744dbe5f647c54404ab1709e7aa96e439",
+      "bytes": 287414
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/sub_trust_from_external_gc-1024x720.png",
+      "file": "assets/c833761da112-sub_trust_from_external_gc-1024x720.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/sub_trust_from_external_gc-1024x720.png",
+      "sha256": "7a71c4d43ef3a2d69129f3f547d99dbd452385ed87694d4c56c02e40530dc6a3",
+      "bytes": 319834
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/domain_trust_refferal_error-1024x196.png",
+      "file": "assets/a085ee2e1cc7-domain_trust_refferal_error-1024x196.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/domain_trust_refferal_error-1024x196.png",
+      "sha256": "418c36b011b3664093c568ddd021a866af4459bfa187a3681a121d53e4f3ff49",
+      "bytes": 172127
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/external_sub_cross_membership-1024x693.png",
+      "file": "assets/7b5af02badf2-external_sub_cross_membership-1024x693.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/external_sub_cross_membership-1024x693.png",
+      "sha256": "07cb11b1c05df57e69c0a115bb2fa3141423e8e62443a7ecb6ed74ffa0fa4a9d",
+      "bytes": 382625
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/sub_foreign_user-1024x269.png",
+      "file": "assets/03afb0539e68-sub_foreign_user-1024x269.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/sub_foreign_user-1024x269.png",
+      "sha256": "b62d972247ec1c86c18528916fc7a3d60f9eeeddd784d8ec22de94f1f57264d2",
+      "bytes": 132054
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/dev_foreign_group_member2-1024x452.png",
+      "file": "assets/f41d64068fce-dev_foreign_group_member2-1024x452.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/dev_foreign_group_member2-1024x452.png",
+      "sha256": "5133072c2170af686654d9d2b6de9f3fc9c503f5ecf8851a5b8a12747df63420",
+      "bytes": 215295
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/testlab_foreign_group_member-1024x403.png",
+      "file": "assets/810a0c0dbfa1-testlab_foreign_group_member-1024x403.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/testlab_foreign_group_member-1024x403.png",
+      "sha256": "cfec4df971d30f4394f2460934f0de8e9631c8b2104dcc6b21e89ee724ba25ee",
+      "bytes": 204132
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/contoso_foreign_member-1024x456.png",
+      "file": "assets/cdaa5e4f621b-contoso_foreign_member-1024x456.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/contoso_foreign_member-1024x456.png",
+      "sha256": "c81b9bd9f4f1a64e1d70d5bfb1933d6e1fb00c1b99fb7733288a142b9cccf499",
+      "bytes": 267916
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/10/external_dcsync_trust-1024x573.png",
+      "file": "assets/7125119bad3e-external_dcsync_trust-1024x573.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/10/external_dcsync_trust-1024x573.png",
+      "sha256": "52b06b5517f53f51c99bcbfe57bf571065cdebd93cd2ed086c724e4c5ce417f9",
+      "bytes": 165090
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2015/09/keep_calm.png",
+      "file": "assets/6bb56304dafd-keep_calm.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2015/09/keep_calm.png",
+      "sha256": "9d43d1a4b44a072383cc6bdae7a509ff59c5ac2eee945ec613c1d7b51a61d98b",
+      "bytes": 39541
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2015/09/delpy_dcsync2-1024x787.png",
+      "file": "assets/0ec41f4e66ef-delpy_dcsync2-1024x787.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2015/09/delpy_dcsync2-1024x787.png",
+      "sha256": "c1541bfecb20ae3bc2c247cd5cc99b9b2f4608dfdd70b0dd73ec6b1eaafaf654",
+      "bytes": 439264
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/09/attr_not_replicated-1024x308.png",
+      "file": "assets/7f18d95fd5c4-attr_not_replicated-1024x308.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/09/attr_not_replicated-1024x308.png",
+      "sha256": "0eac26c7c5c73fff30f5a7e586d8993408e5fe53e3f5c6a25884dc476d5dc245",
+      "bytes": 142676
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/09/attr_replicated-1024x287.png",
+      "file": "assets/72e923e6ec9f-attr_replicated-1024x287.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/09/attr_replicated-1024x287.png",
+      "sha256": "d923c50fc688eee71da60b5b636abf405df798909b697899748a6b19eb5adac4",
+      "bytes": 152226
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/ReplAttributeMetaData_raw.png",
+      "file": "assets/27bdb1aa6083-ReplAttributeMetaData_raw.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/ReplAttributeMetaData_raw.png",
+      "sha256": "2dba84b6b98cb1ab272c0ec1964842d2f33685dee2b991356f56d1cb9c325b5e",
+      "bytes": 92239
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/Get_DomainObjectAttributeHistory.png",
+      "file": "assets/458c73216866-Get_DomainObjectAttributeHistory.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/Get_DomainObjectAttributeHistory.png",
+      "sha256": "978b0e90767adead75306baa26e947857e174a5befb0e9abef612d8adf5a830d",
+      "bytes": 44858
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/Get_DomainObjectLinkedAttributeHistory.png",
+      "file": "assets/8a28d2fc920f-Get_DomainObjectLinkedAttributeHistory.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/Get_DomainObjectLinkedAttributeHistory.png",
+      "sha256": "fbf80c57e5a1a5affaea81104072cb127caab450e1df868223251f1f06c358e1",
+      "bytes": 100761
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/09/forward_links-1024x494.png",
+      "file": "assets/665b841bb48f-forward_links-1024x494.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/09/forward_links-1024x494.png",
+      "sha256": "f7c27d8c712c5d5ee06e85202572cba163fc5b13656553d57103770411e5b7c1",
+      "bytes": 326818
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/test_group_repl.png",
+      "file": "assets/3dda55dc2b9f-test_group_repl.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/test_group_repl.png",
+      "sha256": "fb8b0c3d088eb1074c9124a4660b27590f2d515099e60d56b17d6bd893b0d16e",
+      "bytes": 60741
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/Get_DomainGroupMemberDeleted2.png",
+      "file": "assets/f689feff3cc6-Get_DomainGroupMemberDeleted2.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/Get_DomainGroupMemberDeleted2.png",
+      "sha256": "a6a48c99b1ad69e0e8edf1cfe8d8ecefa315222c7f5788689a786e2b1b7c3264",
+      "bytes": 31110
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/enable_sec_group_audit.png",
+      "file": "assets/c585e0886ef7-enable_sec_group_audit.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/enable_sec_group_audit.png",
+      "sha256": "6f20bff5efdb7ba12aa135192240450c41755d1dd44a39fce3b840d8f874c230",
+      "bytes": 79704
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/event_4737.png",
+      "file": "assets/a15c93552b85-event_4737.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/event_4737.png",
+      "sha256": "e8c373ec309296c728aa54f631b960866a4c4e5ad375e11b3dda476d2bd5afb5",
+      "bytes": 43780
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/spn_set_unset_meta.png",
+      "file": "assets/44a1a52b39d2-spn_set_unset_meta.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/spn_set_unset_meta.png",
+      "sha256": "93ef902b8aeceb234a8cebb034c0f9622a331691b12ab921e996912a6fd99874",
+      "bytes": 148638
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/enable_user_comp_audit.png",
+      "file": "assets/cba62d81e5f6-enable_user_comp_audit.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/enable_user_comp_audit.png",
+      "sha256": "a5559da405785c429ef5caa15d55a46770b4e0c35e211f6fa2281e1e12443192",
+      "bytes": 63044
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/user_spn_eventlog.png",
+      "file": "assets/cb69e94a3ea7-user_spn_eventlog.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/user_spn_eventlog.png",
+      "sha256": "01d9c903dcfdf6c0d5ec76c162a84cfdb5096a861b2005376d1b0a5d395f38d0",
+      "bytes": 42761
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/meta_spn_mass_enum.png",
+      "file": "assets/1d47cde407bc-meta_spn_mass_enum.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/meta_spn_mass_enum.png",
+      "sha256": "d10b980c9c097c6d58ba8eb08968cab2d9553ea95bf829e20e97c1b02db956c9",
+      "bytes": 50970
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/change_owner_meta.png",
+      "file": "assets/4bbeff435537-change_owner_meta.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/change_owner_meta.png",
+      "sha256": "8a11b19ad769e983c3e653f5fac32bc6dd6c7287e931ab9f921427af5672e6ee",
+      "bytes": 75422
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/change_owner_event.png",
+      "file": "assets/c4de181d8db1-change_owner_event.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/change_owner_event.png",
+      "sha256": "f7054681d97e2571dc4e12103fa7e9d057af650dedcde69c09a70f6202b35ccb",
+      "bytes": 43121
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/ntsecuritydescriptor_changes_meta.png",
+      "file": "assets/8e206774178b-ntsecuritydescriptor_changes_meta.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/ntsecuritydescriptor_changes_meta.png",
+      "sha256": "0c48b3cf9beaa0215c14c7a5e9d7faefa0a11b8fe0b18d702519c8a822ec8fc0",
+      "bytes": 90261
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/event_4724.png",
+      "file": "assets/7fb3fedc4aa0-event_4724.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/event_4724.png",
+      "sha256": "95b7beec3e90655ce3589a96d76a40de50b4870e38f2ed9ed7d3a4438e2eadf4",
+      "bytes": 39910
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/gpo_meta_edit-1024x610.png",
+      "file": "assets/3f5e2a4c56c2-gpo_meta_edit-1024x610.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/gpo_meta_edit-1024x610.png",
+      "sha256": "14ce243a8fcadbc43ae164ee97aedaaf49ccf7eacacdc460f5049a767afff058",
+      "bytes": 325783
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/audit_ds_changes-1024x618.png",
+      "file": "assets/e0c7b2b0dadd-audit_ds_changes-1024x618.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/audit_ds_changes-1024x618.png",
+      "sha256": "35f6cae1326224138c06660defd219074265dda240d14212a17709ff158a2507",
+      "bytes": 184412
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/gpo_edit_event-948x1024.png",
+      "file": "assets/c4c6231cc063-gpo_edit_event-948x1024.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/gpo_edit_event-948x1024.png",
+      "sha256": "6ace1c242ddac4241e59024d19bb8ea3f7ff73e5f747bfc3aa0158213ab54bc6",
+      "bytes": 217272
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/09/dsa_trackback_1-1024x320.png",
+      "file": "assets/422e224f91b6-dsa_trackback_1-1024x320.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/09/dsa_trackback_1-1024x320.png",
+      "sha256": "00a0d29ef3013165a8562d3b7fc9d980560672eda99d02bd32241cd79568d469",
+      "bytes": 158137
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/09/dsa_trackback_2-1024x942.png",
+      "file": "assets/c2dddd8fc28c-dsa_trackback_2-1024x942.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/09/dsa_trackback_2-1024x942.png",
+      "sha256": "fadfec6dda26b6041ef3520ba5550b5773ba0055a260a23f86a665d9924e929c",
+      "bytes": 594628
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/09/dsa_trackback_3-1024x565.png",
+      "file": "assets/07590be92434-dsa_trackback_3-1024x565.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/09/dsa_trackback_3-1024x565.png",
+      "sha256": "0ed1586749b3ccfe1fc8c9b2bad501b3ee7327c98c546f8bb461ce6a67112b17",
+      "bytes": 328934
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/09/dsa_trackback_4-1024x873.png",
+      "file": "assets/c4fd73d319c5-dsa_trackback_4-1024x873.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/09/dsa_trackback_4-1024x873.png",
+      "sha256": "5e78876aa19bd74534a4f1b3e4fe502fff767cc3d36e23fbb81b023905356f0b",
+      "bytes": 477031
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/04/groupnesting.jpg",
+      "file": "assets/b2a0fa75ba02-groupnesting.jpg",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/04/groupnesting.jpg",
+      "sha256": "82015cf16b3dfdef6b62b6e1e3b6c7641a6eea51f90d520a58dff1e4db18f0e5",
+      "bytes": 22148
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/05/powerview_universal_groups-1024x225.png",
+      "file": "assets/2c75607f3709-powerview_universal_groups-1024x225.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/05/powerview_universal_groups-1024x225.png",
+      "sha256": "f44567c2e8b5cd55049c748b0939bd7f894cbce3efb889c7cc8322999b58104c",
+      "bytes": 71115
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/05/powerview_not_domainlocal_groups-1024x484.png",
+      "file": "assets/0e354b9c653f-powerview_not_domainlocal_groups-1024x484.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/05/powerview_not_domainlocal_groups-1024x484.png",
+      "sha256": "4027be3e111299adcba600eed63d82beb927fcfc128a9b7b834d9605d07339d9",
+      "bytes": 170120
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/05/domain_group_parse_properties-1024x492.png",
+      "file": "assets/a2e8f8901591-domain_group_parse_properties-1024x492.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/05/domain_group_parse_properties-1024x492.png",
+      "sha256": "350496b499ab71135067828d09a220e525db67709415eca1510600625e45368a",
+      "bytes": 168393
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/05/get_forestglobalcatalog-1024x834.png",
+      "file": "assets/ae72b8dcf91b-get_forestglobalcatalog-1024x834.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/05/get_forestglobalcatalog-1024x834.png",
+      "sha256": "cd540c5395f8e575efb8b30d3874a050bb55184395b499cd10acdcd83d26e1fb",
+      "bytes": 297194
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/05/testlab_computer_global_catalog-1024x263.png",
+      "file": "assets/3df1ea6f27d6-testlab_computer_global_catalog-1024x263.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/05/testlab_computer_global_catalog-1024x263.png",
+      "sha256": "577c8b5764108345fdd2d03862dbf76713d57b9d1de82b29961f6c76e536fd11",
+      "bytes": 63271
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/05/dev_computer_global_catalog-1024x262.png",
+      "file": "assets/b196b112e2e6-dev_computer_global_catalog-1024x262.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/05/dev_computer_global_catalog-1024x262.png",
+      "sha256": "ae565d9e154b33794b9e9fc0450e063b5d4b28f1b2ca9964ca3e94d4811419f1",
+      "bytes": 64623
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/global_catalog_groups3-1024x665.png",
+      "file": "assets/cdbac75ea7fc-global_catalog_groups3-1024x665.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/global_catalog_groups3-1024x665.png",
+      "sha256": "db08761efebaf238cc718a624fdb4132117a32ec4b62ad2cb0232588a237ed6a",
+      "bytes": 534934
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/dev_all_group_memberships2-1024x647.png",
+      "file": "assets/7cff12b8382e-dev_all_group_memberships2-1024x647.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/dev_all_group_memberships2-1024x647.png",
+      "sha256": "99b4c4a6048eff2b8360228cc45a66571c6f2bb0af2da1e8184382cbe9188833",
+      "bytes": 380026
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/domainobject_foreignprincipals-1024x269.png",
+      "file": "assets/3c8545f90608-domainobject_foreignprincipals-1024x269.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/domainobject_foreignprincipals-1024x269.png",
+      "sha256": "432db753647173ec26232582b1b00a7b07b062faf092c67b25cf053224625ce2",
+      "bytes": 191059
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/domain_local_external_member-1024x879.png",
+      "file": "assets/4d273f7479e8-domain_local_external_member-1024x879.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/domain_local_external_member-1024x879.png",
+      "sha256": "c3a4e8acddd7362e51bb9589af0dd4b6155efe925ce7294ea3bcf4be3aead839",
+      "bytes": 474034
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/gc_deconflict_user-1024x675.png",
+      "file": "assets/fe1d77f808ec-gc_deconflict_user-1024x675.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/gc_deconflict_user-1024x675.png",
+      "sha256": "4db38517d2abd2ae277faa8d04270dbb7092a83d49debf4ccf34c7f511ac9211",
+      "bytes": 383091
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/gc_kerberoastable-1024x466.png",
+      "file": "assets/ab1726653721-gc_kerberoastable-1024x466.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/gc_kerberoastable-1024x466.png",
+      "sha256": "d28655b836f8deb8cfbc6f57b23924acf62b9f2947513bf7d97a0bcacfe7b0e1",
+      "bytes": 212719
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/gc_enumerate_trusts-1024x731.png",
+      "file": "assets/fd3e658a3691-gc_enumerate_trusts-1024x731.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/gc_enumerate_trusts-1024x731.png",
+      "sha256": "2c845d0128af6dce4c5d12af5024c59ee095d044fb4c5d3da752edd67c98a385",
+      "bytes": 354608
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/gc_foreign_principals-1024x378.png",
+      "file": "assets/3613990dc736-gc_foreign_principals-1024x378.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/gc_foreign_principals-1024x378.png",
+      "sha256": "f35a65183faf392209fe6a91bf5cd810593624ef8e34fc90d3a8eabcff2e7b71",
+      "bytes": 257169
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/foreign_principal_groups-1024x371.png",
+      "file": "assets/e78f4be82f7e-foreign_principal_groups-1024x371.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/foreign_principal_groups-1024x371.png",
+      "sha256": "4b1f3c7ea165c77af74a885912a2363464eeaa65a3bef692d047726053b6322b",
+      "bytes": 231279
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/06/great_success.jpg",
+      "file": "assets/072531a4bf02-great_success.jpg",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/06/great_success.jpg",
+      "sha256": "14c0f057abec6dabfc5be48cbbd0d904fef889a8781eee667984089207daf998",
+      "bytes": 54761
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/malicious_asrep.png",
+      "file": "assets/6f3941d5e031-malicious_asrep.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/malicious_asrep.png",
+      "sha256": "29893b9c58ce6b2a0f4c841a75cf9ebd82d9820c3a3851f0108204e811e3ee47",
+      "bytes": 43103
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/offensive_kerberoasting.png",
+      "file": "assets/e0e6b267db4f-offensive_kerberoasting.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/offensive_kerberoasting.png",
+      "sha256": "77dbcf5a6e2815ca1a78cf1db94e400c418f490a92602e478c8f5c30eb86eda2",
+      "bytes": 85963
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/normal_preauth_fail-1024x584.png",
+      "file": "assets/5d9ed7a4c32e-normal_preauth_fail-1024x584.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/normal_preauth_fail-1024x584.png",
+      "sha256": "29678b01b370e09e528f65d0b532bcd02b9209231820d14f6a78d16a5c6f738d",
+      "bytes": 238977
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/ad_do_not_require_preauth_gui2.png",
+      "file": "assets/fa5b188dfd36-ad_do_not_require_preauth_gui2.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/ad_do_not_require_preauth_gui2.png",
+      "sha256": "7fca198b0a7f9b71565b09694a9016c1829eb7c555aab06e1276bda1ed485f7d",
+      "bytes": 21069
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/powerview_preauth.png",
+      "file": "assets/3a1ef96b4b31-powerview_preauth.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/powerview_preauth.png",
+      "sha256": "a6d1106dc57ae768dc37e5a6d19fb58230bfb2e32c4eda183c49881d463cbe91",
+      "bytes": 25148
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/asn1_javascript_decoder-1024x576.png",
+      "file": "assets/487acf629de7-asn1_javascript_decoder-1024x576.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/asn1_javascript_decoder-1024x576.png",
+      "sha256": "73ea96ae26ba2ed2ace0ed6674bdf70d2bd67d50a04885547309b5de53a8c0ce",
+      "bytes": 191903
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/get_asrephash.png",
+      "file": "assets/6e17b5996396-get_asrephash.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/get_asrephash.png",
+      "sha256": "4b16db5ddee355a1ab0936f13bf37f0dc99d9d706817baf7bb3001ef8c69d957",
+      "bytes": 36998
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/invoke_asreproast.png",
+      "file": "assets/735385d8bf64-invoke_asreproast.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/invoke_asreproast.png",
+      "sha256": "36c3e1585b47315c913ee9fe0a0de61b9426a065932dd8a0a877aa115de60c50",
+      "bytes": 81295
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/john_asrep_crack.png",
+      "file": "assets/e43584d72e39-john_asrep_crack.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/john_asrep_crack.png",
+      "sha256": "2cd0eba91d1d03f0a32e9e026df28aa89d7aa8aa9337501d67c00070e20abe0b",
+      "bytes": 133722
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/attempted_delegation_edit2-1024x744.png",
+      "file": "assets/7c2a2bd66f47-attempted_delegation_edit2-1024x744.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/attempted_delegation_edit2-1024x744.png",
+      "sha256": "f5237be6d5fa8e279fc6c32933614e6b19ff48a1ab9f936a27e65819654d4a66",
+      "bytes": 238622
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/dc_default_policy-1024x768.png",
+      "file": "assets/743635256872-dc_default_policy-1024x768.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/dc_default_policy-1024x768.png",
+      "sha256": "76083f6ab336d7bc5fa964fa5aa57a5465d29596f6f2f7888c41a579088ddd4a",
+      "bytes": 330808
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/gpo_edit_delegationpriv-1024x656.png",
+      "file": "assets/8d00b63d1017-gpo_edit_delegationpriv-1024x656.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/gpo_edit_delegationpriv-1024x656.png",
+      "sha256": "db5500b2225311f5c70a47bc45c8fddaeea06b3a5eb07a406a42a00b12a47f7c",
+      "bytes": 359583
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/successful_delegation_edit-1024x623.png",
+      "file": "assets/6d6967f91b3f-successful_delegation_edit-1024x623.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/successful_delegation_edit-1024x623.png",
+      "sha256": "8d1a48451e6381118f82f6e1b8faeee7f547a8dce51540d05d3e6510b2f9e79b",
+      "bytes": 207822
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/s4u_dcsync2.png",
+      "file": "assets/14d52a521cbf-s4u_dcsync2.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/s4u_dcsync2.png",
+      "sha256": "eae0aa8c1ed250f0053f9d49301e511f8e23e66fb5cfa645043471ade6b7b4b6",
+      "bytes": 61465
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/seriously.jpg",
+      "file": "assets/54384ee04969-seriously.jpg",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/seriously.jpg",
+      "sha256": "fdbd05132493cc939aedf5fcc2ea38771b70fd21a5ea561d82446526354d385e",
+      "bytes": 100648
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2016/12/delegation_forwarded_tgt.png",
+      "file": "assets/0963e65120d0-delegation_forwarded_tgt.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2016/12/delegation_forwarded_tgt.png",
+      "sha256": "7f04bb187a91cedcf1d8b45f0bc365a1df7d3ae424b2e26441b5383353f67961",
+      "bytes": 33423
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2016/12/get_domaincomputer_unconstrained-1024x532.png",
+      "file": "assets/12971e4dc92b-get_domaincomputer_unconstrained-1024x532.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2016/12/get_domaincomputer_unconstrained-1024x532.png",
+      "sha256": "110053e6acdc9778efa0948424e9e9caf1f23ec78e0898fcb34c307f13978039",
+      "bytes": 150668
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2016/12/sqlservice_delegation_properties-770x1024.png",
+      "file": "assets/6ab731949686-sqlservice_delegation_properties-770x1024.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2016/12/sqlservice_delegation_properties-770x1024.png",
+      "sha256": "0836bf985fff5bb1be6c34162e9fd4ddd54546abc846c309ce20cebfb879f24a",
+      "bytes": 203236
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2016/12/sqlservice_delegation_powerview-1024x487.png",
+      "file": "assets/65aa72f6e861-sqlservice_delegation_powerview-1024x487.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2016/12/sqlservice_delegation_powerview-1024x487.png",
+      "sha256": "a1d63feabbe7c02a44a854d2942b47eb953bc1961662c80c61a1b706c5d82dc1",
+      "bytes": 69129
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2016/12/contrained_delegation.png",
+      "file": "assets/b51a9c879404-contrained_delegation.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2016/12/contrained_delegation.png",
+      "sha256": "6bab70c1b850a6d54f0cc93dcd0f413ef5a7bef0a153099586c116256685c93d",
+      "bytes": 47813
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2016/12/powerview_trustedtoauth2-1024x867.png",
+      "file": "assets/34e18d889f84-powerview_trustedtoauth2-1024x867.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2016/12/powerview_trustedtoauth2-1024x867.png",
+      "sha256": "c7e3b93cbf0028e3d162c8736031e70c06b1ee8696db3f6a034f041160accbfb",
+      "bytes": 299965
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2016/12/scenario1_1-1024x514.png",
+      "file": "assets/8ab80a56004a-scenario1_1-1024x514.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2016/12/scenario1_1-1024x514.png",
+      "sha256": "da5d598ec92257e17e6533164458930d86ab470d7717a8dc83298e1dbd28463f",
+      "bytes": 72914
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2016/12/scenario1_2-1024x400.png",
+      "file": "assets/30c8cea9df0d-scenario1_2-1024x400.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2016/12/scenario1_2-1024x400.png",
+      "sha256": "119553a6b4fce32af6f02bfebce0838b8298bbf0a23b046fed26345198d37b96",
+      "bytes": 61788
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2016/12/scenario1_3-1024x393.png",
+      "file": "assets/465fc9b57ef3-scenario1_3-1024x393.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2016/12/scenario1_3-1024x393.png",
+      "sha256": "0a92272594ff0f5ba9535f09fc296fd3933222ed613ae643644dc7bff422241e",
+      "bytes": 53432
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2016/12/scenario1_4-1024x759.png",
+      "file": "assets/6cfc0bd93dc6-scenario1_4-1024x759.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2016/12/scenario1_4-1024x759.png",
+      "sha256": "603bded701f31ff5499685d1ae3ca2e74e9cef328e7405bb13a8c58387cbaf8c",
+      "bytes": 101067
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2016/12/scenario2_1-1024x466.png",
+      "file": "assets/7cc71dd3b762-scenario2_1-1024x466.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2016/12/scenario2_1-1024x466.png",
+      "sha256": "414f1bd844f5d77e5d41a9f7fd71f784824f73fdcc04404a16894df2524c26b9",
+      "bytes": 61639
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2016/12/scenario2_2-1024x495.png",
+      "file": "assets/28786fcf17ca-scenario2_2-1024x495.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2016/12/scenario2_2-1024x495.png",
+      "sha256": "9db19f0be8a2441dcf3f6aa15bbfe593c8945abb16a9d2d949501212103b4f5c",
+      "bytes": 69961
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/pth_delegation_user_s4u_3-1024x667.png",
+      "file": "assets/3102e708ab21-pth_delegation_user_s4u_3-1024x667.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/pth_delegation_user_s4u_3-1024x667.png",
+      "sha256": "76ee488b14d950a928fe5cb860172a2ca8fcd9a8fc4ad483823e0c946da9d3d1",
+      "bytes": 375621
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/pth_delegation_user_s4u_fail-1024x670.png",
+      "file": "assets/afba05b41c23-pth_delegation_user_s4u_fail-1024x670.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/pth_delegation_user_s4u_fail-1024x670.png",
+      "sha256": "562a0d0561d92dcdca575bb5d659f0e77d05d4e6be950cf5c90d6c339845f789",
+      "bytes": 401290
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/s4u_user_hash-1024x1007.png",
+      "file": "assets/208527d4af67-s4u_user_hash-1024x1007.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/s4u_user_hash-1024x1007.png",
+      "sha256": "2dcc80aaa87dd64da486a39b224156501747c7e52abcbcb6dc0027363245b0de",
+      "bytes": 153237
+    },
+    {
+      "url": "https://www.harmj0y.net/blog/wp-content/uploads/2017/01/s4u_computer_hash-1024x1011.png",
+      "file": "assets/c9738166425f-s4u_computer_hash-1024x1011.png",
+      "download_url": "https://blog.harmj0y.net/wp-content/uploads/2017/01/s4u_computer_hash-1024x1011.png",
+      "sha256": "ad8824c1b9649986f21674cbbc42fa7299c7dcb7fc4d77234a419e05ce04fa6c",
+      "bytes": 152123
+    }
+  ]
+}

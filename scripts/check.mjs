@@ -114,6 +114,26 @@ for (const [relative, expected] of Object.entries(seriesManifest.sha256)) {
 }
 const seriesSourceFiles = await files(path.join(ROOT, 'content/en/OWASP/CheatSheetSeries'));
 if (seriesSourceFiles.length !== seriesManifest.source_count) errors.push('Cheat Sheet source file count differs from provenance');
+const blogRoot = path.join(ROOT, 'content/en/harmj0y/ActiveDirectory');
+const blog = JSON.parse(await fs.readFile(path.join(blogRoot, 'manifest.json'), 'utf8'));
+if (blog.articles.length !== blog.category.reported_count) errors.push('Incomplete harmj0y ActiveDirectory category');
+const blogText = html => html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+for (const post of blog.articles) {
+  const source = await fs.readFile(path.join(blogRoot, post.source), 'utf8');
+  const checksum = crypto.createHash('sha256').update(source).digest('hex');
+  if (checksum !== post.sha256) errors.push(`harmj0y source checksum mismatch: ${post.slug}`);
+  const output = await fs.readFile(path.join(DIST, 'en/harmj0y/ActiveDirectory', post.slug, 'index.html'), 'utf8');
+  const body = output.match(/<div class="blog-article-body">([\s\S]*?)<\/div><footer class="article-source"/)[1];
+  if (blogText(source) !== blogText(body)) errors.push(`harmj0y article text changed: ${post.slug}`);
+  if (!output.includes(`href="${post.url}" rel="author external"`) || !/<footer class="article-source"[\s\S]*?<\/footer><\/article>/.test(output)) errors.push(`Missing source at end of harmj0y article: ${post.slug}`);
+  if (!output.includes('id="harmjoy-filter"') || !output.includes('id="page-toc"><a')) errors.push(`harmj0y navigation missing: ${post.slug}`);
+  if (/<img\b[^>]*\bsrc=["']https?:/i.test(body) || /\bsrcset=/.test(body)) errors.push(`harmj0y image not saved locally: ${post.slug}`);
+}
+for (const asset of blog.assets) {
+  const source = await fs.readFile(path.join(blogRoot, asset.file));
+  const output = await fs.readFile(path.join(DIST, 'en/harmj0y/ActiveDirectory', asset.file));
+  if (!source.equals(output) || crypto.createHash('sha256').update(source).digest('hex') !== asset.sha256) errors.push(`harmj0y asset differs: ${asset.file}`);
+}
 // Image bytes must remain identical to the release, not just have matching names.
 for (const file of sourceDocs.filter(f => !f.endsWith('.md'))) {
   const rel = path.relative(docRoot, file);
@@ -136,5 +156,6 @@ console.log(`Checked ${htmlFiles.length} HTML files and ${links} local links; ${
 console.log(`Compared ${compared} mirrored pages with original article/navigation markup and verified the custom design assets.`);
 console.log(`Checked ${cheatsheetSources.length} Cheat Sheet source files against the published pages.`);
 console.log(`Compared ${seriesCompared} Cheat Sheet articles and ${Object.keys(seriesManifest.sha256).length} source checksums.`);
+console.log(`Checked ${blog.articles.length} complete harmj0y articles, their final source links, and ${blog.assets.length} local image checksums.`);
 if (errors.length) throw Error([...new Set(errors)].join('\n'));
 console.log('All checks passed.');

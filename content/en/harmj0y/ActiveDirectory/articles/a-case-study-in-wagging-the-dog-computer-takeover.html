@@ -1,0 +1,126 @@
+
+<p>Last month, <a href="https://twitter.com/elad_shamir">Elad Shamir</a> released a <a href="https://shenaniganslabs.io/2019/01/28/Wagging-the-Dog.html">phenomenal, in depth post</a> on abusing resource-based constrained delegation (RBCD) in Active Directory. One of the big points he discusses is that if the TrustedToAuthForDelegation UserAccountControl flag is not set, the S4U2self process will still work but the resulting TGS is not FORWARDABLE. This resulting service ticket will fail for traditional constrained delegation, but will still work in the S4U2proxy process for resource-based constrained delegation.</p>
+
+
+
+<p>Does the first paragraph sound like Greek? Check out these resources so it makes it bit more sense:</p>
+
+
+
+<ul><li><a href="https://twitter.com/machosec">Matan Hart</a>’s BlackHat Asia 2017 “Delegate to the Top” <a href="https://www.blackhat.com/docs/asia-17/materials/asia-17-Hart-Delegate-To-The-Top-Abusing-Kerberos-For-Arbitrary-Impersonations-And-RCE.pdf">talk</a> and <a href="https://www.blackhat.com/docs/asia-17/materials/asia-17-Hart-Delegate-To-The-Top-Abusing-Kerberos-For-Arbitrary-Impersonations-And-RCE-wp.pdf">whitepaper</a>.</li><li>The “<a href="http://www.harmj0y.net/blog/activedirectory/s4u2pwnage/">S4U2Pwnage</a>” post for background on traditional constrained delegation, including S4U2self/S4U2proxy.</li><li><a href="https://twitter.com/meatballs__">Ben Campbell</a>’s “<a href="http://www.harmj0y.net/blog/redteaming/another-word-on-delegation/">Trust? Years to earn, seconds to break</a>” for another perspective on the same topic.</li><li>CyberArk’s “<a href="https://www.cyberark.com/threat-research-blog/weakness-within-kerberos-delegation/">Weakness Within: Kerberos Delegation</a>” post on constrained delegation</li><li>The “<a href="https://posts.specterops.io/another-word-on-delegation-10bdbe3cd94a">Another Word on Delegation</a>” on the start of some of the resource-based constrained delegation (RBCD) material.</li><li>Elad’s “<a href="https://shenaniganslabs.io/2019/01/28/Wagging-the-Dog.html">Wagging the Dog: Abusing Resource-Based Constrained Delegation to Attack Active Directory</a>” for a complete set of details on his new RBCD research. Seriously, go read it.</li></ul>
+
+
+
+<p>Why care? That’s what I hope to show in this post with a practical example, instead of doing my normal dive-into-insane-depth-on-a-topic thing.</p>
+
+
+
+<p>The <strong>tl;dr</strong> is that Elad’s new research gives us a generalized DACL-based computer takeover primitive (among other things, however I’m focusing just on this example for now). This means that if we have an ACE entry allowing us the ability to somehow modify a specific field for a computer object in Active Directory (specifically msDS-AllowedToActOnBehalfOfOtherIdentity, so rights would include GenericAll, GenericWrite, WriteOwner, etc.) we can abuse this access and a modified S4U Kerberos ticket request process to compromise the computer itself.</p>
+
+
+
+<p>Note: if DACLs, ACEs, and “object takeover” sounds like another dialect of Greek to you, check out Andy Robbins’ and my “Ace Up the Sleeve” <a href="https://www.slideshare.net/harmj0y/ace-up-the-sleeve">talk</a> and associated <a href="https://specterops.io/assets/resources/an_ace_up_the_sleeve.pdf">whitepaper</a> for more security-focused DACL discussion. For another take on the subject, check out the “<a href="https://www.slideshare.net/harmj0y/derbycon-the-unintended-risks-of-trusting-active-directory">The Unintended Risks of Trusting Active Directory</a>” talk that Lee Christensen, Matt Nelson, and myself gave at DerbyCon 2018.</p>
+
+
+
+<p>The <strong>tl;dr </strong>of the <strong>tl;dr</strong> is that if we can modify a computer object in Active Directory, we can compromise the computer itself in modern domains.</p>
+
+
+
+<p>There’s one caveat: the domain the computer resides in has to have at least one 2012+ domain controller in order to support the resource-based constrained delegation abuse. If this isn’t the case, and the domain only has domain controllers with Server 2008 (an 11 year old operating system) there are probably other issues you can target for abuse : )</p>
+
+
+
+<h3 class="wp-block-heading">Taking over a Computer Object Through Resource-Based Constrained Delegation<br></h3>
+
+
+
+<p>I’m not going to explain resource-based constrained delegation in depth as the resources at the start of this post have all the information you need. Instead, I’m going to walk through a practical abuse example with syntax and screenshots illustrating the abuse so you can get a feel for how it works operationally. This scenario is fairly similar to the “<a href="http://www.harmj0y.net/blog/redteaming/another-word-on-delegation/">Another Word on Delegation</a>” post I published last year, as well as the “Generic DACL Abuse” section of <a href="https://shenaniganslabs.io/2019/01/28/Wagging-the-Dog.html#a-misunderstood-feature-1">Elad’s post</a>. That is, <em>there’s nothing new here</em>, Elad covered everything in awesome depth with a ton of details and videos. I wanted to present a slightly different practical demonstration with full weaponization details in order to bring attention to his awesome research.</p>
+
+
+
+<p>My test environment will be my standard Windows Server 2012R2 domain controller with a 2012R2 domain functional level, and Windows 10 host:</p>
+
+
+
+<ul><li>The domain is <strong>testlab.local</strong> with domain functional level 2012R2.</li><li>The domain controller is <strong>primary.testlab.local</strong>, and is 2012R2.</li><li>The client is Windows 10.</li><li>The <strong>TESTLAB\attacker</strong> user account has GenericWrite access to the <strong>PRIMARY$</strong> computer object, but has no other special privileges nor rights.</li><li>The tools used are <a href="https://github.com/PowerShellMafia/PowerSploit/blob/dev/Recon/PowerView.ps1">PowerView</a>, <a href="https://twitter.com/kevin_robertson">Kevin Robertson</a>’s Powermad (specifically the <a href="https://github.com/Kevin-Robertson/Powermad#new-machineaccount">New-MachineAccount</a> function), and Rubeus’ <a href="https://github.com/GhostPack/Rubeus#s4u">S4U command</a>.</li><li>A text transcript of this scenario is <a href="https://gist.github.com/HarmJ0y/224dbfef83febdaf885a8451e40d52ff#file-rbcd_demo-ps1">available here</a>.</li></ul>
+
+
+
+<p>First we’re going to load up our toolsets, confirm our identity, and verify that our current user has the proper DACL misconfiguration to allow abuse. Using PowerView to enumerate the specific ACE in the access control information for our target system (primary.testlab.local), we can see that we (TESTLAB\attacker) have GenericWrite over the PRIMARY$ <em>computer</em> object in Active Directory. The relevant syntax for these commands <a href="https://gist.github.com/HarmJ0y/224dbfef83febdaf885a8451e40d52ff#file-rbcd_demo-ps1-L1-L17">are here</a>.</p>
+
+
+
+<figure class="wp-block-image"><img loading="lazy" decoding="async" width="1024" height="775" src="http://www.harmj0y.net/blog/wp-content/uploads/2019/02/rbcd1-1024x775.png" alt="" class="wp-image-4882" srcset="https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd1-1024x775.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd1-300x227.png 300w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd1-768x581.png 768w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd1.png 1708w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<p>As Elad details in his post, we need control of an account with a service principal name (SPN) set in order to weaponize the S4U2self/S4U2proxy process with resource-based constrained delegation. If we don’t have preexisting control of such an object, we can create a new computer object that will have default SPNs set. This is possible because <a href="https://docs.microsoft.com/en-us/windows/desktop/adschema/a-ms-ds-machineaccountquota">MachineAccountQuota</a> is set to 10 by default in domains, meaning that regular domains users can create up to ten new machine accounts.</p>
+
+
+
+<p>So let&#8217;s use the <a href="https://github.com/Kevin-Robertson/Powermad#new-machineaccount">New-MachineAccount</a> function in <a href="https://twitter.com/kevin_robertson">Kevin Robertson</a>&#8216;s <a href="https://github.com/Kevin-Robertson/Powermad">Powermad</a> project to stand up &#8220;attackersystem$&#8221; with the password &#8220;Symmer2018!&#8221;. The relevant syntax for this command <a href="https://gist.github.com/HarmJ0y/224dbfef83febdaf885a8451e40d52ff#file-rbcd_demo-ps1-L19-L20">is here</a>.</p>
+
+
+
+<figure class="wp-block-image"><img loading="lazy" decoding="async" width="1024" height="67" src="http://www.harmj0y.net/blog/wp-content/uploads/2019/02/rbcd2-1024x67.png" alt="" class="wp-image-4883" srcset="https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd2-1024x67.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd2-300x20.png 300w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd2-768x50.png 768w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<p>The msDS-AllowedToActOnBehalfOfOtherIdentity field is an array of bytes representing a security descriptor. I couldn&#8217;t quite figure out all of the nuances of its structure, so I used the &#8220;official&#8221; way to add resource-based constrained delegation in my test lab, extracted the msDS-AllowedToActOnBehalfOfOtherIdentity field and converted it to SDDL form. From this template, we can easily substitute in the SID of the newly created computer account that we control (which has a SPN!), convert it back to binary form, and store it into the msDS-AllowedToActOnBehalfOfOtherIdentity field of the computer object we&#8217;re taking over using PowerView. The relevant syntax for these commands <a href="https://gist.github.com/HarmJ0y/224dbfef83febdaf885a8451e40d52ff#file-rbcd_demo-ps1-L22-L33">are here</a>.</p>
+
+
+
+<figure class="wp-block-image"><img loading="lazy" decoding="async" width="1024" height="168" src="http://www.harmj0y.net/blog/wp-content/uploads/2019/02/rbcd3-1024x168.png" alt="" class="wp-image-4884" srcset="https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd3-1024x168.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd3-300x49.png 300w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd3-768x126.png 768w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<p>Let&#8217;s double check that the security descriptor added correctly. We can see below that the SecurityIdentifier in the entry states that the computer account attackersystem$ has &#8220;AccessAllowed&#8221;. The relevant syntax for these commands <a href="https://gist.github.com/HarmJ0y/224dbfef83febdaf885a8451e40d52ff#file-rbcd_demo-ps1-L35-L38">are here</a>.</p>
+
+
+
+<figure class="wp-block-image"><img loading="lazy" decoding="async" width="1024" height="213" src="http://www.harmj0y.net/blog/wp-content/uploads/2019/02/rbcd4-1024x213.png" alt="" class="wp-image-4885" srcset="https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd4-1024x213.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd4-300x62.png 300w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd4-768x160.png 768w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<p>Let&#8217;s review: we&#8217;ve modified a special property of our target computer object (primary.testlab.local) to state that a computer account (TESTLAB\attackersystem$) is allowed to pretend to be anyone in the domain to the primary computer. Since we have the password of attackersystem$ (as we created it, again abusing MachineAccountQuota), we can authenticate as attackersystem$ and abuse the resource-constrained delegation process to compromise primary.testlab.local!</p>
+
+
+
+<p>In this case, we’re targeting the service name (sname) of cifs, the service that backs file system access. First let’s prove we don’t have access, and then get the RC4_HMAC hashed version of the password. <a href="https://gist.github.com/HarmJ0y/224dbfef83febdaf885a8451e40d52ff#file-rbcd_demo-ps1-L40-L44">Relevant syntax here</a>.</p>
+
+
+
+<figure class="wp-block-image"><img loading="lazy" decoding="async" width="1024" height="646" src="http://www.harmj0y.net/blog/wp-content/uploads/2019/02/rbcd5-1024x646.png" alt="" class="wp-image-4886" srcset="https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd5-1024x646.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd5-300x189.png 300w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd5-768x484.png 768w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<p>And thanks to Elad&#8217;s additions, we can execute this with a single Rubeus command. <a href="https://gist.github.com/HarmJ0y/224dbfef83febdaf885a8451e40d52ff#file-rbcd_demo-ps1-L46-L49">Relevant syntax here</a>.<br></p>
+
+
+
+<figure class="wp-block-image"><img loading="lazy" decoding="async" width="1024" height="669" src="http://www.harmj0y.net/blog/wp-content/uploads/2019/02/rbcd6-1024x669.png" alt="" class="wp-image-4888" srcset="https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd6-1024x669.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd6-300x196.png 300w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd6-768x502.png 768w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<figure class="wp-block-image"><img loading="lazy" decoding="async" width="1024" height="650" src="http://www.harmj0y.net/blog/wp-content/uploads/2019/02/rbcd7-1024x650.png" alt="" class="wp-image-4889" srcset="https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd7-1024x650.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd7-300x190.png 300w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd7-768x487.png 768w, https://blog.harmj0y.net/wp-content/uploads/2019/02/rbcd7.png 1481w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+
+
+
+<p>Since PRIMARY$ is a domain controller, and the <strong>ldap</strong> service name backs the DCSync process, all we have to do is change the <strong>/msdsspn</strong> parameter from <strong>cifs/primary.testlab.local</strong> to <strong>ldap/primary.testlab.local </strong>if we wanted to DCSync instead We can execute this for any service name (sname) we’d like to abuse.<br></p>
+
+
+
+<p>Once we’re done abusing the scenario, we can <a href="https://gist.github.com/HarmJ0y/224dbfef83febdaf885a8451e40d52ff#file-rbcd_demo-ps1-L52-L53">clean up with PowerView as well</a>.</p>
+
+
+
+<h3 class="wp-block-heading">Wrapup</h3>
+
+
+
+<p><a href="https://shenaniganslabs.io/2019/01/28/Wagging-the-Dog.html#a-misunderstood-feature-1">Elad’s post</a> is one of the best that I’ve read in a long time. It’s filled with a ton of information and abuse scenarios that we’ll unpacking for a while as an industry. I strongly strongly recommend anyone who’s interested in these topics to start digesting Elad’s post- you’ll be that much better for it.<br></p>
+
+
+
+<p>I wanted to illustrate another example in this post to show how his research can be practically applied. We’re also in the process of updating the BloodHound schema, and hope to integrate these DACL based computer takeover primitives soon!<br></p>
