@@ -18,3 +18,5 @@
 .series-document .admonition-title{font-weight:700}
 .series-document .headerlink{font-size:.7em;margin-left:8px;text-decoration:none;color:var(--muted);opacity:0}
 .series-document :is(h1,h2,h3,h4):hover .headerlink,.series-document .headerlink:focus-visible{opacity:1}
+
+.article-meta{color:var(--muted);font-size:12px}.article-source{border-top:1px solid var(--line);padding-top:20px;margin-top:42px;font-size:12px;color:var(--muted)}.article-source p{margin-bottom:6px}.article-source a{overflow-wrap:anywhere}.blog-article-body .wp-caption{max-width:100%;margin:24px 0}.blog-article-body .wp-caption-text{font-size:12px;color:var(--muted)}.blog-article-body iframe,.blog-article-body video{max-width:100%}.archive-list li{padding:6px 0}.blog-document .sidebar-book .eyebrow{text-transform:none}
