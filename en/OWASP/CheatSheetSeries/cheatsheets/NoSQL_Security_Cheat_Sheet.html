@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NoSQL Security | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · NoSQL Security">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/NoSQL_Security_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="nosql-security-cheat-sheet">NoSQL Security Cheat Sheet<a class="headerlink" href="#nosql-security-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>NoSQL databases (MongoDB, CouchDB, Cassandra etc.) power many modern applications with flexible schemas and horizontal scale.
+This cheat sheet summarizes guidance to reduce risk when using NoSQL systems.</p>
+<h2 id="threats-common-failure-modes">Threats &amp; Common Failure Modes<a class="headerlink" href="#threats-common-failure-modes" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>NoSQL Injection</strong> — Unsafe construction of query objects or query strings from untrusted input.</li>
+<li><strong>Exposed Management Interfaces</strong> — Admin GUIs, database ports or REST endpoints exposed to the internet.</li>
+<li><strong>Weak/No Authentication &amp; Authorization</strong> — Default open access or excessive privileges for clients.</li>
+<li><strong>Insecure Network Exposure</strong> — No TLS, open ports, insufficient network segmentation.</li>
+<li><strong>Insecure Defaults</strong> — Default admin accounts, default passwords, unsecured configs.</li>
+<li><strong>Poor Access Control Models</strong> — Coarse roles allowing lateral abuse.</li>
+<li><strong>Insecure Serialization / Deserialization</strong> — Remote code execution via unsafe object deserialization.</li>
+<li><strong>Misconfigured CORS / Public APIs</strong> — APIs accidentally allow cross-origin requests or wide access.</li>
+<li><strong>Credential &amp; Secret Leaks</strong> — Hardcoded DB credentials in code, images, CI logs.</li>
+<li><strong>Unsafe Backup Exposure</strong> — Backups left unencrypted or publicly accessible.</li>
+<li><strong>Supply-chain / Dependency Risks</strong> — Vulnerable drivers, ORMs/ODMs, or plugins.</li>
+</ul>
+<h2 id="secure-by-design-principles">Secure-by-Design Principles<a class="headerlink" href="#secure-by-design-principles" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Treat all input as untrusted</strong> — validate, sanitize, and normalize.</li>
+<li><strong>Use least privilege</strong> — narrow roles for users, services, and operators.</li>
+<li><strong>Defense in depth</strong> — combine network controls, auth, input validation, and monitoring.</li>
+<li><strong>Secure defaults</strong> — change default ports/accounts, enable auth and TLS by default.</li>
+<li><strong>Automate secrets &amp; rotation</strong> — vaults and short-lived credentials.</li>
+<li><strong>Monitor &amp; audit</strong> — log access and detect anomalies.</li>
+</ul>
+<h2 id="practical-defenses-examples">Practical Defenses &amp; Examples<a class="headerlink" href="#practical-defenses-examples" title="Permanent link">&para;</a></h2>
+<h3 id="prevent-nosql-injection">Prevent NoSQL Injection<a class="headerlink" href="#prevent-nosql-injection" title="Permanent link">&para;</a></h3>
+<p><strong>Unsafe (string-based filter building — Node.js / MongoDB):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// DANGEROUS: building query from untrusted input</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"{ name: '"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">query</span><span class="p">.</span><span class="nx">name</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s2">"' }"</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">filter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">eval</span><span class="p">(</span><span class="s2">"("</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">q</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s2">")"</span><span class="p">);</span><span class="w"> </span><span class="c1">// NEVER do this</span>
+<span class="nx">db</span><span class="p">.</span><span class="nx">collection</span><span class="p">(</span><span class="s1">'users'</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="nx">filter</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Safe (use driver query objects / parameterization):</strong></p>
+<p>Building a query object does not prevent operator injection when an untrusted value is itself an object. For example, MongoDB interprets <code>{ name: { $ne: "" } }</code> as a <a href="https://www.mongodb.com/docs/manual/reference/operator/query/ne/">not-equal query</a>. Validate the expected scalar type before constructing the filter; do not pass client-supplied objects through as field values.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">query</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="s1">'string'</span><span class="p">)</span><span class="w"> </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s2">"Invalid name"</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">filter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="p">};</span>
+<span class="nx">db</span><span class="p">.</span><span class="nx">collection</span><span class="p">(</span><span class="s1">'users'</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="nx">filter</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Additional pattern rejection:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Reject a pattern in the serialized request body.</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">body</span><span class="p">).</span><span class="nx">includes</span><span class="p">(</span><span class="s1">'"$'</span><span class="p">))</span><span class="w"> </span><span class="k">throw</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s2">"Invalid input"</span><span class="p">);</span>
+</code></pre></div>
+<p>This <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#description"><code>JSON.stringify()</code></a> check is a denylist, not an operator allowlist. It also rejects ordinary string values that begin with <code>$</code>, and it does not validate allowed fields or their types. Use <a href="Input_Validation_Cheat_Sheet.html#input-validation-strategies">field-specific validation</a> before building queries.</p>
+<p>Notes:</p>
+<ul>
+<li>Do <strong>not</strong> accept raw JSON fragments from the client to execute as queries.</li>
+<li>Disallow client-controlled query operators (like <code>$where</code>, <code>$regex</code>, or <code>$expr</code>) unless strictly required and validated.</li>
+<li>For text-based search parameters, use safe driver APIs (e.g., <code>$text</code> with controlled input).</li>
+</ul>
+<h3 id="use-secure-driver-odm-patterns">Use Secure Driver / ODM Patterns<a class="headerlink" href="#use-secure-driver-odm-patterns" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Prefer high-level APIs (ODM/ORM) that build queries safely (e.g., Mongoose, Spring Data, Datastax driver patterns).</li>
+<li>Avoid <code>.eval()</code>-like functionality and raw query execution from untrusted data.</li>
+<li>Sanitize and validate any raw expressions before passing to the DB.</li>
+</ul>
+<h4 id="example-pymongo-safe-usage">Example — PyMongo safe usage<a class="headerlink" href="#example-pymongo-safe-usage" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pymongo</span><span class="w"> </span><span class="kn">import</span> <span class="n">MongoClient</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">MongoClient</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">tls</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">collection</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">mydb</span><span class="o">.</span><span class="n">users</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">email_input</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid email"</span><span class="p">)</span>
+<span class="n">user</span> <span class="o">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s2">"email"</span><span class="p">:</span> <span class="n">email_input</span><span class="p">})</span>
+</code></pre></div>
+<h3 id="example-in-java">Example in Java<a class="headerlink" href="#example-in-java" title="Permanent link">&para;</a></h3>
+<p>This example uses the Java driver's <a href="https://www.mongodb.com/docs/drivers/java/sync/current/builders/filters/">equality filter builder</a> with a string value:</p>
+<div class="highlight"><pre><span></span><code><span class="n">MongoCollection</span><span class="o">&lt;</span><span class="n">Document</span><span class="o">&gt;</span><span class="w"> </span><span class="n">collection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">getCollection</span><span class="p">();</span>
+<span class="n">Bson</span><span class="w"> </span><span class="n">expression</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Filters</span><span class="p">.</span><span class="na">eq</span><span class="p">(</span><span class="s">"borough"</span><span class="p">,</span><span class="w"> </span><span class="n">userInput</span><span class="p">);</span>
+<span class="n">FindIterable</span><span class="o">&lt;</span><span class="n">Document</span><span class="o">&gt;</span><span class="w"> </span><span class="n">restaurants</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">collection</span><span class="p">.</span><span class="na">find</span><span class="p">(</span><span class="n">expression</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="authentication-authorization">Authentication &amp; Authorization<a class="headerlink" href="#authentication-authorization" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Enable authentication</strong> (do not run databases unauthenticated).</li>
+<li>Use <strong>role-based access control (RBAC)</strong>, least privilege for service accounts.</li>
+<li>Use <strong>separate users</strong> for admin/backup/readonly/application.</li>
+<li>Use identity federation or short-lived credentials when supported (e.g., AWS IAM -&gt; DynamoDB).</li>
+</ul>
+<p>For more information please check following cheat sheets:</p>
+<p><a href="/en/OWASP/CheatSheetSeries/cheatsheets/Authentication_Cheat_Sheet.html">Authentication Cheat Sheet</a></p>
+<p><a href="/en/OWASP/CheatSheetSeries/cheatsheets/Authorization_Cheat_Sheet.html">Authorization Cheat Sheet</a></p>
+<h3 id="network-transport-security">Network &amp; Transport Security<a class="headerlink" href="#network-transport-security" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Bind services to internal interfaces</strong>, not <code>0.0.0.0</code>.</li>
+<li>Use <strong>network segmentation / private subnets</strong> and security groups.</li>
+<li><strong>Enforce TLS</strong> (in transit encryption) for driver connections and admin consoles.</li>
+<li>Turn off remote management or restrict it to admin networks/VPNs.</li>
+</ul>
+<h3 id="configuration-hardening">Configuration Hardening<a class="headerlink" href="#configuration-hardening" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Change default ports and disable sample/demo users.</li>
+<li>Turn off or restrict features that execute code on the server, such as <a href="https://www.mongodb.com/docs/drivers/client-libraries-best-practices/#restrict-server-side-javascript-execution">MongoDB server-side JavaScript</a>.</li>
+<li>Require TLS for internal replication links where supported.</li>
+</ul>
+<h3 id="secrets-management">Secrets Management<a class="headerlink" href="#secrets-management" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Do <strong>not</strong> hardcode DB credentials — use a secret manager (Vault, AWS Secrets Manager, Azure Key Vault).</li>
+<li>Avoid baking credentials into container images or environment variables in CI logs.</li>
+<li>Rotate credentials regularly and use ephemeral tokens when possible.</li>
+</ul>
+<h3 id="logging-monitoring-auditing">Logging, Monitoring &amp; Auditing<a class="headerlink" href="#logging-monitoring-auditing" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Enable audit logging (connection attempts, admin actions, failed auth).</li>
+<li>Send logs to a tamper-evident SIEM.</li>
+<li>Alert on anomalous patterns (spike in queries, slow queries, large data exports).</li>
+<li>Monitor for suspicious commands (e.g., admin actions, <code>$where</code>, map-reduce jobs).</li>
+</ul>
+<h3 id="backups-snapshots">Backups &amp; Snapshots<a class="headerlink" href="#backups-snapshots" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Encrypt backups at rest and during transfer.</li>
+<li>Restrict access to backup storage.</li>
+<li>Sanitize backups for PII as required by policy.</li>
+<li>Validate restore procedures regularly.</li>
+</ul>
+<h2 id="quick-nosql-security-checklist">Quick NoSQL Security Checklist<a class="headerlink" href="#quick-nosql-security-checklist" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Enable authentication &amp; RBAC</li>
+<li>Enforce TLS for client and node communication</li>
+<li>Bind DB to internal IPs / use private networks</li>
+<li>Use least privilege service accounts</li>
+<li>Disallow client-controlled query operators unless validated</li>
+<li>Avoid raw query execution / eval on server</li>
+<li>Store credentials in secret manager &amp; rotate them</li>
+<li>Harden configs (disable unsafe defaults)</li>
+<li>Encrypt and secure backups</li>
+<li>Monitor/audit DB access and admin actions</li>
+<li>Keep DB and drivers patched</li>
+</ul>
+<h2 id="dos-and-donts">Do’s and Don’ts<a class="headerlink" href="#dos-and-donts" title="Permanent link">&para;</a></h2>
+<p><strong>Do</strong>:</p>
+<ul>
+<li>Use driver query objects rather than building query strings.</li>
+<li>Validate and whitelist user-supplied fields (columns/keys).</li>
+<li>Restrict management interfaces and require MFA for admin access.</li>
+<li>Automate security testing in CI/CD pipelines.</li>
+</ul>
+<p><strong>Don’t</strong>:</p>
+<ul>
+<li>Expose DB ports/admin consoles to the public Internet.</li>
+<li>Accept raw JSON queries from clients or eval untrusted strings.</li>
+<li>Use root/admin DB accounts for application connections.</li>
+<li>Rely only on network controls to protect badly written queries.</li>
+</ul>
+<h2 id="examples-of-dangerous-patterns-brief">Examples of Dangerous Patterns (brief)<a class="headerlink" href="#examples-of-dangerous-patterns-brief" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Accepting client-controlled <code>$where</code> expressions executes untrusted JavaScript inside MongoDB and can consume excessive resources. Use standard query operators instead, and <a href="https://www.mongodb.com/docs/drivers/client-libraries-best-practices/#restrict-server-side-javascript-execution">disable server-side scripting</a> when it is not needed.</li>
+<li>Concatenating user input into query language strings or shell commands for DB tools.</li>
+<li>Leaving MongoDB unsecured (no auth) listening on public IP.</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://www.mongodb.com/docs/manual/administration/security-checklist/">MongoDB: Security Checklist for Self-Managed Deployments</a></li>
+<li><a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices-security-preventative.html">Amazon DynamoDB: Preventative Security Best Practices</a></li>
+<li><a href="https://github.com/OWASP/wstg/blob/master/document/4-Web_Application_Security_Testing/07-Injection/05.6-NoSQL_Injection.md">WSTG - Testing for NoSQL Injection</a></li>
+<li><a href="https://arxiv.org/abs/1506.04082">No SQL, No Injection?</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

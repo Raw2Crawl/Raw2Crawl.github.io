@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Business Logic Security | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Business Logic Security">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Business_Logic_Security_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="business-logic-security-cheat-sheet">Business Logic Security Cheat Sheet<a class="headerlink" href="#business-logic-security-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>Business logic vulnerabilities are flaws in the way an application implements its intended workflow. They aren't missing input sanitization or unescaped output. The code does what the developer told it to do, but what the developer told it to do doesn't match what the business actually needs. A user skips a required step, submits a request out of order, pays a negative price, stacks coupons in a way nobody planned for, or wins a race against the server's own bookkeeping.</p>
+<p>Generic scanners often miss business logic flaws because they lack the application's business rules. Automated analysis can still detect some patterns, including <a href="https://cwe.mitre.org/data/definitions/841.html">workflow enforcement weaknesses</a>. Combine tools with review and testing that checks the intended business process.</p>
+<p>This cheat sheet covers practical patterns for preventing business logic abuse. It's aimed at developers building features, not at penetration testers looking for them. For testing guidance, see the <a href="/en/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/">OWASP Web Security Testing Guide, Business Logic Testing section</a>.</p>
+<p>Key takeaways:</p>
+<ul>
+<li>Always re-derive security-relevant values (prices, permissions, ownership) on the server. Client state is input, not truth.</li>
+<li>Enforce workflows as explicit state machines. Don't rely on the UI to gate the order of steps.</li>
+<li>Treat concurrency as a real threat. If two requests can race, assume they will.</li>
+<li>Rate-limit and monitor at the feature level, not just at authentication. Abuse-friendly features (referrals, coupons, password reset) need their own controls.</li>
+<li>Threat model from the business process, not just the technical architecture. Ask what happens if a user acts dishonestly, not just what happens if an attacker sends a malicious payload.</li>
+</ul>
+<h2 id="why-business-logic-flaws-are-different">Why Business Logic Flaws Are Different<a class="headerlink" href="#why-business-logic-flaws-are-different" title="Permanent link">&para;</a></h2>
+<p>Most well-known web vulnerabilities (SQL injection, XSS, CSRF, path traversal) have a clear technical signature. A security scanner can fuzz parameters, look for reflected payloads, and produce a reasonable report. Business logic flaws often require additional knowledge of the intended workflow.</p>
+<p>Consider an e-commerce checkout. The server accepts a request containing a product ID, quantity, and coupon code. Every input is validated: the product ID exists, the quantity is a positive integer, the coupon code matches a known pattern. No technical rule is broken. But the application recalculates the total from the client-submitted price instead of looking it up server-side, so a user can pay one cent for a television. That's a business logic bug, and no amount of input validation helps, because the input is syntactically perfect.</p>
+<p>The patterns repeat across industries:</p>
+<ul>
+<li>A user-facing application assumes the client will respect the order of steps in a multi-step workflow, and exposes the endpoints for each step without checking whether the previous steps were completed.</li>
+<li>A system takes user-controlled data (price, account balance, user role) from the request body and trusts it, because the UI never shows the user how to change it.</li>
+<li>An endpoint performs two operations (check balance, then debit) without a lock, so two concurrent requests both pass the balance check and both debit.</li>
+<li>A feature intended to reward legitimate use (referrals, points, promo credits) has no controls against one user creating many accounts.</li>
+</ul>
+<p>Review these patterns against the application's business rules; a clean scanner report does not show that those rules are enforced.</p>
+<h2 id="always-re-derive-security-relevant-values-server-side">Always Re-derive Security-relevant Values Server-side<a class="headerlink" href="#always-re-derive-security-relevant-values-server-side" title="Permanent link">&para;</a></h2>
+<p>The single most effective defensive habit is this: if a value in the request influences price, access, ownership, or state, assume the client made it up and recompute it from trusted data.</p>
+<h3 id="prices-and-totals">Prices and Totals<a class="headerlink" href="#prices-and-totals" title="Permanent link">&para;</a></h3>
+<p>Never accept a price, subtotal, tax, or total from the client. Accept product identifiers and quantities only, and compute the rest on the server from your own database. The same applies to discounts: accept a coupon code, validate the code server-side, and apply the discount server-side. Don't accept a "discount amount" field from the request.</p>
+<table>
+<thead>
+<tr>
+<th>Client sends</th>
+<th>Server should</th>
+<th>Server should not</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Product ID and quantity</td>
+<td>Look up the price, compute line total</td>
+<td>Accept a price field and trust it</td>
+</tr>
+<tr>
+<td>Coupon code</td>
+<td>Validate and apply the discount itself</td>
+<td>Accept a "discounted total" field</td>
+</tr>
+<tr>
+<td>Shipping selection</td>
+<td>Compute cost from its own rate table</td>
+<td>Accept a shipping cost field</td>
+</tr>
+<tr>
+<td>Tax-exempt flag</td>
+<td>Determine from account state</td>
+<td>Accept a client-supplied exemption</td>
+</tr>
+</tbody>
+</table>
+<p>This pattern extends beyond commerce. A social app shouldn't accept a "post visibility" value from the client if the value is supposed to be derived from the user's privacy settings. A banking app shouldn't accept a "source account balance" that the client calculated.</p>
+<h3 id="permissions-and-ownership">Permissions and Ownership<a class="headerlink" href="#permissions-and-ownership" title="Permanent link">&para;</a></h3>
+<p>Re-check ownership on every request that acts on a resource. Don't rely on the URL, the referrer, or a flag in the request body. The backend should ask: "Is the authenticated user actually allowed to perform this action on this object, right now?"</p>
+<p>A common mistake is checking ownership once when a resource is loaded and then trusting subsequent requests that reference it. Each request is independent. Each request must be authorized on its own.</p>
+<h3 id="identity-and-role">Identity and Role<a class="headerlink" href="#identity-and-role" title="Permanent link">&para;</a></h3>
+<p>Never accept a user ID, tenant ID, or role from the request body unless the request is explicitly an administrative action by a privileged caller, and even then the value has to be validated against what the caller is allowed to manage. The identity of the acting user always comes from the server-side session or token, never from a field the user can edit.</p>
+<h2 id="enforce-workflows-as-explicit-state-machines">Enforce Workflows as Explicit State Machines<a class="headerlink" href="#enforce-workflows-as-explicit-state-machines" title="Permanent link">&para;</a></h2>
+<p>Multi-step processes (signup flows, checkouts, approvals, KYC verification, password reset) are prime targets because developers often implement them as a sequence of pages that the UI walks the user through. If the UI is the only thing enforcing the sequence, an attacker who sends requests directly to each endpoint can skip steps, repeat steps, or reach terminal steps without the prerequisites.</p>
+<h3 id="model-state-on-the-server">Model State on the Server<a class="headerlink" href="#model-state-on-the-server" title="Permanent link">&para;</a></h3>
+<p>Every multi-step workflow should have an explicit state representation stored on the server, keyed to the user or session. Each transition should be validated against the current state.</p>
+<p>A minimal pattern:</p>
+<ol>
+<li>When the workflow starts, create a record with the initial state (e.g., <code>awaiting_email_verification</code>).</li>
+<li>Each step endpoint checks the current state, performs the action, and updates the state to the next valid value.</li>
+<li>If a request arrives for a step that doesn't match the current state, reject it.</li>
+<li>Terminal actions (submit order, approve, transfer funds) only run if the state is exactly what's required for that action.</li>
+</ol>
+<h3 id="dont-use-hidden-form-fields-as-state">Don't Use Hidden Form Fields as State<a class="headerlink" href="#dont-use-hidden-form-fields-as-state" title="Permanent link">&para;</a></h3>
+<p>A pattern that shows up repeatedly in real applications is storing the "current step" as a hidden field in the form, or in a cookie the client can read. This is not enforcement. The client can set it to whatever value it wants. State lives on the server, in storage the client can't write to.</p>
+<h3 id="reject-replays-of-completed-steps">Reject Replays of Completed Steps<a class="headerlink" href="#reject-replays-of-completed-steps" title="Permanent link">&para;</a></h3>
+<p>Once a step has been completed, later attempts to re-run it should fail. This matters especially for one-time operations like applying a signup bonus, redeeming a coupon, claiming a voucher, or accepting a referral reward. The cleanest pattern is to mark each such operation complete in persistent storage and treat attempts to re-run it as errors.</p>
+<h3 id="expire-partial-states">Expire Partial States<a class="headerlink" href="#expire-partial-states" title="Permanent link">&para;</a></h3>
+<p>Workflows that pause for user input (email verification, bank transfer confirmation, multi-step KYC) should have a deadline. If the user hasn't progressed in some bounded time, invalidate the partial state and require them to start over. Long-lived half-completed workflows accumulate and are a frequent source of exploitable inconsistencies.</p>
+<h2 id="prevent-race-conditions-on-sensitive-operations">Prevent Race Conditions on Sensitive Operations<a class="headerlink" href="#prevent-race-conditions-on-sensitive-operations" title="Permanent link">&para;</a></h2>
+<p>Any operation that reads a value, makes a decision, and then writes a value is a potential race condition. If two requests can run at the same time, they can both read the old value, both decide the same thing, and both write. This is how loyalty points get drained, balances go negative, single-use coupons get redeemed many times, and one-per-account bonuses become many-per-account.</p>
+<h3 id="identify-the-critical-sections">Identify the Critical Sections<a class="headerlink" href="#identify-the-critical-sections" title="Permanent link">&para;</a></h3>
+<p>Ask which operations have the shape "check a condition, then act on it". Typical examples:</p>
+<ul>
+<li>Check balance, then debit.</li>
+<li>Check that a coupon hasn't been used, then record its use.</li>
+<li>Check that a user has fewer than N items, then add one.</li>
+<li>Check that a slot is available, then book it.</li>
+<li>Check that a referral code hasn't been applied to this account, then apply it.</li>
+<li>Check whether a registration request is unique, then insert the new user record.</li>
+</ul>
+<p>Each of these is a race condition waiting to happen unless the check and the act are inside a single atomic operation.</p>
+<h3 id="use-database-transactions-and-locks">Use Database Transactions and Locks<a class="headerlink" href="#use-database-transactions-and-locks" title="Permanent link">&para;</a></h3>
+<p>The most broadly available fix is a database transaction with the right isolation level. At the default isolation level of most databases, the check and the update run separately and another transaction can slip between them. For operations that must be atomic, use one of:</p>
+<ul>
+<li>A <code>SERIALIZABLE</code> transaction isolation level. The database will detect conflicts and roll back one of the competing transactions.</li>
+<li>An explicit row lock (<code>SELECT ... FOR UPDATE</code> in PostgreSQL, MySQL InnoDB, and similar). The second caller blocks until the first one commits.</li>
+<li>A conditional update (<code>UPDATE ... WHERE balance &gt;= amount</code>) that succeeds only if the predicate still holds at write time. Check the number of affected rows. If zero, the check failed and the caller should see an error.</li>
+</ul>
+<h3 id="use-idempotency-keys-for-external-actions">Use Idempotency Keys for External Actions<a class="headerlink" href="#use-idempotency-keys-for-external-actions" title="Permanent link">&para;</a></h3>
+<p>For external actions such as charging a card, use the provider's idempotency mechanism and reuse the same key when retrying the same operation. Follow its key-generation, parameter-matching, and retention rules; for example, <a href="https://docs.stripe.com/api/idempotent_requests">Stripe rejects changed parameters and can treat a key as new after its stored record expires</a>.</p>
+<p>For your own API, scope stored keys to the authenticated caller and operation, bind them to the original request parameters, and reject reuse with different parameters. Authorize the request before returning a cached result; possession of a key is not authorization. Coordinate concurrent requests atomically so only one starts the action, and record its state and result durably. <a href="https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/">AWS describes caller-scoped identifiers, atomic processing, and parameter-mismatch checks</a>.</p>
+<p>Define the retry and retention window, including recovery when the <a href="https://docs.stripe.com/error-low-level.md">external result is unknown</a>. A local database transaction alone cannot make an external side effect atomic with saving its result. After the retry window expires, reconcile the external outcome before resubmitting.</p>
+<h3 id="dont-assume-fast-enough">Don't Assume "Fast Enough"<a class="headerlink" href="#dont-assume-fast-enough" title="Permanent link">&para;</a></h3>
+<p>A common rationalization is "the window between the check and the update is microseconds, no attacker can exploit it". Concurrent request tools can trivially send dozens of requests to arrive within a millisecond of each other. Modern bug bounty tooling sends them as a single multiplexed HTTP/2 request so they land at the server effectively simultaneously. If the window exists at all, assume it's exploitable.</p>
+<h3 id="pattern-reference">Pattern Reference<a class="headerlink" href="#pattern-reference" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Operation shape</th>
+<th>Safe pattern</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Read-modify-write on a single row</td>
+<td><code>SELECT ... FOR UPDATE</code> then <code>UPDATE</code>, inside a transaction</td>
+</tr>
+<tr>
+<td>Conditional decrement on a counter</td>
+<td><code>UPDATE ... SET value = value - 1 WHERE value &gt; 0</code>, check affected rows</td>
+</tr>
+<tr>
+<td>One-per-user bonus</td>
+<td>Unique constraint on (user_id, bonus_type) and let the database reject duplicates</td>
+</tr>
+<tr>
+<td>External non-idempotent call</td>
+<td>Provider-supported idempotency, with durable state for retries and recovery</td>
+</tr>
+<tr>
+<td>Cross-row consistency</td>
+<td>Serializable transaction with explicit retry logic</td>
+</tr>
+</tbody>
+</table>
+<h2 id="protect-abuse-friendly-features">Protect Abuse-friendly Features<a class="headerlink" href="#protect-abuse-friendly-features" title="Permanent link">&para;</a></h2>
+<p>Some features are inherently abuse magnets because they dispense value in response to user actions. Referral bonuses, promo codes, signup credits, free trials, email reminders, password reset flows, account recovery paths, and anything that sends messages or makes outbound requests. These need their own controls beyond the authentication controls on the rest of the app.</p>
+<h3 id="abuse-patterns-to-design-against">Abuse Patterns to Design Against<a class="headerlink" href="#abuse-patterns-to-design-against" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Multi-accounting.</strong> One human creates many accounts to claim one-per-account rewards multiple times. Ask whether your signup flow makes this trivially cheap and consider what signals you have to detect it.</li>
+<li><strong>Self-referral.</strong> A user refers themselves using a second account. Referral flows should check that referrer and referee are distinguishable humans, not just distinguishable accounts.</li>
+<li><strong>Coupon stacking.</strong> Multiple promos that were each meant to be used alone get combined to push a price below cost. If your coupon engine allows stacking by default, it's probably a bug.</li>
+<li><strong>Free trial resets.</strong> A user cancels and re-signs up repeatedly to stay on the free tier forever. Track trial eligibility by something more stable than an email address.</li>
+<li><strong>Resource exhaustion.</strong> Features that send email, make outbound HTTP calls, trigger webhooks, or run expensive computations on demand are DoS vectors and spam vectors unless rate-limited.</li>
+<li><strong>Enumeration through behavior.</strong> A password reset endpoint that returns different messages for valid and invalid emails leaks account existence.</li>
+</ul>
+<h3 id="controls-to-apply">Controls to Apply<a class="headerlink" href="#controls-to-apply" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Per-feature rate limits.</strong> A global rate limit at the edge is not enough. The signup-bonus endpoint, the referral endpoint, the promo-redemption endpoint each need their own limits.</li>
+<li><strong>Identity signals beyond email.</strong> Device fingerprints, payment-method fingerprints, phone number verification, and KYC verification all carry more signal than email addresses, which are cheap to create in bulk.</li>
+<li><strong>Audit trails on value-dispensing operations.</strong> Every issued credit, applied promo, or granted bonus should be logged with the triggering user, target user, IP, and timestamp. When abuse is suspected, the log is how you untangle it.</li>
+<li><strong>Maximums at every layer.</strong> A per-action cap (e.g., one bonus per account) plus a per-account cap (e.g., total lifetime promo value) plus a per-source cap (e.g., per payment method or per device) gives defense in depth.</li>
+<li><strong>Asymmetric consequences.</strong> Actions that give value should be harder than actions that don't. Making someone wait 30 seconds, or complete a CAPTCHA, to claim a reward is fine. The legitimate user clicks once and moves on; the automated abuser suffers a per-request cost.</li>
+</ul>
+<h2 id="threat-model-from-the-business-process">Threat Model from the Business Process<a class="headerlink" href="#threat-model-from-the-business-process" title="Permanent link">&para;</a></h2>
+<p>See the <a href="Abuse_Case_Cheat_Sheet.html">Abuse Case Cheat Sheet</a> for identifying misuse scenarios.</p>
+<p>Most threat modeling is done from a technical angle: data flow diagrams, trust boundaries, STRIDE categories. That's useful, but it misses the bugs where the code is technically correct and the process is the problem. Business logic threat modeling asks different questions.</p>
+<h3 id="questions-to-ask-early">Questions to Ask Early<a class="headerlink" href="#questions-to-ask-early" title="Permanent link">&para;</a></h3>
+<ul>
+<li>What does a legitimate user do in this feature, step by step?</li>
+<li>What does the system do at each step, and what assumption is it making about the user's intent?</li>
+<li>Which of those assumptions would benefit the user if they were false? (That's where the bugs live.)</li>
+<li>Can the user do things out of order? Skip a step? Repeat a step?</li>
+<li>Can two users act on the same object at the same time?</li>
+<li>Can one user act from two directions at once (e.g., two tabs, two devices)?</li>
+<li>What does this feature produce that has value? (Credits, access, trust, messages, outbound requests.)</li>
+<li>If an adversary tried to exploit this feature for gain, how would they go about it?</li>
+<li>What invariant must always hold (e.g., "a coupon can only be used once", "an account balance can never be negative")? What enforces it, and is that enforcement atomic?</li>
+</ul>
+<h3 id="the-dishonest-user-exercise">The "Dishonest User" Exercise<a class="headerlink" href="#the-dishonest-user-exercise" title="Permanent link">&para;</a></h3>
+<p>Sit with the feature specification and imagine a user whose only goal is to extract maximum value while staying within the letter of the system's rules. What would they do? What combination of legitimate actions would produce an illegitimate outcome? This is different from thinking about a technical attacker. The dishonest user isn't sending malicious payloads. They're using the app exactly as designed, just in an order or volume the designer didn't anticipate.</p>
+<h3 id="write-down-the-invariants">Write Down the Invariants<a class="headerlink" href="#write-down-the-invariants" title="Permanent link">&para;</a></h3>
+<p>For any feature that handles value, ownership, or state, write down the invariants in plain English:</p>
+<ul>
+<li>A user cannot approve their own request.</li>
+<li>A coupon code is valid for one redemption per user, and never more than N total.</li>
+<li>A transfer cannot complete if it would leave the source account below zero.</li>
+<li>A workflow reaches the "approved" state only after both reviewer A and reviewer B have approved.</li>
+</ul>
+<p>Then for each invariant, identify exactly what code enforces it. If the answer is "the UI" or "the user won't try that", the invariant isn't actually enforced.</p>
+<h2 id="authorization-at-the-business-logic-layer">Authorization at the Business-logic Layer<a class="headerlink" href="#authorization-at-the-business-logic-layer" title="Permanent link">&para;</a></h2>
+<p>Technical authorization (is this user authenticated, do they have this role) is necessary but not sufficient. Many business logic bugs are authorization bugs in disguise: the user has the general permission to use a feature, but the specific action they're taking violates a rule the system didn't think to check.</p>
+<h3 id="contextual-authorization">Contextual Authorization<a class="headerlink" href="#contextual-authorization" title="Permanent link">&para;</a></h3>
+<p>Check not just "can this user do X" but "can this user do X on this object, in this state, right now".</p>
+<p>Examples:</p>
+<ul>
+<li>A manager can approve expense reports, but not their own.</li>
+<li>A reviewer can approve a pull request, but not if they authored it.</li>
+<li>A user can cancel an order, but not after it has shipped.</li>
+<li>A user can change their email, but not to an address already in use, and not without verifying the new address.</li>
+</ul>
+<p>These checks are part of the business logic, not the authentication layer. They typically require knowledge the auth middleware doesn't have. Keep them close to the operation they guard.</p>
+<h3 id="avoid-implicit-permissions">Avoid "Implicit" Permissions<a class="headerlink" href="#avoid-implicit-permissions" title="Permanent link">&para;</a></h3>
+<p>If two features logically grant the same permission, make sure both are guarded. An internal admin endpoint that's checked carefully is no help if the same operation is reachable through a less-guarded public endpoint.</p>
+<p>Map every sensitive operation to every entry point that can trigger it, and verify each entry point enforces the rules. When adding a new entry point (a new API version, an internal tool, a webhook handler), explicitly audit which business rules it needs to apply.</p>
+<h3 id="reference-related-guidance">Reference Related Guidance<a class="headerlink" href="#reference-related-guidance" title="Permanent link">&para;</a></h3>
+<p>For general access control guidance, see the <a href="Access_Control_Cheat_Sheet.html">Access Control Cheat Sheet</a> and the <a href="Authorization_Cheat_Sheet.html">Authorization Cheat Sheet</a>. For the higher-sensitivity case of financial or state-changing transactions, see the <a href="Transaction_Authorization_Cheat_Sheet.html">Transaction Authorization Cheat Sheet</a>.</p>
+<h2 id="validate-inputs-for-business-meaning-not-just-format">Validate Inputs for Business Meaning, Not Just Format<a class="headerlink" href="#validate-inputs-for-business-meaning-not-just-format" title="Permanent link">&para;</a></h2>
+<p>See the <a href="Input_Validation_Cheat_Sheet.html">Input Validation Cheat Sheet</a> for validation controls.</p>
+<p>Input validation typically focuses on format: is this a well-formed integer, is this within length limits, does it match a whitelist of characters. That catches injection attacks but not business logic abuse. The input can be perfectly formatted and still semantically invalid.</p>
+<h3 id="validate-ranges">Validate Ranges<a class="headerlink" href="#validate-ranges" title="Permanent link">&para;</a></h3>
+<p>A quantity can be a positive integer and still be wrong. A discount can be numeric and still absurd. Validate against the meaningful range for the business:</p>
+<ul>
+<li>Quantity must be at least 1 and no more than the stock available.</li>
+<li>Date must be in the future, not more than a year out, not on a blocked day.</li>
+<li>Amount must be positive, not more than the account allows, not above a regulatory limit.</li>
+<li>Text length must match what the downstream system can accept, which may be shorter than a generic limit.</li>
+</ul>
+<h3 id="validate-combinations">Validate Combinations<a class="headerlink" href="#validate-combinations" title="Permanent link">&para;</a></h3>
+<p>Fields that are individually valid can be collectively invalid. A booking for a valid room with a valid check-in date and a valid check-out date might still be invalid if the check-out precedes the check-in. A transfer between two valid accounts might still be invalid if the accounts belong to different customers and the user lacks permission to act on both.</p>
+<p>Write the validation rules that describe legal combinations and enforce them server-side. Unit-test the cases where each individual field is valid but the combination is not.</p>
+<h3 id="dont-trust-derived-or-hidden-fields">Don't Trust Derived or Hidden Fields<a class="headerlink" href="#dont-trust-derived-or-hidden-fields" title="Permanent link">&para;</a></h3>
+<p>Fields that are "not editable in the UI" are fully editable at the HTTP layer. Every field in a request is an input, including the ones in hidden form controls, disabled form controls, fields set by JavaScript, and fields you set in a previous response and expect to receive unchanged. If a field matters, validate it as if it came from an attacker, because it did.</p>
+<h2 id="observability-and-anomaly-detection">Observability and Anomaly Detection<a class="headerlink" href="#observability-and-anomaly-detection" title="Permanent link">&para;</a></h2>
+<p>Even a well-designed feature will eventually face a creative abuse attempt. Logging and monitoring are what let you notice it and respond.</p>
+<h3 id="what-to-log">What to Log<a class="headerlink" href="#what-to-log" title="Permanent link">&para;</a></h3>
+<p>For any operation that dispenses value, changes permissions, or moves money:</p>
+<ul>
+<li>The authenticated user</li>
+<li>The target resource</li>
+<li>The action taken</li>
+<li>The outcome</li>
+<li>Enough request context to reconstruct what happened (IP, user agent, correlation ID)</li>
+<li>Enough business context to audit (the price computed, the coupon applied, the new state)</li>
+</ul>
+<p>These logs should be tamper-evident and separate from general application logs.</p>
+<h3 id="what-to-alert-on">What to Alert On<a class="headerlink" href="#what-to-alert-on" title="Permanent link">&para;</a></h3>
+<p>Rates of the following often precede or accompany abuse:</p>
+<ul>
+<li>Signups from the same IP, device fingerprint, or payment instrument</li>
+<li>Repeated failed password-reset requests from the same source</li>
+<li>Unusually high rates of promo redemptions, referral completions, or credit issuances</li>
+<li>Bursts of requests to a single endpoint from a single user</li>
+<li>Workflows that complete in substantially less time than a human would need</li>
+</ul>
+<p>You don't need sophisticated machine learning for this. Simple thresholds on per-user, per-IP, and per-device rates catch most automated abuse.</p>
+<h3 id="close-the-loop">Close the Loop<a class="headerlink" href="#close-the-loop" title="Permanent link">&para;</a></h3>
+<p>When monitoring surfaces a potential abuse, two things should happen: the specific incident gets investigated and resolved, and the control that should have prevented it gets added or tightened. A detection that doesn't lead to a prevention is a detection you'll be making again next month.</p>
+<h2 id="testing-business-logic">Testing Business Logic<a class="headerlink" href="#testing-business-logic" title="Permanent link">&para;</a></h2>
+<p>Automated tests are how business rules stay enforced as the code evolves. Focus test effort on the rules, not the happy path.</p>
+<h3 id="test-the-rules-not-the-implementation">Test the Rules, Not the Implementation<a class="headerlink" href="#test-the-rules-not-the-implementation" title="Permanent link">&para;</a></h3>
+<p>For each invariant you identified during threat modeling, write a test that would fail if the invariant were violated. A test that says "a user cannot approve their own request" should attempt exactly that and assert the request is rejected. These tests document the rules as much as they verify them.</p>
+<h3 id="test-concurrency">Test Concurrency<a class="headerlink" href="#test-concurrency" title="Permanent link">&para;</a></h3>
+<p>If two requests can race, write a test that races them. Most test frameworks have ways to fire concurrent requests and assert the end state is consistent (e.g., balance is never negative, coupon is redeemed exactly once, bonus is granted exactly once across all winners).</p>
+<h3 id="test-ordering">Test Ordering<a class="headerlink" href="#test-ordering" title="Permanent link">&para;</a></h3>
+<p>For multi-step workflows, test attempts to skip, repeat, and reorder steps. The expected outcome for each is a rejection, not progress.</p>
+<h3 id="test-with-an-adversarial-mindset">Test with an Adversarial Mindset<a class="headerlink" href="#test-with-an-adversarial-mindset" title="Permanent link">&para;</a></h3>
+<p>Unit tests written by the developer who wrote the feature tend to cover cases the developer was already thinking about. A useful complement is adversarial testing: take the feature specification and write tests for the ways a motivated user would try to misuse it. Often the bug reproduces on the first attempt, because the feature wasn't designed with that misuse in mind.</p>
+<h2 id="common-examples-of-business-logic-flaws">Common Examples of Business Logic Flaws<a class="headerlink" href="#common-examples-of-business-logic-flaws" title="Permanent link">&para;</a></h2>
+<p>Concrete examples help developers recognize the pattern in their own code. The list below is not exhaustive.</p>
+<h3 id="price-and-quantity">Price and Quantity<a class="headerlink" href="#price-and-quantity" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Negative quantity in a cart to get a refund against another item's cost.</li>
+<li>Client-supplied price that the server trusts.</li>
+<li>Zero-price items that are actually valuable because a "free" flag was intended for a different product.</li>
+<li>Currency switching mid-transaction where the amount is kept but the currency changes (e.g., from USD to a much weaker unit).</li>
+<li>Coupon codes applied multiple times, or applied to products they were not meant for.</li>
+</ul>
+<h3 id="workflow">Workflow<a class="headerlink" href="#workflow" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Skipping identity verification by calling the post-verification endpoint directly.</li>
+<li>Advancing a job application, approval, or KYC workflow past a stage that was supposed to be gated on a reviewer.</li>
+<li>Triggering "checkout complete" without having actually paid.</li>
+<li>Claiming a reward for a task that was never completed.</li>
+</ul>
+<h3 id="concurrency">Concurrency<a class="headerlink" href="#concurrency" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Withdrawing the same balance from two concurrent sessions.</li>
+<li>Redeeming a single-use voucher from two parallel requests.</li>
+<li>Transferring the same item to two recipients at once.</li>
+<li>Concurrently updating a counter so that one update is lost.</li>
+</ul>
+<h3 id="authorization-in-disguise">Authorization-in-disguise<a class="headerlink" href="#authorization-in-disguise" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Approving your own request because the "not the author" check was forgotten.</li>
+<li>Canceling an order after it was supposed to be locked in.</li>
+<li>Modifying a shared resource because the "only the owner can modify" rule was never enforced on a specific endpoint.</li>
+</ul>
+<h3 id="value-dispensing-abuse">Value-dispensing Abuse<a class="headerlink" href="#value-dispensing-abuse" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Claiming a signup bonus multiple times by re-signing up.</li>
+<li>Earning referral rewards by referring yourself.</li>
+<li>Stacking promos that were meant to be mutually exclusive.</li>
+<li>Abusing "refer a friend" mechanics to send spam that looks like it comes from your platform.</li>
+</ul>
+<h2 id="summary-checklist">Summary Checklist<a class="headerlink" href="#summary-checklist" title="Permanent link">&para;</a></h2>
+<p>Before shipping any feature that handles money, permissions, or state, walkthrough this list:</p>
+<ul>
+<li>Are all security-relevant values (prices, permissions, identity, ownership) derived server-side, not accepted from the client?</li>
+<li>Is every multi-step workflow represented as an explicit state machine in server-side storage, with each transition validated?</li>
+<li>Is every check-then-act operation atomic (transaction, row lock, or conditional update)?</li>
+<li>Do retries of external actions reuse the same idempotency key within the provider's documented retry window?</li>
+<li>Does every value-dispensing feature have a per-action cap, a per-account cap, and a rate limit?</li>
+<li>Are all invariants written down and tested?</li>
+<li>Is every entry point for a sensitive operation subject to the same business rules?</li>
+<li>Does logging capture enough context to reconstruct abuse after the fact, and do alerts fire on anomalous rates?</li>
+<li>Have you considered the dishonest-user perspective, not just the attacker-with-exploit perspective?</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://cwe.mitre.org/data/definitions/840.html">CWE-840: Business Logic Errors</a></li>
+<li><a href="https://cwe.mitre.org/data/definitions/841.html">CWE-841: Improper Enforcement of Behavioral Workflow</a></li>
+<li><a href="https://cwe.mitre.org/data/definitions/367.html">CWE-367: Time-of-check Time-of-use Race Condition</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

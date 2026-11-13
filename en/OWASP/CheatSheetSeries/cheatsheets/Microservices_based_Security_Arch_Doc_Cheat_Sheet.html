@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Microservices based Security Arch Doc | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Microservices based Security Arch Doc">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Microservices_based_Security_Arch_Doc_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="microservices-based-security-arch-doc-cheat-sheet">Microservices based Security Arch Doc Cheat Sheet<a class="headerlink" href="#microservices-based-security-arch-doc-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>The microservice architecture is being increasingly used for designing and implementing application systems in both cloud-based and on-premise infrastructures. There are many security challenges need to be addressed in the application design and implementation phases. In order to address some security challenges it is necessity to collect security-specific information on application architecture.
+The goal of this article is to provide a concrete proposal of approach to collect microservice-based architecture information to securing application.</p>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>During securing applications based on microservices architecture, security architects/engineers usually face with the following questions (mostly referenced in the <a href="https://github.com/OWASP/ASVS">OWASP Application Security Verification Standard Project</a> under the section <a href="https://github.com/OWASP/ASVS/blob/master/4.0/en/0x10-V1-Architecture.md#v1-architecture-design-and-threat-modeling">V1 "Architecture, Design and Threat Modeling Requirements"</a>):</p>
+<ol>
+<li>Threat modeling and enforcement of the principle of least privilege:<ul>
+<li>What scopes or API keys does microservice minimally need to access other microservice APIs?</li>
+<li>What grants does microservice minimally need to access database or message queue?</li>
+</ul>
+</li>
+<li>Data leakage analysis:<ul>
+<li>What storages or message queues do contain sensitive data?</li>
+<li>Does microservice read/write date from/to specific database or message queue?</li>
+<li>What microservices are invoked by dedicated microservice? What data is passed between microservices?</li>
+</ul>
+</li>
+<li>Attack surface analysis:<ul>
+<li>What microservices endpoints need to be tested during security testing?</li>
+</ul>
+</li>
+</ol>
+<p>In most cases, existing application architecture documentation is not suitable to answer those questions. Next sections propose what architecture security-specific information can be collected to answer the questions above.</p>
+<h2 id="objective">Objective<a class="headerlink" href="#objective" title="Permanent link">&para;</a></h2>
+<p>The objectives of the cheat sheet are to explain what architecture security-specific information can be collected to answer the questions above and provide concrete proposal of approach to collect microservice-based architecture information to securing application.</p>
+<h2 id="proposition">Proposition<a class="headerlink" href="#proposition" title="Permanent link">&para;</a></h2>
+<h3 id="collect-information-on-the-building-blocks">Collect information on the building blocks<a class="headerlink" href="#collect-information-on-the-building-blocks" title="Permanent link">&para;</a></h3>
+<h4 id="identify-and-describe-application-functionality-services">Identify and describe application-functionality services<a class="headerlink" href="#identify-and-describe-application-functionality-services" title="Permanent link">&para;</a></h4>
+<p>Application-functionality services implement one or several business process or functionality (e.g., storing customer details, storing and displaying product catalog). Collect information on the parameters listed below related to each application-functionality service.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter name</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Service name (ID)</td>
+<td style="text-align: left;">Unique service name or ID</td>
+</tr>
+<tr>
+<td style="text-align: left;">Short description</td>
+<td style="text-align: left;">Short description of business process or functionality implemented by the microservice</td>
+</tr>
+<tr>
+<td style="text-align: left;">Link to source code repository</td>
+<td style="text-align: left;">Specify a link to service source code repository</td>
+</tr>
+<tr>
+<td style="text-align: left;">Development Team</td>
+<td style="text-align: left;">Specify development team which develops the microservice</td>
+</tr>
+<tr>
+<td style="text-align: left;">API definition</td>
+<td style="text-align: left;">If microservice exposes external interface specify a link to the interface description (e.g., OpenAPI specification). It is advisable to define used security scheme, e.g. define scopes or API keys needed to invoke dedicated endpoint (e.g., <a href="https://swagger.io/docs/specification/authentication/">see</a>).</td>
+</tr>
+<tr>
+<td style="text-align: left;">The microservice architecture description</td>
+<td style="text-align: left;">Specify a link to the microservice architecture diagram, description (if available)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Link to runbook</td>
+<td style="text-align: left;">Specify a link to the microservice runbook</td>
+</tr>
+</tbody>
+</table>
+<h4 id="identify-and-describe-infrastructure-services">Identify and describe infrastructure services<a class="headerlink" href="#identify-and-describe-infrastructure-services" title="Permanent link">&para;</a></h4>
+<p>Infrastructure services including remote services may implement authentication, authorization, service registration and discovery, security monitoring, logging etc. Collect information on the parameters listed below related to each infrastructure service.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter name</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Service name (ID)</td>
+<td style="text-align: left;">Unique service name or ID</td>
+</tr>
+<tr>
+<td style="text-align: left;">Short description</td>
+<td style="text-align: left;">Short description of functionality implemented by the service (e.g., authentication, authorization, service registration and discovery, logging, security monitoring, API gateway).</td>
+</tr>
+<tr>
+<td style="text-align: left;">Link to source code repository</td>
+<td style="text-align: left;">Specify a link to service source code repository (if applicable)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Link to the service documentation</td>
+<td style="text-align: left;">Specify a link to the service documentation that includes service API definition, operational guidance/runbook, etc.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="identify-and-describe-data-storages">Identify and describe data storages<a class="headerlink" href="#identify-and-describe-data-storages" title="Permanent link">&para;</a></h4>
+<p>Collect information on the parameters listed below related to each data storage.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter name</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Storage name (ID)</td>
+<td style="text-align: left;">Unique storage name or ID</td>
+</tr>
+<tr>
+<td style="text-align: left;">Software type</td>
+<td style="text-align: left;">Specify software that implements the data storage (e.g., PostgreSQL, Redis, Apache Cassandra).</td>
+</tr>
+</tbody>
+</table>
+<h4 id="identify-and-describe-message-queues">Identify and describe message queues<a class="headerlink" href="#identify-and-describe-message-queues" title="Permanent link">&para;</a></h4>
+<p>Messaging systems (e.g., RabbitMQ or Apache Kafka) are used to implement asynchronous microservices communication mechanism. Collect information on the parameters listed below related to each message queue.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter name</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Message queue (ID)</td>
+<td style="text-align: left;">Unique message queue name or ID</td>
+</tr>
+<tr>
+<td style="text-align: left;">Software type</td>
+<td style="text-align: left;">Specify software that implements the message queue (e.g., RabbitMQ, Apache Kafka).</td>
+</tr>
+</tbody>
+</table>
+<h4 id="identify-and-describe-data-assets">Identify and describe data assets<a class="headerlink" href="#identify-and-describe-data-assets" title="Permanent link">&para;</a></h4>
+<p>Identify and describe data assets that processed by system microservices/services. It is advisable firstly to identify assets, which are valuable from a security perspective (e.g., "User information", "Payment"). Collect information on the parameters listed below related to each asset.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter name</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Asset name (ID)</td>
+<td style="text-align: left;">Unique asset name or ID</td>
+</tr>
+<tr>
+<td style="text-align: left;">Protection level</td>
+<td style="text-align: left;">Specify asset protection level (e.g., PII, confidential)</td>
+</tr>
+<tr>
+<td style="text-align: left;">Additional info</td>
+<td style="text-align: left;">Add clarifying information</td>
+</tr>
+</tbody>
+</table>
+<h3 id="collect-information-on-relations-between-building-blocks">Collect information on relations between building blocks<a class="headerlink" href="#collect-information-on-relations-between-building-blocks" title="Permanent link">&para;</a></h3>
+<h4 id="identify-service-to-storage-relations">Identify "service-to-storage" relations<a class="headerlink" href="#identify-service-to-storage-relations" title="Permanent link">&para;</a></h4>
+<p>Collect information on the parameters listed below related to each "service-to-storage" relation.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter name</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Service name (ID)</td>
+<td style="text-align: left;">Specify service name (ID) defined above</td>
+</tr>
+<tr>
+<td style="text-align: left;">Storage name (ID)</td>
+<td style="text-align: left;">Specify storage name (ID) defined above</td>
+</tr>
+<tr>
+<td style="text-align: left;">Access type</td>
+<td style="text-align: left;">Specify access type, e.g. "Read" or "Read/Write"</td>
+</tr>
+</tbody>
+</table>
+<h4 id="identify-service-to-service-synchronous-communications">Identify "service-to-service" synchronous communications<a class="headerlink" href="#identify-service-to-service-synchronous-communications" title="Permanent link">&para;</a></h4>
+<p>Collect information on the parameters listed below related to each "service-to-service" synchronous communication.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter name</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Caller service name (ID)</td>
+<td style="text-align: left;">Specify caller service name (ID) defined above</td>
+</tr>
+<tr>
+<td style="text-align: left;">Called service name (ID)</td>
+<td style="text-align: left;">Specify called service name (ID) defined above</td>
+</tr>
+<tr>
+<td style="text-align: left;">Protocol/framework used</td>
+<td style="text-align: left;">Specify protocol/framework used for communication, e.g. HTTP (REST, SOAP), Apache Thrift, gRPC</td>
+</tr>
+<tr>
+<td style="text-align: left;">Short description</td>
+<td style="text-align: left;">Shortly describe the purpose of communication (requests for query of information or request/commands for a state-changing business function) and data passed between services (if possible, in therms of assets defined above)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="identify-service-to-service-asynchronous-communications">Identify "service-to-service" asynchronous communications<a class="headerlink" href="#identify-service-to-service-asynchronous-communications" title="Permanent link">&para;</a></h4>
+<p>Collect information on the parameters listed below related to each "service-to-service" asynchronous communication.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter name</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Publisher service name (ID)</td>
+<td style="text-align: left;">Specify publisher service name (ID) defined above</td>
+</tr>
+<tr>
+<td style="text-align: left;">Subscriber service name (ID)</td>
+<td style="text-align: left;">Specify subscriber service name (ID) defined above</td>
+</tr>
+<tr>
+<td style="text-align: left;">Message queue (ID)</td>
+<td style="text-align: left;">Specify message queue (ID) defined above</td>
+</tr>
+<tr>
+<td style="text-align: left;">Short description</td>
+<td style="text-align: left;">Shortly describe the purpose of communication (receiving of information or commands for a state-changing business function) and data passed between services (if possible, in therms of assets defined above)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="identify-asset-to-storage-relations">Identify "asset-to-storage" relations<a class="headerlink" href="#identify-asset-to-storage-relations" title="Permanent link">&para;</a></h4>
+<p>Collect information on the parameters listed below related to each "asset-to-storage" relation.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Parameter name</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Asset name (ID)</td>
+<td style="text-align: left;">Asset name (ID) defined above</td>
+</tr>
+<tr>
+<td style="text-align: left;">Storage name (ID)</td>
+<td style="text-align: left;">Specify storage name (ID) defined above</td>
+</tr>
+<tr>
+<td style="text-align: left;">Storage type</td>
+<td style="text-align: left;">Specify storage type for the asset, e.g. "golden source" or "cache"</td>
+</tr>
+</tbody>
+</table>
+<h3 id="create-a-graphical-presentation-of-application-architecture">Create a graphical presentation of application architecture<a class="headerlink" href="#create-a-graphical-presentation-of-application-architecture" title="Permanent link">&para;</a></h3>
+<p>It is advisable to create graphical presentation of application architecture (building blocks and relations defined above) in form of services call graph or data flow diagram. In order to do that one can use special software tools (e.g. Enterprise Architect) or <a href="https://en.wikipedia.org/wiki/DOT_%28graph_description_language%29">DOT language</a>. See example of using DOT language <a href="https://gist.github.com/vladgolubev/80c5523336ddec3859c0e90d9a070882">here</a>.</p>
+<h3 id="use-collected-information-in-secure-software-development-practices">Use collected information in secure software development practices<a class="headerlink" href="#use-collected-information-in-secure-software-development-practices" title="Permanent link">&para;</a></h3>
+<p>Collected information may be useful for doing application security practices, e.g. during defining security requirements, threat modeling or security testing. Sections below contains examples of activities related to securing application architecture (as well as its mapping to OWASP projects) and tips for their implementation using information collected above.</p>
+<h4 id="attack-surface-analysis">Attack surface analysis<a class="headerlink" href="#attack-surface-analysis" title="Permanent link">&para;</a></h4>
+<h5 id="implementation-tips">Implementation tips<a class="headerlink" href="#implementation-tips" title="Permanent link">&para;</a></h5>
+<p>To enumerate microservices endpoints that need to be tested during security testing and analyzed during threat modeling analyze data collected under the following sections:</p>
+<ul>
+<li>Identify and describe application-functionality services (parameter "API definition")</li>
+<li>Identify and describe infrastructure services (parameter "Link to the service documentation")</li>
+</ul>
+<h5 id="mapping-to-owasp-projects">Mapping to OWASP projects<a class="headerlink" href="#mapping-to-owasp-projects" title="Permanent link">&para;</a></h5>
+<ul>
+<li><a href="https://github.com/OWASP/ASVS/blob/master/4.0/en/0x10-V1-Architecture.md#v1-architecture-design-and-threat-modeling">OWASP ASVS, V1 "Architecture, Design and Threat Modeling Requirements", #1.1.2</a></li>
+<li><a href="https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Attack_Surface_Analysis_Cheat_Sheet.md">OWASP Attack Surface Analysis Cheat Sheet</a></li>
+</ul>
+<h4 id="data-leakage-analysis">Data leakage analysis<a class="headerlink" href="#data-leakage-analysis" title="Permanent link">&para;</a></h4>
+<h5 id="implementation-tips_1">Implementation tips<a class="headerlink" href="#implementation-tips_1" title="Permanent link">&para;</a></h5>
+<p>To analyze possible data leakage analyze data collected under the following sections:</p>
+<ul>
+<li>Identify and describe data assets</li>
+<li>Identify "service-to-storage" relations</li>
+<li>Identify "service-to-service" synchronous communications</li>
+<li>Identify "service-to-service" asynchronous communications</li>
+<li>Identify "asset-to-storage" relations</li>
+</ul>
+<h5 id="mapping-to-owasp-projects_1">Mapping to OWASP projects<a class="headerlink" href="#mapping-to-owasp-projects_1" title="Permanent link">&para;</a></h5>
+<ul>
+<li><a href="https://github.com/OWASP/ASVS/blob/master/4.0/en/0x10-V1-Architecture.md#v1-architecture-design-and-threat-modeling">OWASP ASVS, V1 "Architecture, Design and Threat Modeling Requirements", #1.1.2</a></li>
+<li><a href="https://owasp.org/www-project-top-ten/OWASP_Top_Ten_2017/Top_10-2017_A3-Sensitive_Data_Exposure">OWASP Top 10-2017 A3-Sensitive Data Exposure</a></li>
+</ul>
+<h4 id="applications-trust-boundaries-components-and-significant-data-flows-justification">Application's trust boundaries, components, and significant data flows justification<a class="headerlink" href="#applications-trust-boundaries-components-and-significant-data-flows-justification" title="Permanent link">&para;</a></h4>
+<h5 id="implementation-tips_2">Implementation tips<a class="headerlink" href="#implementation-tips_2" title="Permanent link">&para;</a></h5>
+<p>Start the review of the application's trust boundaries, components, and significant data flows with the inventories from these sections:</p>
+<ul>
+<li>Identify and describe application-functionality services</li>
+<li>Identify and describe infrastructure services</li>
+<li>Identify and describe data storages</li>
+<li>Identify and describe message queues</li>
+<li>Identify "service-to-storage" relations</li>
+<li>Identify "service-to-service" synchronous communications</li>
+<li>Identify "service-to-service" asynchronous communications</li>
+</ul>
+<p>Use these inventories as inputs to a <a href="Threat_Modeling_Cheat_Sheet.html#system-modeling">system model</a>. Mark the trust boundaries and the flows that cross them, and justify each crossing. Record the endpoint identities, authentication and authorization enforcement points, and protections for data in transit (see <a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-204.pdf">NIST SP 800-204, sections 4.1 and 4.3</a>). Check these controls against the deployed configuration and behavior; the inventories alone do not verify enforcement.</p>
+<h5 id="mapping-to-owasp-projects_2">Mapping to OWASP projects<a class="headerlink" href="#mapping-to-owasp-projects_2" title="Permanent link">&para;</a></h5>
+<ul>
+<li><a href="https://github.com/OWASP/ASVS/blob/master/4.0/en/0x10-V1-Architecture.md#v1-architecture-design-and-threat-modeling">OWASP ASVS, V1 "Architecture, Design and Threat Modeling Requirements", #1.1.4</a></li>
+</ul>
+<h4 id="analysis-of-the-applications-high-level-architecture">Analysis of the application's high-level architecture<a class="headerlink" href="#analysis-of-the-applications-high-level-architecture" title="Permanent link">&para;</a></h4>
+<h5 id="implementation-tips_3">Implementation tips<a class="headerlink" href="#implementation-tips_3" title="Permanent link">&para;</a></h5>
+<p>To verify definition and security analysis of the application's high-level architecture and all connected remote services analyze data collected under the following sections:</p>
+<ul>
+<li>Identify and describe application-functionality services</li>
+<li>Identify and describe infrastructure services</li>
+<li>Identify and describe data storages</li>
+<li>Identify and describe message queues</li>
+</ul>
+<h5 id="mapping-to-owasp-projects_3">Mapping to OWASP projects<a class="headerlink" href="#mapping-to-owasp-projects_3" title="Permanent link">&para;</a></h5>
+<ul>
+<li><a href="https://github.com/OWASP/ASVS/blob/master/4.0/en/0x10-V1-Architecture.md#v1-architecture-design-and-threat-modeling">OWASP ASVS, V1 "Architecture, Design and Threat Modeling Requirements", #1.1.5</a></li>
+</ul>
+<h4 id="implementation-of-centralized-security-controls-verification">Implementation of centralized security controls verification<a class="headerlink" href="#implementation-of-centralized-security-controls-verification" title="Permanent link">&para;</a></h4>
+<h5 id="implementation-tips_4">Implementation tips<a class="headerlink" href="#implementation-tips_4" title="Permanent link">&para;</a></h5>
+<p>To verify implementation of centralized, simple (economy of design), vetted, secure, and reusable security controls to avoid duplicate, missing, ineffective, or insecure controls analyze data collected under the section "Identify and describe infrastructure services".</p>
+<h5 id="mapping-to-owasp-projects_4">Mapping to OWASP projects<a class="headerlink" href="#mapping-to-owasp-projects_4" title="Permanent link">&para;</a></h5>
+<ul>
+<li><a href="https://github.com/OWASP/ASVS/blob/master/4.0/en/0x10-V1-Architecture.md#v1-architecture-design-and-threat-modeling">OWASP ASVS, V1 "Architecture, Design and Threat Modeling Requirements", #1.1.6</a></li>
+</ul>
+<h4 id="enforcement-of-the-principle-of-least-privilege">Enforcement of the principle of least privilege<a class="headerlink" href="#enforcement-of-the-principle-of-least-privilege" title="Permanent link">&para;</a></h4>
+<h5 id="implementation-tips_5">Implementation tips<a class="headerlink" href="#implementation-tips_5" title="Permanent link">&para;</a></h5>
+<p>To define minimally needed microservice permissions analyze data collected under the following sections:</p>
+<ul>
+<li>Identify and describe application-functionality services (parameter "API definition")</li>
+<li>Identify "service-to-storage" relations</li>
+<li>Identify "service-to-service" synchronous communications</li>
+<li>Identify "service-to-service" asynchronous communications</li>
+</ul>
+<h5 id="mapping-to-owasp-projects_5">Mapping to OWASP projects<a class="headerlink" href="#mapping-to-owasp-projects_5" title="Permanent link">&para;</a></h5>
+<ul>
+<li><a href="https://github.com/OWASP/ASVS/blob/v4.0.3_release/4.0/en/0x12-V4-Access-Control.md#v41-general-access-control-design">OWASP ASVS 4.0.3, V4 "Access Control", #4.1.3</a></li>
+</ul>
+<h4 id="sensitive-data-identification-and-classification">Sensitive data identification and classification<a class="headerlink" href="#sensitive-data-identification-and-classification" title="Permanent link">&para;</a></h4>
+<h5 id="implementation-tips_6">Implementation tips<a class="headerlink" href="#implementation-tips_6" title="Permanent link">&para;</a></h5>
+<p>To verify that all sensitive data is identified and classified into protection levels analyze data collected under the following sections:</p>
+<ul>
+<li>Identify and describe data assets</li>
+<li>Identify "asset-to-storage" relations</li>
+</ul>
+<h5 id="mapping-to-owasp-projects_6">Mapping to OWASP projects<a class="headerlink" href="#mapping-to-owasp-projects_6" title="Permanent link">&para;</a></h5>
+<ul>
+<li><a href="https://github.com/OWASP/ASVS/blob/master/4.0/en/0x10-V1-Architecture.md#v1-architecture-design-and-threat-modeling">OWASP ASVS, V1 "Architecture, Design and Threat Modeling Requirements", #1.8.1</a></li>
+</ul>
+<h4 id="application-components-businesssecurity-functions-verification">Application components business/security functions verification<a class="headerlink" href="#application-components-businesssecurity-functions-verification" title="Permanent link">&para;</a></h4>
+<h5 id="implementation-tips_7">Implementation tips<a class="headerlink" href="#implementation-tips_7" title="Permanent link">&para;</a></h5>
+<p>To verify the definition and documentation of all application components in terms of the business or security functions they provide analyze data collected under the following sections (parameter "Short description"):</p>
+<ul>
+<li>Identify and describe application-functionality services</li>
+<li>Identify and describe infrastructure services</li>
+</ul>
+<h5 id="mapping-to-owasp-projects_7">Mapping to OWASP projects<a class="headerlink" href="#mapping-to-owasp-projects_7" title="Permanent link">&para;</a></h5>
+<ul>
+<li><a href="https://github.com/OWASP/ASVS/blob/master/4.0/en/0x10-V1-Architecture.md#v1-architecture-design-and-threat-modeling">OWASP ASVS, V1 "Architecture, Design and Threat Modeling Requirements", #1.11.1</a></li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-204.pdf">NIST SP 800-204: Security Strategies for Microservices-based Application Systems</a></li>
+<li><a href="https://github.com/OWASP/ASVS/blob/master/4.0/en/0x10-V1-Architecture.md#v1-architecture-design-and-threat-modeling">OWASP ASVS 4: Architecture, Design and Threat Modeling</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

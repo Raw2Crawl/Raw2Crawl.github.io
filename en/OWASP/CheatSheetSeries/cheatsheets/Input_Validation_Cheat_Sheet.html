@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Input Validation | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Input Validation">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Input_Validation_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="input-validation-cheat-sheet">Input Validation Cheat Sheet<a class="headerlink" href="#input-validation-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>Input validation checks whether data meets an application's requirements before the application uses it. It reduces the risk of malformed data, invalid business operations, and excessive resource consumption. <a href="https://top10proactive.owasp.org/archive/2024/the-top-10/c3-validate-input-and-handle-exceptions/">OWASP's Proactive Control C3</a> distinguishes validation from the additional defenses needed when using that data:</p>
+<ul>
+<li>Use <a href="SQL_Injection_Prevention_Cheat_Sheet.html">parameterized queries</a> for SQL and <a href="Cross_Site_Scripting_Prevention_Cheat_Sheet.html#output-encoding">context-aware output encoding</a> to prevent cross-site scripting (XSS).</li>
+<li>Check <a href="Authorization_Cheat_Sheet.html">authorization</a> separately: a valid account identifier does not mean the caller may access that account.</li>
+</ul>
+<h2 id="input-validation-strategies">Input Validation Strategies<a class="headerlink" href="#input-validation-strategies" title="Permanent link">&para;</a></h2>
+<p>Validate both <strong>syntax</strong> (the expected type and format) and <strong>semantics</strong> (whether the value makes sense for the operation). For example, a booking needs valid dates and an end date after its start date. <a href="https://cwe.mitre.org/data/definitions/20.html">CWE-20</a> describes these checks, including consistency between related fields.</p>
+<p>Define rules for each field:</p>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Rules to enforce</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fixed choices</td>
+<td>Exact membership in the allowed set, including values submitted from drop-down menus</td>
+</tr>
+<tr>
+<td>Numbers and dates</td>
+<td>Expected type, accepted format, and minimum and maximum values</td>
+</tr>
+<tr>
+<td>Strings</td>
+<td>Length limits and the characters or structure required by the field</td>
+</tr>
+<tr>
+<td>Objects</td>
+<td>Allowed fields, required fields, and rules for missing or null values</td>
+</tr>
+<tr>
+<td>Arrays</td>
+<td>Minimum and maximum item counts and validation of every item, including nested objects</td>
+</tr>
+</tbody>
+</table>
+<h3 id="allowlist-vs-denylist">Allowlist vs Denylist<a class="headerlink" href="#allowlist-vs-denylist" title="Permanent link">&para;</a></h3>
+<p>Define what the application accepts and reject values outside those rules. Do not try to recognize every malicious string. Blocking apostrophes, for example, rejects legitimate names without making a database query safe. For free-form comments, an allowlist can permit broad Unicode text while limiting its length; it need not restrict users to letters and digits.</p>
+<h2 id="implementing-input-validation">Implementing Input Validation<a class="headerlink" href="#implementing-input-validation" title="Permanent link">&para;</a></h2>
+<h3 id="parse-safely-then-validate">Parse Safely, Then Validate<a class="headerlink" href="#parse-safely-then-validate" title="Permanent link">&para;</a></h3>
+<p>Apply request size limits before buffering or parsing input, and configure parser limits such as maximum nesting depth. JSON explicitly supports <a href="https://www.rfc-editor.org/info/rfc8259/#section-9">implementation limits on size, depth, and numbers</a>. A schema check after parsing cannot protect a parser that has already exhausted resources.</p>
+<p>Use a maintained parser for the expected format, handle parsing failures, and validate the resulting values before business processing or storage. Configure parsers for untrusted input; see <a href="XML_External_Entity_Prevention_Cheat_Sheet.html#general-guidance">XML External Entity Prevention</a> and <a href="Deserialization_Cheat_Sheet.html">Deserialization</a>. Converting text to an integer only establishes a type: it does not establish an acceptable quantity.</p>
+<p>Decode according to the protocol before checking field rules. Validate the representation that will actually be used, and avoid decoding it again downstream; <a href="https://cwe.mitre.org/data/definitions/20.html">CWE-20</a> explains how inconsistent decoding can invalidate earlier checks.</p>
+<h3 id="validate-structured-data">Validate Structured Data<a class="headerlink" href="#validate-structured-data" title="Permanent link">&para;</a></h3>
+<p>Use your framework's validators or a schema validator to enforce field rules. For JSON, explicitly configure <a href="https://json-schema.org/understanding-json-schema/reference/object">required and additional properties</a>; listing a property alone neither requires it nor rejects unknown fields. Apply schemas to nested objects and use <a href="https://json-schema.org/understanding-json-schema/reference/array">item schemas and array length limits</a>. Keep business checks, such as date ordering, alongside these structural checks.</p>
+<p>Reject invalid requests with a clear error; do not continue with partially validated data. Bind only intended input fields to application objects; see <a href="Mass_Assignment_Cheat_Sheet.html">Mass Assignment</a>.</p>
+<h3 id="validating-free-form-unicode-text">Validating Free-form Unicode Text<a class="headerlink" href="#validating-free-form-unicode-text" title="Permanent link">&para;</a></h3>
+<p>Agree on a character encoding across components and reject malformed input. Preserve legitimate punctuation and scripts in names and comments. Where a field requires Unicode normalization for consistent comparison, define and apply the same policy before validation, storage, and comparison. <a href="https://www.unicode.org/reports/tr15/">Unicode Standard Annex #15</a> defines the normalization forms and warns that compatibility normalization can erase meaningful distinctions. Normalization is not sanitization and does not replace output encoding.</p>
+<h3 id="regular-expressions-regex">Regular Expressions (Regex)<a class="headerlink" href="#regular-expressions-regex" title="Permanent link">&para;</a></h3>
+<p>Use regular expressions for simple, structured fields. Require a match of the entire value, using an API such as <a href="https://docs.python.org/3/library/re.html#re.fullmatch">Python's <code>fullmatch</code></a> where available. Check the engine's character classes and newline behavior rather than assuming patterns behave identically across languages.</p>
+<p>Bound input length before matching, avoid patterns with excessive backtracking, and use a non-backtracking engine or a match timeout where supported. Test valid, invalid, and near-matching values; <a href="https://learn.microsoft.com/en-us/dotnet/standard/base-types/best-practices-regex">Microsoft's regex guidance</a> explains why near-matches can cause denial of service. Treat a timeout as validation failure.</p>
+<h3 id="validating-rich-user-content">Validating Rich User Content<a class="headerlink" href="#validating-rich-user-content" title="Permanent link">&para;</a></h3>
+<p>When accepting user-authored HTML, use a maintained <a href="Cross_Site_Scripting_Prevention_Cheat_Sheet.html#html-sanitization">HTML sanitization library</a>. Input validation and regular expressions cannot replace that control.</p>
+<h3 id="file-upload-validation">File Upload Validation<a class="headerlink" href="#file-upload-validation" title="Permanent link">&para;</a></h3>
+<p>Treat the submitted filename and content type as untrusted metadata. Validate filenames after protocol decoding; an allowed extension alone does not establish safe content. Follow the <a href="File_Upload_Cheat_Sheet.html">File Upload Cheat Sheet</a> for content checks, size limits, storage, and safe serving.</p>
+<h3 id="email-address-validation">Email Address Validation<a class="headerlink" href="#email-address-validation" title="Permanent link">&para;</a></h3>
+<p>Use a maintained email validation library compatible with the addresses your mail system supports. Format validation does not prove mailbox access. Follow <a href="Email_Validation_and_Verification_Cheat_Sheet.html">Email Validation and Verification</a> for comparison policies, ownership verification, and email change workflows.</p>
+<h2 id="common-pitfalls">Common Pitfalls<a class="headerlink" href="#common-pitfalls" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Client-only checks:</strong> Validate on the server even when the browser checks the same fields. <a href="https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Form_validation">Client-side validation is bypassable</a>; use it for immediate feedback.</li>
+<li><strong>Trusting internal sources:</strong> Validate data from internal APIs, partner feeds, queues, and stored records when it crosses a trust boundary. An internal transport does not establish that a value meets the receiving component's rules (<a href="https://cwe.mitre.org/data/definitions/20.html">CWE-20</a>).</li>
+<li><strong>Denylisting or “cleaning” input:</strong> Apply field-specific acceptance rules. Removing suspicious characters can change meaning and still does not provide query parameterization or output encoding.</li>
+<li><strong>Stopping at parsing or outer fields:</strong> Test rejected ranges, missing fields, invalid nested items, and oversized arrays, not just malformed syntax.</li>
+<li><strong>Assuming regex or Unicode normalization makes data safe:</strong> Check whole-value matching and resource limits; keep normalization consistent with the field's meaning.</li>
+<li><strong>Trusting upload metadata:</strong> Use the file upload controls above; checking a filename is not checking the file's contents.</li>
+<li><strong>Logging rejected input verbatim:</strong> Record the failure and relevant metadata without secrets or full request bodies. Escape any retained untrusted values for the log format to prevent log injection; see <a href="Logging_Cheat_Sheet.html#event-collection">Logging: Event collection</a> and <a href="Logging_Cheat_Sheet.html#data-to-exclude">Data to exclude</a>.</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://top10proactive.owasp.org/archive/2024/the-top-10/c3-validate-input-and-handle-exceptions/">OWASP Top 10 Proactive Controls 2024: C3 — Validate all Input &amp; Handle Exceptions</a></li>
+<li><a href="https://cwe.mitre.org/data/definitions/20.html">CWE-20: Improper Input Validation</a></li>
+<li><a href="https://www.unicode.org/reports/tr15/">Unicode Standard Annex #15: Unicode Normalization Forms</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

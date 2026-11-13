@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JavaScript and TypeScript Security | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · JavaScript and TypeScript Security">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/JavaScript_and_TypeScript_Security_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="javascript-and-typescript-security-cheat-sheet">JavaScript and TypeScript Security Cheat Sheet<a class="headerlink" href="#javascript-and-typescript-security-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>This cheat sheet lists secure development practices for JavaScript and TypeScript that apply everywhere the language runs: browsers, hybrid apps, server-side Node.js, and any other runtime that implements the language (<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript">MDN JavaScript</a>). It covers language-level pitfalls (dynamic code execution, prototype pollution, regular expressions), client-side sinks, and TypeScript-specific false confidence. Rules that are equally valid on the client and the server are stated once here; backend and runtime hardening stays in the <a href="Nodejs_Security_Cheat_Sheet.html">Node.js Security Cheat Sheet</a>, which this sheet links to instead of duplicating.</p>
+<h2 id="related-cheat-sheets-top-level-links">Related Cheat Sheets (Top-Level Links)<a class="headerlink" href="#related-cheat-sheets-top-level-links" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="Nodejs_Security_Cheat_Sheet.html">Node.js Security Cheat Sheet</a> - backend and runtime guidance.</li>
+<li><a href="Cross_Site_Scripting_Prevention_Cheat_Sheet.html">Cross Site Scripting Prevention Cheat Sheet</a> - output encoding rules per context.</li>
+<li><a href="DOM_based_XSS_Prevention_Cheat_Sheet.html">DOM based XSS Prevention Cheat Sheet</a> - client-side XSS sinks and sources.</li>
+<li><a href="Third_Party_Javascript_Management_Cheat_Sheet.html">Third Party JavaScript Management Cheat Sheet</a> - managing external scripts.</li>
+<li><a href="Transport_Layer_Security_Cheat_Sheet.html">Transport Layer Security Cheat Sheet</a> - TLS configuration.</li>
+<li><a href="/en/OWASP/CheatSheetSeries/index.html">OWASP Cheat Sheet Series index</a> - start here for the full catalog.</li>
+</ul>
+<h2 id="dangerous-language-surface">Dangerous Language Surface<a class="headerlink" href="#dangerous-language-surface" title="Permanent link">&para;</a></h2>
+<h3 id="eval-function-and-with"><code>eval</code>, <code>Function</code>, and <code>with</code><a class="headerlink" href="#eval-function-and-with" title="Permanent link">&para;</a></h3>
+<p>Never build code from strings. See <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval">MDN's eval guidance</a>. <code>eval</code> and <code>new Function</code> execute arbitrary code with the current runtime's privileges, so any attacker-influenced input reaching them is code injection (<a href="https://cwe.mitre.org/data/definitions/94.html">CWE-94</a>). In browsers, <code>setTimeout</code> and <code>setInterval</code> with a string argument compile it the same way through implied <code>eval</code>.</p>
+<ul>
+<li>Parse data with <code>JSON.parse</code>, never <code>eval</code>.</li>
+<li>Replace dynamic dispatch with static maps of functions instead of constructing calls from names.</li>
+<li>Do not use the <code>with</code> statement. It makes scope unpredictable, is forbidden in strict mode, and blocks engine optimizations.</li>
+<li>Enforce this statically with the <code>no-eval</code>, <code>no-implied-eval</code>, and <code>no-new-func</code> lint rules.</li>
+<li>In browsers, block string compilation with an enforced Content Security Policy whose <code>script-src</code> directive, or <code>default-src</code> fallback, omits both <code>'unsafe-eval'</code> and <code>'trusted-types-eval'</code>. A report-only policy does not block execution (<a href="https://w3c.github.io/webappsec-csp/#can-compile-strings">CSP <code>EnsureCSPDoesNotBlockStringCompilation</code></a>).</li>
+<li>CSP is a browser-side control and does not apply to server-side runtimes, so the lint rules remain the primary enforcement everywhere.</li>
+</ul>
+<h3 id="evil-regex-redos">Evil Regex (ReDoS)<a class="headerlink" href="#evil-regex-redos" title="Permanent link">&para;</a></h3>
+<p>Nested quantifiers such as <code>(a+)+</code>, and repeated ambiguous alternatives such as <code>^(a|aa)*$</code>, can make matching take exponential time on crafted input, consuming CPU and potentially blocking the executing thread or event loop (<a href="https://cwe.mitre.org/data/definitions/1333.html">CWE-1333</a>). Whether a pattern is actually exploitable depends on the surrounding expression and the failing input, not just the quantified group.</p>
+<ul>
+<li>Prefer well-tested validators over hand-written patterns for emails, URLs, and similar inputs.</li>
+<li>Keep patterns linear: avoid nested quantifiers and ambiguous alternation over the same characters.</li>
+<li>Cap untrusted input length before matching, and reject rather than sanitize when input does not match.</li>
+<li>For the attack mechanics and detection tooling, see the <a href="https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS">OWASP ReDoS guidance</a>; use linear-time patterns as the primary control and input-length caps as defense in depth.</li>
+</ul>
+<h3 id="strict-mode">Strict Mode<a class="headerlink" href="#strict-mode" title="Permanent link">&para;</a></h3>
+<p>Ship ES modules (strict by default) or declare <code>'use strict'</code>, as described in <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode">MDN's strict mode documentation</a>. Strict mode turns silent mistakes into errors: assignment to undeclared variables throws, <code>this</code> stays <code>undefined</code> in plain functions instead of becoming the global object, and <code>with</code> is rejected. It does not fix injection, XSS, or prototype pollution; treat it as hygiene, not a security boundary.</p>
+<h2 id="object-and-property-safety-including-prototype-pollution">Object and Property Safety (Including Prototype Pollution)<a class="headerlink" href="#object-and-property-safety-including-prototype-pollution" title="Permanent link">&para;</a></h2>
+<p>Prototype pollution (<a href="https://cwe.mitre.org/data/definitions/1321.html">CWE-1321</a>) occurs when attacker-controlled keys such as <code>__proto__</code>, <code>constructor</code>, or <code>prototype</code> reach a recursive merge or path setter and modify an object's prototype. This can alter the behavior of objects that inherit from that prototype. These are the JavaScript-specific essentials only; the full protection guidance lives in the dedicated <a href="Prototype_Pollution_Prevention_Cheat_Sheet.html">Prototype Pollution Prevention Cheat Sheet</a>.</p>
+<ul>
+<li>Never pass untrusted input to a recursive merge or <code>set-by-path</code> helper, and reject the key segments <code>__proto__</code>, <code>constructor</code>, and <code>prototype</code> before writing.</li>
+<li>Use a <code>Map</code> with <code>set</code>, <code>get</code>, and <code>has</code> for untrusted dictionary keys, keeping entries separate from object properties (<a href="https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/Prototype_pollution#use_map_and_set_instead">MDN prototype pollution defenses</a>). If an object is required, create it with <code>Object.create(null)</code> so it has no prototype.</li>
+<li>Validate parsed or copied untrusted data against a schema before use, and drop <code>__proto__</code> keys first: <code>Object.assign</code> applies them through the prototype setter and mutates the target's prototype, while spread creates a silent own property.</li>
+</ul>
+<h2 id="dom-sinks-and-output-context">DOM Sinks and Output Context<a class="headerlink" href="#dom-sinks-and-output-context" title="Permanent link">&para;</a></h2>
+<p>Injecting attacker-controlled strings into HTML, script, or URL contexts is cross-site scripting (<a href="https://cwe.mitre.org/data/definitions/79.html">CWE-79</a>). Follow the <a href="Cross_Site_Scripting_Prevention_Cheat_Sheet.html">Cross Site Scripting Prevention Cheat Sheet</a> for per-context encoding and the <a href="DOM_based_XSS_Prevention_Cheat_Sheet.html">DOM based XSS Prevention Cheat Sheet</a> for client-side sources and sinks.</p>
+<ul>
+<li>Build DOM with <code>textContent</code> and <code>createElement</code> instead of <code>innerHTML</code> or <code>insertAdjacentHTML</code>.</li>
+<li>When HTML must be rendered, sanitize with a maintained allowlist sanitizer and enforce <a href="https://w3c.github.io/trusted-types/dist/spec/">Trusted Types</a> with no permissive default policy.</li>
+<li>Framework auto-escaping has explicit bypasses that must never receive untrusted input: React <code>dangerouslySetInnerHTML</code>, Vue <code>v-html</code>, and Angular <code>bypassSecurityTrustHtml</code> and its siblings.</li>
+</ul>
+<h2 id="async-error-handling-messaging-and-origin-checks">Async Error Handling, Messaging, and Origin Checks<a class="headerlink" href="#async-error-handling-messaging-and-origin-checks" title="Permanent link">&para;</a></h2>
+<p>Not every promise failure is a defect. An <em>expected</em> failure is part of a function's contract, such as a lookup that returns <code>null</code> for a missing key or a parse that throws on malformed input; handle it where the caller decides what to do, with a <code>try</code>/<code>catch</code> around <code>await</code> or a <code>.catch</code> on the terminal link of the chain, and return a typed result or a documented error. An <em>unhandled</em> rejection is a promise that rejects with no handler attached, so the failure propagates past the call site and is usually a bug: browsers report it in the console and fire an <code>unhandledrejection</code> event, while Node.js behavior depends on its unhandled-rejection mode and may terminate the process (<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises#promise_rejection_events">MDN promise rejection events</a>). Keep promise chains flat with a terminal error handler so genuinely unexpected rejections stay visible, and do not silence them with an empty <code>catch</code>. Server-side specifics live in the <a href="Nodejs_Security_Cheat_Sheet.html">Node.js Security Cheat Sheet</a> and are not repeated here.</p>
+<p>For <code>postMessage</code>, the receiver must verify <code>event.origin</code> against an explicit allowlist, check <code>event.source</code> when a conversation partner is expected, and validate <code>event.data</code> against the expected schema before acting on it. The sender must pass an exact <code>targetOrigin</code>, never <code>"*"</code> for sensitive data (<a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage">MDN postMessage</a>). Prefer narrow <code>MessageChannel</code> ports over broadcast messaging where the design allows it.</p>
+<h2 id="typescript-specific-caveats">TypeScript-Specific Caveats<a class="headerlink" href="#typescript-specific-caveats" title="Permanent link">&para;</a></h2>
+<p>Types are erased at runtime, so TypeScript alone enforces nothing against a malicious or malformed caller.</p>
+<ul>
+<li>Treat <code>any</code> as a hole in every check. <code>unknown</code> is the safe default for values of unknown type, because it forces you to narrow before use, whereas <code>any</code> disables type checking for that value (<a href="https://www.typescriptlang.org/docs/handbook/2/functions.html#unknown">TypeScript Handbook: <code>unknown</code></a>).</li>
+<li>Type assertions (<code>as</code>) and non-null assertions (<code>!</code>) silence the compiler without changing runtime values; do not use them on untrusted data.</li>
+<li>Enable <code>strict</code> in <code>tsconfig.json</code> (plus <code>noUncheckedIndexedAccess</code> where affordable) to catch accidental unsafety in your own code. It is a code-quality control, not a trust boundary.</li>
+<li>Validate at every trust boundary (network responses, <code>postMessage</code> payloads, storage reads) with a runtime schema validator. The validated type should flow from the schema, not from a parallel hand-written interface.</li>
+</ul>
+<h2 id="linting-and-dependency-tooling">Linting and Dependency Tooling<a class="headerlink" href="#linting-and-dependency-tooling" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Lint with <a href="https://typescript-eslint.io/"><code>typescript-eslint</code></a> recommended sets plus <code>no-eval</code>, <code>no-implied-eval</code>, and <code>no-new-func</code>. Keep dependencies updated so new rules apply.</li>
+<li>Pin versions with a lockfile, review dependency changes, and monitor advisories. Frontend dependency-review specifics overlap with the <a href="Nodejs_Security_Cheat_Sheet.html">Node.js Security Cheat Sheet</a>.</li>
+<li>For third-party scripts loaded from a CDN, pin a Subresource Integrity hash with <code>crossorigin</code> handling per the <a href="Third_Party_Javascript_Management_Cheat_Sheet.html">Third Party JavaScript Management Cheat Sheet</a>.</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage">MDN: Window.postMessage</a></li>
+<li><a href="https://www.typescriptlang.org/docs/handbook/2/functions.html#unknown">TypeScript Handbook: unknown</a></li>
+<li><a href="https://w3c.github.io/trusted-types/dist/spec/">W3C Trusted Types</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

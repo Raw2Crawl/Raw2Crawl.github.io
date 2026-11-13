@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Laravel | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Laravel">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Laravel_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="laravel-cheat-sheet">Laravel Cheat Sheet<a class="headerlink" href="#laravel-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>This <em>Cheatsheet</em> intends to provide security tips to developers building Laravel applications. It aims to cover all common vulnerabilities and how to ensure that your Laravel applications are secure.</p>
+<p>The Laravel Framework provides in-built security features and is meant to be secure by default. However, it also provides additional flexibility for complex use cases. This means that developers unfamiliar with the inner workings of Laravel may fall into the trap of using complex features in a way that is not secure. This guide is meant to educate developers to avoid common pitfalls and develop Laravel applications in a secure manner.</p>
+<h2 id="the-basics">The Basics<a class="headerlink" href="#the-basics" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Make sure your app is not in debug mode while in production. To turn off debug mode, set your <code>APP_DEBUG</code> environment variable to <code>false</code>:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="na">APP_DEBUG</span><span class="o">=</span><span class="s">false</span>
+</code></pre></div>
+<ul>
+<li>Make sure your application key has been generated. Laravel applications use the app key for symmetric encryption and SHA256 hashes such as cookie encryption, signed URLs, password reset tokens and session data encryption. To generate the app key, you may run the <code>key:generate</code> Artisan command:</li>
+</ul>
+<div class="highlight"><pre><span></span><code>php<span class="w"> </span>artisan<span class="w"> </span>key:generate
+</code></pre></div>
+<ul>
+<li>
+<p>Make sure your PHP configuration is secure. You may refer the <a href="PHP_Configuration_Cheat_Sheet.html">PHP Configuration Cheat Sheet</a> for more information on secure PHP configuration settings.</p>
+</li>
+<li>
+<p>Set safe file and directory permissions on your Laravel application. In general, all Laravel directories should be setup with a max permission level of <code>775</code> and non-executable files with a max permission level of <code>664</code>. Executable files such as Artisan or deployment scripts should be provided with a max permission level of <code>775</code>.</p>
+</li>
+<li>
+<p>Make sure your application does not have vulnerable dependencies.</p>
+</li>
+</ul>
+<h2 id="cookie-security-and-session-management">Cookie Security and Session Management<a class="headerlink" href="#cookie-security-and-session-management" title="Permanent link">&para;</a></h2>
+<p>By default, Laravel is configured in a secure manner. However, if you change your cookie or session configurations, make sure of the following:</p>
+<ul>
+<li>Enable the cookie encryption middleware if you use the <code>cookie</code> session store or if you store any kind of data that should not be readable or tampered with by clients. In general, this should be enabled unless your application has a very specific use case that requires disabling this. To enable this middleware, simply add the <code>EncryptCookies</code> middleware to the <code>web</code> middleware group in your <code>App\Http\Kernel</code> class:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="x">/**</span>
+<span class="x"> * The application's route middleware groups.</span>
+<span class="x"> *</span>
+<span class="x"> * @var array</span>
+<span class="x"> */</span>
+<span class="x">protected $middlewareGroups = [</span>
+<span class="x">    'web' =&gt; [</span>
+<span class="x">        \App\Http\Middleware\EncryptCookies::class,</span>
+<span class="x">        ...</span>
+<span class="x">    ],</span>
+<span class="x">    ...</span>
+<span class="x">];</span>
+</code></pre></div>
+<ul>
+<li>Enable the <code>HttpOnly</code> attribute on your session cookies via your <code>config/session.php</code> file, so that your session cookies are inaccessible from JavaScript:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="x">'http_only' =&gt; true,</span>
+</code></pre></div>
+<ul>
+<li>Unless cookies must be shared with subdomains, set <code>domain</code> to <code>null</code> in <code>config/session.php</code> to omit the Domain attribute. This restricts <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#domaindomain-value">where the browser sends that cookie</a> to the setting host; it does not prevent sibling subdomains from setting same-name parent-domain cookies. For stronger protection against these cookie collisions, use a <a href="Session_Management_Cheat_Sheet.html#cookie-name-prefixes"><code>__Host-</code> session cookie</a> with <code>Secure</code>, <code>Path=/</code>, and no Domain attribute on supporting browsers:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="x">'domain' =&gt; null,</span>
+</code></pre></div>
+<ul>
+<li>Set your <code>SameSite</code> cookie attribute to <code>lax</code> or <code>strict</code> in your <code>config/session.php</code> file to restrict your cookies to a first-party or same-site context:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="x">'same_site' =&gt; 'lax',</span>
+</code></pre></div>
+<ul>
+<li>If your application is HTTPS only, it is recommended to set the <code>secure</code> configuration option in your <code>config/session.php</code> file to <code>true</code> to protect against man-in-the-middle attacks. If your application has a combination of HTTP and HTTPS, then it is recommended to set this value to <code>null</code> so that the secure attribute is set automatically when serving HTTPS requests:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="x">'secure' =&gt; null,</span>
+</code></pre></div>
+<ul>
+<li>Ensure that you have a low session idle timeout value. <a href="Session_Management_Cheat_Sheet.html">OWASP recommends</a> a 2-5 minutes idle timeout for high value applications and 15-30 minutes for low risk applications. This can be configured in your <code>config/session.php</code> file:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="x">'lifetime' =&gt; 15,</span>
+</code></pre></div>
+<p>You may also refer the <a href="https://owasp.org/www-chapter-london/assets/slides/OWASPLondon20171130_Cookie_Security_Myths_Misconceptions_David_Johansson.pdf">Cookie Security Guide</a> to learn more about cookie security and the cookie attributes mentioned above.</p>
+<h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
+<h3 id="guards-and-providers">Guards and Providers<a class="headerlink" href="#guards-and-providers" title="Permanent link">&para;</a></h3>
+<p>At its core, Laravel's authentication facilities are made up of "guards" and "providers". Guards define how users are authenticated for each request. Providers define how users are retrieved from your persistent storage.</p>
+<p>Laravel ships with a <code>session</code> guard which maintains state using session storage and cookies, and a <code>token</code> guard for API tokens.</p>
+<p>For providers, Laravel ships with a <code>eloquent</code> provider for retrieving users using the Eloquent ORM and the <code>database</code> provider for retrieving users using the database query builder.</p>
+<p>Guards and providers can be configured in the <code>config/auth.php</code> file. Laravel offers the ability to build custom guards and providers as well.</p>
+<h3 id="starter-kits">Starter Kits<a class="headerlink" href="#starter-kits" title="Permanent link">&para;</a></h3>
+<p>Laravel offers a wide variety of first party application starter kits that include in-built authentication features:</p>
+<ol>
+<li><a href="https://laravel.com/docs/8.x/starter-kits#laravel-breeze">Laravel Breeze</a>: A simple, minimal implementation of all Laravel's authentication features including login, registration, password reset, email verification and password confirmation.</li>
+<li><a href="https://laravel.com/docs/fortify">Laravel Fortify</a>: A headless authentication backend that includes the above authentication features along with two-factor authentication.</li>
+<li><a href="https://jetstream.laravel.com/">Laravel Jetstream</a>: An application starter kit that provides a UI on top of Laravel Fortify's authentication features.</li>
+</ol>
+<p>It is recommended to use one of these starter kits to ensure robust and secure authentication for your Laravel applications.</p>
+<h3 id="api-authentication-packages">API Authentication Packages<a class="headerlink" href="#api-authentication-packages" title="Permanent link">&para;</a></h3>
+<p>Laravel also offers the following API authentication packages:</p>
+<ol>
+<li><a href="https://laravel.com/docs/passport">Passport</a>: An OAuth2 authentication provider.</li>
+<li><a href="https://laravel.com/docs/sanctum">Sanctum</a>: An API token authentication provider.</li>
+</ol>
+<p>Starter kits such as Fortify and Jetstream have in-built support for Sanctum.</p>
+<h2 id="mass-assignment">Mass Assignment<a class="headerlink" href="#mass-assignment" title="Permanent link">&para;</a></h2>
+<p><a href="Mass_Assignment_Cheat_Sheet.html">Mass assignment</a> is a common vulnerability in modern web applications that use an ORM like Laravel's Eloquent ORM.</p>
+<p>A mass assignment is a vulnerability where an ORM pattern is abused to modify data items that the user should not be normally allowed to modify.</p>
+<p>Consider the following code:</p>
+<div class="highlight"><pre><span></span><code><span class="x">Route::any('/profile', function (Request $request) {</span>
+<span class="x">    $request-&gt;user()-&gt;forceFill($request-&gt;all())-&gt;save();</span>
+
+<span class="x">    $user = $request-&gt;user()-&gt;fresh();</span>
+
+<span class="x">    return response()-&gt;json(compact('user'));</span>
+<span class="x">})-&gt;middleware('auth');</span>
+</code></pre></div>
+<p>The above profile route allows the logged in user to change their profile information.</p>
+<p>However, let's say there is an <code>is_admin</code> column in the users table. You probably do not want the user to be allowed to change the value of this column. However, the above code allows users to change any column values for their row in the users table. This is a mass assignment vulnerability.</p>
+<p>Laravel has in-built features by default to protect against this vulnerability. Make sure of the following to stay secure:</p>
+<ul>
+<li>Qualify the allowed parameters that you wish to update using <code>$request-&gt;only</code> or <code>$request-&gt;validated</code> rather than <code>$request-&gt;all</code>.</li>
+<li>Do not unguard models or set the <code>$guarded</code> variable to an empty array. By doing this, you are actually disabling Laravel's in-built mass assignment protection.</li>
+<li>Avoid using methods such as <code>forceFill</code> or <code>forceCreate</code> that bypass the protection mechanism. You may however use these methods if you are passing in a validated array of values.</li>
+</ul>
+<h2 id="sql-injection">SQL Injection<a class="headerlink" href="#sql-injection" title="Permanent link">&para;</a></h2>
+<p>SQL Injection attacks are unfortunately quite common in modern web applications and entail attackers providing malicious request input data to interfere with SQL queries. This guide covers SQL injection and how it can be prevented specifically for Laravel applications. You may also refer the <a href="SQL_Injection_Prevention_Cheat_Sheet.html">SQL Injection Prevention Cheatsheet</a> for more information that is not specific to Laravel.</p>
+<h3 id="eloquent-orm-sql-injection-protection">Eloquent ORM SQL Injection Protection<a class="headerlink" href="#eloquent-orm-sql-injection-protection" title="Permanent link">&para;</a></h3>
+<p>By default, Laravel's Eloquent ORM protects against SQL injection by parameterizing queries and using SQL bindings. For instance, consider the following query:</p>
+<div class="highlight"><pre><span></span><code><span class="x">use App\Models\User;</span>
+
+<span class="x">User::where('email', $email)-&gt;get();</span>
+</code></pre></div>
+<p>The code above fires the query below:</p>
+<div class="highlight"><pre><span></span><code><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="o">`</span><span class="n">users</span><span class="o">`</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="o">`</span><span class="n">email</span><span class="o">`</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">?</span>
+</code></pre></div>
+<p>So, even if <code>$email</code> is untrusted user input data, you are protected from SQL injection attacks.</p>
+<h3 id="raw-query-sql-injection">Raw Query SQL Injection<a class="headerlink" href="#raw-query-sql-injection" title="Permanent link">&para;</a></h3>
+<p>Laravel also offers raw query expressions and raw queries to construct complex queries or database specific queries that aren't supported out of the box.</p>
+<p>While this is great for flexibility, you must be careful to always use SQL data bindings for such queries. Consider the following query:</p>
+<div class="highlight"><pre><span></span><code><span class="x">use Illuminate\Support\Facades\DB;</span>
+<span class="x">use App\Models\User;</span>
+
+<span class="x">User::whereRaw('email = "'.$request-&gt;input('email').'"')-&gt;get();</span>
+<span class="x">DB::table('users')-&gt;whereRaw('email = "'.$request-&gt;input('email').'"')-&gt;get();</span>
+</code></pre></div>
+<p>Both lines of code actually execute the same query, which is vulnerable to SQL injection as the query does not use SQL bindings for untrusted user input data.</p>
+<p>The code above fires the following query:</p>
+<div class="highlight"><pre><span></span><code><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="o">`</span><span class="n">users</span><span class="o">`</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="o">`</span><span class="n">email</span><span class="o">`</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ss">"value of email query parameter"</span>
+</code></pre></div>
+<p>Always remember to use SQL bindings for request data. We can fix the above code by making the following modification:</p>
+<div class="highlight"><pre><span></span><code><span class="x">use App\Models\User;</span>
+
+<span class="x">User::whereRaw('email = ?', [$request-&gt;input('email')])-&gt;get();</span>
+</code></pre></div>
+<p>We can even use named SQL bindings like so:</p>
+<div class="highlight"><pre><span></span><code><span class="x">use App\Models\User;</span>
+
+<span class="x">User::whereRaw('email = :email', ['email' =&gt; $request-&gt;input('email')])-&gt;get();</span>
+</code></pre></div>
+<h3 id="column-name-sql-injection">Column Name SQL Injection<a class="headerlink" href="#column-name-sql-injection" title="Permanent link">&para;</a></h3>
+<p>You must never allow user input data to dictate column names referenced by your queries.</p>
+<p>The following queries may be vulnerable to SQL injection:</p>
+<div class="highlight"><pre><span></span><code><span class="x">use App\Models\User;</span>
+
+<span class="x">User::where($request-&gt;input('colname'), 'somedata')-&gt;get();</span>
+<span class="x">User::query()-&gt;orderBy($request-&gt;input('sortBy'))-&gt;get();</span>
+</code></pre></div>
+<p>It is important to note that even though Laravel has some in-built features such as wrapping column names to protect against the above SQL injection vulnerabilities, some database engines (depending on versions and configurations) may still be vulnerable because binding column names is not supported by databases.</p>
+<p>At the very least, this may result in a mass assignment vulnerability instead of a SQL injection because you may have expected a certain set of column values, but since they are not validated here, the user is free to use other columns as well.</p>
+<p>Always validate user input for such situations like so:</p>
+<div class="highlight"><pre><span></span><code><span class="x">use App\Models\User;</span>
+
+<span class="x">$request-&gt;validate(['sortBy' =&gt; 'in:price,updated_at']);</span>
+<span class="x">User::query()-&gt;orderBy($request-&gt;validated()['sortBy'])-&gt;get();</span>
+</code></pre></div>
+<h3 id="validation-rule-sql-injection">Validation Rule SQL Injection<a class="headerlink" href="#validation-rule-sql-injection" title="Permanent link">&para;</a></h3>
+<p>Certain validation rules have the option of providing database column names. Such rules are vulnerable to SQL injection in the same manner as column name SQL injection because they construct queries in a similar manner.</p>
+<p>For example, the following code may be vulnerable:</p>
+<div class="highlight"><pre><span></span><code><span class="x">use Illuminate\Validation\Rule;</span>
+
+<span class="x">$request-&gt;validate([</span>
+<span class="x">    'id' =&gt; Rule::unique('users')-&gt;ignore($id, $request-&gt;input('colname'))</span>
+<span class="x">]);</span>
+</code></pre></div>
+<p>Behind the scenes, the above code triggers the following query:</p>
+<div class="highlight"><pre><span></span><code><span class="x">use App\Models\User;</span>
+
+<span class="x">$colname = $request-&gt;input('colname');</span>
+<span class="x">User::where($colname, $request-&gt;input('id'))-&gt;where($colname, '&lt;&gt;', $id)-&gt;count();</span>
+</code></pre></div>
+<p>Since the column name is dictated by user input, it is similar to column name SQL injection.</p>
+<h2 id="cross-site-scripting-xss">Cross Site Scripting (XSS)<a class="headerlink" href="#cross-site-scripting-xss" title="Permanent link">&para;</a></h2>
+<p><a href="https://owasp.org/www-community/attacks/xss/">XSS attacks</a> are injection attacks where malicious scripts (such as JavaScript code snippets) are injected into trusted websites.</p>
+<p>Laravel's <a href="https://laravel.com/framework/docs/blade#displaying-data">Blade echo statements</a> <code>{{ }}</code> HTML-escape ordinary string values using <code>htmlspecialchars</code>. This is appropriate for HTML text and quoted ordinary text attributes, but does not validate URL schemes or encode JavaScript or CSS contexts.</p>
+<p>Laravel also offers displaying unescaped data using the unescaped syntax <code>{!! !!}</code>. This must not be used on any untrusted data, otherwise your application will be subject to an XSS attack.</p>
+<p>For instance, if you have something like this in any of your Blade templates, it would result in a vulnerability:</p>
+<div class="highlight"><pre><span></span><code>{!! request()-&gt;input('somedata') !!}
+</code></pre></div>
+<p>For example, render untrusted text inside an ordinary HTML element:</p>
+<div class="highlight"><pre><span></span><code>&lt;span&gt;{{ request()-&gt;input('somedata') }}&lt;/span&gt;
+</code></pre></div>
+<p>For data embedded in JavaScript, follow Laravel's <a href="https://laravel.com/framework/docs/blade#rendering-json"><code>Js::from</code> guidance</a>. For URLs, CSS, and other output contexts, follow the <a href="Cross_Site_Scripting_Prevention_Cheat_Sheet.html">Cross Site Scripting Prevention Cheat Sheet</a>.</p>
+<h2 id="unrestricted-file-uploads">Unrestricted File Uploads<a class="headerlink" href="#unrestricted-file-uploads" title="Permanent link">&para;</a></h2>
+<p>Unrestricted file upload attacks entail attackers uploading malicious files to compromise web applications. This section describes how to protect against such attacks while building Laravel applications. You may also refer the <a href="File_Upload_Cheat_Sheet.html">File Upload Cheatsheet</a> to learn more.</p>
+<h3 id="always-validate-file-type-and-size">Always Validate File Type and Size<a class="headerlink" href="#always-validate-file-type-and-size" title="Permanent link">&para;</a></h3>
+<p>Validate allowed file types and impose a maximum file size as one layer of protection. This illustrative rule uses <a href="https://laravel.com/framework/docs/12.x/validation#rule-max"><code>max</code></a> to cap the file size rather than requiring an exact size:</p>
+<div class="highlight"><pre><span></span><code><span class="x">$request-&gt;validate([</span>
+<span class="x">    'photo' =&gt; 'file|max:100|mimes:jpg,bmp,png'</span>
+<span class="x">]);</span>
+</code></pre></div>
+<p>Storage DOS attacks exploit missing file size validations and upload massive files to cause a denial of service (DOS) by exhausting the disk space.</p>
+<p>Remote code execution attacks entail first, uploading malicious executable files (such as PHP files) and then, triggering their malicious code by visiting the file URL (if public).</p>
+<p>These validations alone do not prevent either attack. Laravel's <a href="https://laravel.com/framework/docs/12.x/validation#rule-mimes"><code>mimes</code> rule</a> infers type from content; it does not validate the user-supplied extension or make the file safe to execute. Generate stored filenames, keep uploads outside the webroot or on a separate host, and ensure uploaded files cannot be executed by the server. Bound aggregate storage and upload frequency as well as individual file size. Follow the <a href="File_Upload_Cheat_Sheet.html#file-upload-protection">File Upload Cheat Sheet</a> for the remaining controls.</p>
+<h3 id="do-not-rely-on-user-input-to-dictate-filenames-or-path">Do Not Rely On User Input To Dictate Filenames or Path<a class="headerlink" href="#do-not-rely-on-user-input-to-dictate-filenames-or-path" title="Permanent link">&para;</a></h3>
+<p>If your application allows user controlled data to construct the path of a file upload, this may result in overwriting a critical file or storing the file in a bad location.</p>
+<p>Consider the following code:</p>
+<div class="highlight"><pre><span></span><code><span class="x">Route::post('/upload', function (Request $request) {</span>
+<span class="x">    $request-&gt;file('file')-&gt;storeAs(auth()-&gt;id(), $request-&gt;input('filename'));</span>
+
+<span class="x">    return back();</span>
+<span class="x">});</span>
+</code></pre></div>
+<p>This route saves a file to a directory specific to a user ID. Here, we rely on the <code>filename</code> user input data and this may result in a vulnerability as the filename could be something like <code>../2/filename.pdf</code>. This will upload the file in user ID 2's directory instead of the directory pertaining to the current logged in user.</p>
+<p>To fix this, we should use the <code>basename</code> PHP function to strip out any directory information from the <code>filename</code> input data:</p>
+<div class="highlight"><pre><span></span><code><span class="x">Route::post('/upload', function (Request $request) {</span>
+<span class="x">    $request-&gt;file('file')-&gt;storeAs(auth()-&gt;id(), basename($request-&gt;input('filename')));</span>
+
+<span class="x">    return back();</span>
+<span class="x">});</span>
+</code></pre></div>
+<h3 id="avoid-processing-zip-or-xml-files-if-possible">Avoid Processing ZIP or XML Files If Possible<a class="headerlink" href="#avoid-processing-zip-or-xml-files-if-possible" title="Permanent link">&para;</a></h3>
+<p>XML files can expose your application to a wide variety of attacks such as XXE attacks, the billion laughs attack and others. If you process ZIP files, you may be exposed to zip bomb DOS attacks.</p>
+<p>Refer the <a href="XML_Security_Cheat_Sheet.html">XML Security Cheatsheet</a> and the <a href="File_Upload_Cheat_Sheet.html">File Upload Cheatsheet</a> to learn more.</p>
+<h2 id="path-traversal">Path Traversal<a class="headerlink" href="#path-traversal" title="Permanent link">&para;</a></h2>
+<p>A path traversal attack aims to access files by manipulating request input data with <code>../</code> sequences and variations or by using absolute file paths.</p>
+<p>If you allow users to download files by filename, you may be exposed to this vulnerability if input data is not stripped of directory information.</p>
+<p>Consider the following code:</p>
+<div class="highlight"><pre><span></span><code><span class="x">Route::get('/download', function(Request $request) {</span>
+<span class="x">    return response()-&gt;download(storage_path('content/').$request-&gt;input('filename'));</span>
+<span class="x">});</span>
+</code></pre></div>
+<p>Here, the filename is not stripped of directory information, so a malformed filename such as <code>../../.env</code> could expose your application credentials to potential attackers.</p>
+<p>Similar to unrestricted file uploads, you should use the <code>basename</code> PHP function to strip out directory information like so:</p>
+<div class="highlight"><pre><span></span><code><span class="x">Route::get('/download', function(Request $request) {</span>
+<span class="x">    return response()-&gt;download(storage_path('content/').basename($request-&gt;input('filename')));</span>
+<span class="x">});</span>
+</code></pre></div>
+<h2 id="open-redirection">Open Redirection<a class="headerlink" href="#open-redirection" title="Permanent link">&para;</a></h2>
+<p>Open Redirection attacks in themselves are not that dangerous but they enable phishing attacks.</p>
+<p>Consider the following code:</p>
+<div class="highlight"><pre><span></span><code><span class="x">Route::get('/redirect', function (Request $request) {</span>
+<span class="x">   return redirect($request-&gt;input('url'));</span>
+<span class="x">});</span>
+</code></pre></div>
+<p>This code redirects the user to any external URL provided by user input. This could enable attackers to create seemingly safe URLs like <code>https://example.com/redirect?url=http://evil.com</code>. For instance, attackers may use a URL of this type to spoof password reset emails and lead victims to expose their credentials on the attacker's website.</p>
+<h2 id="cross-site-request-forgery-csrf">Cross Site Request Forgery (CSRF)<a class="headerlink" href="#cross-site-request-forgery-csrf" title="Permanent link">&para;</a></h2>
+<p><a href="https://owasp.org/www-community/attacks/csrf">Cross-Site Request Forgery (CSRF)</a> is a type of attack that occurs when a malicious web site, email, blog, instant message, or program causes a user's web browser to perform an unwanted action on a trusted site when the user is authenticated.</p>
+<p>Laravel provides CSRF protection out-of-the-box with the <code>VerifyCSRFToken</code> middleware. Generally, if you have this middleware in the <code>web</code> middleware group of your <code>App\Http\Kernel</code> class, you should be well protected:</p>
+<div class="highlight"><pre><span></span><code><span class="x">/**</span>
+<span class="x"> * The application's route middleware groups.</span>
+<span class="x"> *</span>
+<span class="x"> * @var array</span>
+<span class="x"> */</span>
+<span class="x">protected $middlewareGroups = [</span>
+<span class="x">    'web' =&gt; [</span>
+<span class="x">        ...</span>
+<span class="x">         \App\Http\Middleware\VerifyCsrfToken::class,</span>
+<span class="x">         ...</span>
+<span class="x">    ],</span>
+<span class="x">];</span>
+</code></pre></div>
+<p>Next, for all your <code>POST</code> request forms, you may use the <code>@csrf</code> blade directive to generate the hidden CSRF input token fields:</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">form</span> <span class="na">method</span><span class="o">=</span><span class="s">"POST"</span> <span class="na">action</span><span class="o">=</span><span class="s">"/profile"</span><span class="p">&gt;</span>
+    @csrf
+
+    <span class="cm">&lt;!-- Equivalent to... --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"hidden"</span> <span class="na">name</span><span class="o">=</span><span class="s">"_token"</span> <span class="na">value</span><span class="o">=</span><span class="s">"{{ csrf_token() }}"</span> <span class="p">/&gt;</span>
+<span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+</code></pre></div>
+<p>For AJAX requests, you can setup the <a href="https://laravel.com/docs/csrf#csrf-x-csrf-token">X-CSRF-Token header</a>.</p>
+<p>Laravel also provides the ability to exclude certain routes from CSRF protection using the <code>$except</code> variable in your CSRF middleware class. Typically, you would want to exclude only stateless routes (e.g. APIs or webhooks) from CSRF protection. If any other routes are excluded, these may result in CSRF vulnerabilities.</p>
+<h2 id="command-injection">Command Injection<a class="headerlink" href="#command-injection" title="Permanent link">&para;</a></h2>
+<p>Command Injection vulnerabilities involve executing shell commands constructed with unescaped user input data.</p>
+<p>For example, the following code performs a <code>whois</code> on a user provided domain name:</p>
+<div class="highlight"><pre><span></span><code><span class="x">public function verifyDomain(Request $request)</span>
+<span class="x">{</span>
+<span class="x">    exec('whois '.$request-&gt;input('domain'));</span>
+<span class="x">}</span>
+</code></pre></div>
+<p>Avoid invoking operating-system commands when a PHP library can perform the operation. If a process is required, keep the executable fixed and pass arguments separately using <a href="https://symfony.com/doc/current/components/process.html#using-features-from-the-os-shell">Symfony Process with an argument array</a>. Validate the domain against the expected format before passing it to <code>whois</code>; argument separation does not stop a value from being interpreted as a command option. See <a href="OS_Command_Injection_Defense_Cheat_Sheet.html#argument-injection">Argument Injection</a> for this remaining risk.</p>
+<p>Do not use <a href="https://www.php.net/manual/en/function.escapeshellcmd.php"><code>escapeshellcmd()</code></a> as a substitute for separating arguments: it still permits extra arguments. If shell invocation is unavoidable, <a href="https://www.php.net/manual/en/function.escapeshellarg.php"><code>escapeshellarg()</code></a> escapes a single argument, but you must still validate its meaning to the called program.</p>
+<h2 id="other-injections">Other Injections<a class="headerlink" href="#other-injections" title="Permanent link">&para;</a></h2>
+<p>Object injection, eval code injection and extract variable hijacking attacks involve unserializing, evaluating or using the <code>extract</code> function on untrusted user input data.</p>
+<p>Some examples are:</p>
+<div class="highlight"><pre><span></span><code><span class="x">unserialize($request-&gt;input('data'));</span>
+<span class="x">eval($request-&gt;input('data'));</span>
+<span class="x">extract($request-&gt;all());</span>
+</code></pre></div>
+<p>In general, avoid passing any untrusted input data to these dangerous functions.</p>
+<h2 id="rate-limiting">Rate Limiting<a class="headerlink" href="#rate-limiting" title="Permanent link">&para;</a></h2>
+<p>Laravel provides built-in mechanisms to protect your routes from excessive requests and potential abuse.</p>
+<p>The two main ways to implement rate limiting are:</p>
+<ol>
+<li><strong><code>throttle</code> middleware</strong> – A built-in middleware that you can apply directly to routes or route groups.</li>
+<li><strong><code>RateLimiter::for()</code></strong> – Allows you to define custom rate limiting rules with more flexibility.</li>
+</ol>
+<p>Below are the main ways to apply rate limiting effectively:</p>
+<h3 id="1-per-route">1. Per Route<a class="headerlink" href="#1-per-route" title="Permanent link">&para;</a></h3>
+<p>Apply a limit directly to a single route using the <code>throttle</code> middleware:</p>
+<div class="highlight"><pre><span></span><code><span class="x">Route::get('/profile', function () {</span>
+<span class="x">    return 'User profile';</span>
+<span class="x">})-&gt;middleware('throttle:10,1'); // 10 requests per minute</span>
+</code></pre></div>
+<h3 id="2-per-route-group">2. Per Route Group<a class="headerlink" href="#2-per-route-group" title="Permanent link">&para;</a></h3>
+<p>Apply a limit to a group of routes:</p>
+<div class="highlight"><pre><span></span><code><span class="x">Route::middleware('throttle:20,1')-&gt;group(function () {</span>
+<span class="x">    Route::get('/posts', fn () =&gt; 'Posts');</span>
+<span class="x">    Route::get('/comments', fn () =&gt; 'Comments');</span>
+<span class="x">});</span>
+</code></pre></div>
+<h3 id="3-custom-rate-limiter">3. Custom Rate Limiter<a class="headerlink" href="#3-custom-rate-limiter" title="Permanent link">&para;</a></h3>
+<p>Define a custom rate limiter in <code>RouteServiceProvider</code> using <code>RateLimiter::for()</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="x">use Illuminate\Cache\RateLimiting\Limit;</span>
+<span class="x">use Illuminate\Support\Facades\RateLimiter;</span>
+
+<span class="x">RateLimiter::for('custom-limit', function ($request) {</span>
+<span class="x">    return Limit::perMinute(5)-&gt;by($request-&gt;user()?-&gt;id ?: $request-&gt;ip());</span>
+<span class="x">});</span>
+</code></pre></div>
+<p>Apply the custom limiter to your routes:</p>
+<div class="highlight"><pre><span></span><code><span class="x">Route::middleware('throttle:custom-limit')-&gt;get('/dashboard', fn () =&gt; 'Dashboard');</span>
+</code></pre></div>
+<h3 id="4-global-api-web-rate-limiting">4. Global API / Web Rate Limiting<a class="headerlink" href="#4-global-api-web-rate-limiting" title="Permanent link">&para;</a></h3>
+<p>Laravel allows you to apply global rate limiting to entire route groups like <code>api</code> or <code>web</code> by including the <code>throttle</code> middleware in <code>Kernel.php</code> (note that the <code>api</code> group is rate-limited by default).</p>
+<div class="highlight"><pre><span></span><code><span class="x">protected $middlewareGroups = [</span>
+<span class="x">    'api' =&gt; [</span>
+<span class="x">        'throttle:60,1', // 60 requests per minute globally for API</span>
+<span class="x">        // ...</span>
+<span class="x">    ],</span>
+
+<span class="x">    'web' =&gt; [</span>
+<span class="x">        'throttle:30,1', // 30 requests per minute globally for web</span>
+<span class="x">        // ...</span>
+<span class="x">    ],</span>
+<span class="x">];</span>
+</code></pre></div>
+<p>For more details, see the official Laravel documentation on <a href="https://laravel.com/docs/12.x/routing#rate-limiting">rate limiting</a>.</p>
+<h2 id="security-headers">Security Headers<a class="headerlink" href="#security-headers" title="Permanent link">&para;</a></h2>
+<p>You should consider adding the following security headers to your web server or Laravel application middleware:</p>
+<ul>
+<li>X-Frame-Options</li>
+<li>X-Content-Type-Options</li>
+<li>Strict-Transport-Security (for HTTPS only applications)</li>
+<li>Content-Security-Policy</li>
+</ul>
+<p>For more information, refer the <a href="https://owasp.org/www-project-secure-headers/">OWASP secure headers project</a>.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://laravel.com/docs/authentication">Laravel Documentation on Authentication</a></li>
+<li><a href="https://laravel.com/docs/authorization">Laravel Documentation on Authorization</a></li>
+<li><a href="https://laravel.com/docs/csrf">Laravel Documentation on CSRF</a></li>
+<li><a href="https://laravel.com/docs/validation">Laravel Documentation on Validation</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

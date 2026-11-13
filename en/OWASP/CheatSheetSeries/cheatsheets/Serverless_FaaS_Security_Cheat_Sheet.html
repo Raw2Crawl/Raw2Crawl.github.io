@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Serverless FaaS Security | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Serverless FaaS Security">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Serverless_FaaS_Security_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="serverless-faas-security-cheat-sheet">Serverless / FaaS Security Cheat Sheet<a class="headerlink" href="#serverless-faas-security-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>Serverless computing (Functions as a Service — FaaS) platforms such as AWS Lambda, Azure Functions, and Google Cloud Functions simplify application development and scaling.
+However, the execution model (short-lived, event-driven functions running in managed environments) introduces unique security risks compared to traditional architectures.</p>
+<p>This cheat sheet provides best practices to secure serverless applications and minimize attack surfaces.</p>
+<h2 id="key-risks">Key Risks<a class="headerlink" href="#key-risks" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Over-permissioned functions (broad IAM roles, <code>*</code> policies).</li>
+<li>Unvalidated event inputs (API Gateway, S3, Pub/Sub, IoT).</li>
+<li>Cold start data leakage (persistent state, side-channel timing).</li>
+<li>Function chaining abuse (compromised function invoking others).</li>
+<li>Shared environment risks (multi-tenant leakage, <code>/tmp</code> reuse).</li>
+<li>Hardcoded secrets in code or platform config.</li>
+<li>Excessive network access.</li>
+</ul>
+<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
+<h3 id="1-principle-of-least-privilege">1. Principle of Least Privilege<a class="headerlink" href="#1-principle-of-least-privilege" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Assign minimal IAM permissions to each function.</li>
+<li>Use role-per-function (avoid shared high-privilege roles).</li>
+<li>Scope database/API keys to the smallest set of actions needed.</li>
+</ul>
+<p><strong>Bad IAM Policy (too broad):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"Effect"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Allow"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"Action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"*"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"Resource"</span><span class="p">:</span><span class="w"> </span><span class="s2">"*"</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Good IAM Policy (scoped):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"Effect"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Allow"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"Action"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"dynamodb:GetItem"</span><span class="p">,</span><span class="w"> </span><span class="s2">"dynamodb:PutItem"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"Resource"</span><span class="p">:</span><span class="w"> </span><span class="s2">"arn:aws:dynamodb:us-east-1:123456789012:table/Orders"</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="2-environment-isolation">2. Environment Isolation<a class="headerlink" href="#2-environment-isolation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Disable default network access unless required (e.g. outbound internet access).</li>
+<li>Place functions in private subnets with controlled egress.</li>
+<li>Isolate sensitive functions (e.g. payment, auth) from general-purpose ones.</li>
+<li>Separate production vs. staging environments with strict boundaries.</li>
+</ul>
+<p><strong>AWS Lambda VPC Config (restrictive):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nt">VpcConfig</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">SubnetIds</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">subnet-123456</span>
+<span class="w">  </span><span class="nt">SecurityGroupIds</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sg-restrict-outbound</span>
+</code></pre></div>
+<h3 id="3-secure-function-invocation">3. Secure Function Invocation<a class="headerlink" href="#3-secure-function-invocation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Enforce authentication and authorization on all triggers (API Gateway, Pub/Sub, S3, IoT).</li>
+<li>Validate function-to-function calls with signed tokens or workload identities.</li>
+<li>Apply rate limiting and throttling to mitigate DoS and abuse.</li>
+</ul>
+<p><strong>API Gateway Authorizer Example (JWT validation):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"Type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"JWT"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"IdentitySource"</span><span class="p">:</span><span class="w"> </span><span class="s2">"$request.header.Authorization"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"Issuer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://secure-idp.example.com/"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"Audience"</span><span class="p">:</span><span class="w"> </span><span class="s2">"my-api-client"</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="4-event-data-validation">4. Event Data Validation<a class="headerlink" href="#4-event-data-validation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Treat all event payloads as untrusted input.</li>
+<li>Apply strong input validation &amp; sanitization (length, type, format).</li>
+<li>Protect against common injection attacks (SQLi, XSS, JSON injection, deserialization).</li>
+<li>Strip unnecessary fields and metadata before processing.</li>
+</ul>
+<p>Example: Python input validation for Lambda</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">lambda_handler</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">event</span><span class="p">[</span><span class="s2">"body"</span><span class="p">])</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"email"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[^@]+@[^@]+\.[^@]+"</span><span class="p">,</span> <span class="n">email</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"statusCode"</span><span class="p">:</span> <span class="mi">400</span><span class="p">,</span> <span class="s2">"body"</span><span class="p">:</span> <span class="s2">"Invalid email"</span><span class="p">}</span>
+
+    <span class="c1"># process safely</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"statusCode"</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">"body"</span><span class="p">:</span> <span class="s2">"OK"</span><span class="p">}</span>
+</code></pre></div>
+<h3 id="5-cold-start-execution-context-security">5. Cold Start &amp; Execution Context Security<a class="headerlink" href="#5-cold-start-execution-context-security" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Do not assume function runtime context is clean between invocations.</li>
+<li>Avoid storing secrets or temporary sensitive data in global/static variables.</li>
+<li>Protect against side-channel leaks (timing differences, leftover files in /tmp).</li>
+<li>For sensitive workloads, enforce single-use execution environments if the platform supports it.</li>
+</ul>
+<p><strong>Bad:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Secret stays in global variable across invocations</span>
+<span class="n">SECRET_KEY</span> <span class="o">=</span> <span class="s2">"hardcoded-secret"</span>
+</code></pre></div>
+<p><strong>Good:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">my_secrets_lib</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_secret</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">lambda_handler</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+    <span class="n">secret</span> <span class="o">=</span> <span class="n">get_secret</span><span class="p">(</span><span class="s2">"db-password"</span><span class="p">)</span>  <span class="c1"># fetch fresh each time</span>
+    <span class="o">...</span>
+</code></pre></div>
+<h3 id="6-secrets-management">6. Secrets Management<a class="headerlink" href="#6-secrets-management" title="Permanent link">&para;</a></h3>
+<p>See the <a href="Secrets_Management_Cheat_Sheet.html">Secrets Management Cheat Sheet</a> for secret lifecycle controls.</p>
+<ul>
+<li>Fetch secrets at runtime from a vault or caching extension — not from platform-level function configuration (e.g. Lambda Environment Variables).</li>
+<li>Use ephemeral credentials (STS, workload identity federation).</li>
+<li>Rotate secrets automatically.</li>
+</ul>
+<p><strong>AWS Lambda Secret Fetch (Python via Parameters and Secrets Extension):</strong></p>
+<p><strong>Note:</strong> Ensure that the AWS Lambda Parameters and Secrets Extension is added and enabled for your function (for example, as a Lambda layer). Otherwise, <code>http://localhost:2773</code> will not be available and requests to it will fail.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.parse</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_secret</span><span class="p">(</span><span class="n">secret_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Retrieves a secret using the AWS Lambda Extension local endpoint.</span>
+<span class="sd">    This method is faster and more cost-effective due to local caching.</span>
+<span class="sd">    """</span>
+    <span class="c1"># The extension provides a local HTTP endpoint on port 2773</span>
+    <span class="n">encoded_name</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">quote_plus</span><span class="p">(</span><span class="n">secret_name</span><span class="p">)</span>
+
+    <span class="n">secrets_extension_endpoint</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"http://localhost:2773/secretsmanager/get?secretId=</span><span class="si">{</span><span class="n">encoded_name</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Authenticate using the identity token provided by the Lambda environment.</span>
+    <span class="c1"># Fail fast if the token is missing to avoid confusing 4xx errors.</span>
+    <span class="n">session_token</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"AWS_SESSION_TOKEN"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">session_token</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">"Missing AWS_SESSION_TOKEN required for "</span>
+            <span class="s2">"Parameters and Secrets Extension authentication."</span>
+        <span class="p">)</span>
+
+    <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"X-Aws-Parameters-Secrets-Token"</span><span class="p">:</span> <span class="n">session_token</span>
+    <span class="p">}</span>
+
+    <span class="n">request</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span>
+        <span class="n">secrets_extension_endpoint</span><span class="p">,</span>
+        <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+        <span class="n">method</span><span class="o">=</span><span class="s2">"GET"</span>
+    <span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Error retrieving secret: </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+        <span class="n">response_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="n">secret_string</span> <span class="o">=</span> <span class="n">response_json</span><span class="p">[</span><span class="s2">"SecretString"</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">secret_string</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="7-monitoring-logging">7. Monitoring &amp; Logging<a class="headerlink" href="#7-monitoring-logging" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use centralized logging (CloudWatch, Azure Monitor, GCP Logging).</li>
+<li>Mask secrets and PII.</li>
+</ul>
+<p>Example: Redacting fields</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">log_event</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+    <span class="n">safe_event</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">(</span><span class="s2">"***"</span> <span class="k">if</span> <span class="s2">"password"</span> <span class="ow">in</span> <span class="n">k</span> <span class="k">else</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">safe_event</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="8-supply-chain-security">8. Supply Chain Security<a class="headerlink" href="#8-supply-chain-security" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Scan dependencies (<code>npm audit</code>, <code>pip-audit</code>, <code>safety</code>).</li>
+<li>Use minimal deployment packages.</li>
+<li>Sign deployment packages and verify signatures against an approved publisher before deployment. A checksum alone does not authenticate the publisher.</li>
+</ul>
+<p>For AWS Lambda, use <a href="https://docs.aws.amazon.com/lambda/latest/dg/configuration-codesigning.html">code signing configurations</a> with allowed signing profiles and <code>UntrustedArtifactOnDeployment</code> set to <code>Enforce</code>; the default <code>Warn</code> setting allows deployments that fail expiry, publisher, or revocation checks. Layers added to functions with code signing enabled must also be signed by an allowed profile.</p>
+<h2 id="dos-and-donts">Do’s and Don’ts<a class="headerlink" href="#dos-and-donts" title="Permanent link">&para;</a></h2>
+<p><strong>Do</strong>:</p>
+<ul>
+<li>Enforce least privilege per function.</li>
+<li>Validate all event inputs.</li>
+<li>Fetch secrets from vaults, not platform config.</li>
+<li>Restrict network egress.</li>
+<li>Monitor invocations and logs.</li>
+</ul>
+<p><strong>Don’t</strong>:</p>
+<ul>
+<li>Hardcode secrets in code or configs.</li>
+<li>Assume clean runtime between invocations.</li>
+<li>Give <code>*</code> IAM permissions.</li>
+<li>Leave sensitive data in <code>/tmp</code> or globals.</li>
+<li>Trust event sources blindly.</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://docs.aws.amazon.com/lambda/latest/dg/best-practices.html">AWS Lambda: Best practices</a></li>
+<li><a href="https://learn.microsoft.com/en-us/azure/azure-functions/security-concepts">Azure Functions: Security concepts</a></li>
+<li><a href="https://docs.cloud.google.com/run/docs/securing/security">Google Cloud Run: Security</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

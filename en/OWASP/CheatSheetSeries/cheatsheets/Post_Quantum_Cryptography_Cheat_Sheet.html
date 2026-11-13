@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Post Quantum Cryptography | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Post Quantum Cryptography">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Post_Quantum_Cryptography_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="post-quantum-cryptography-cheat-sheet">Post-Quantum Cryptography Cheat Sheet<a class="headerlink" href="#post-quantum-cryptography-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>Post-quantum cryptography (PQC) uses algorithms designed to resist attacks from both classical and quantum computers. A sufficiently powerful quantum computer could break <a href="https://www.rfc-editor.org/rfc/rfc9794.html#section-1">RSA, Diffie-Hellman, and elliptic curve cryptography</a>, affecting public-key encryption, key exchange, and digital signatures. This cheat sheet turns <a href="https://www.ncsc.gov.uk/guidance/pqc-migration-timelines">PQC migration planning</a> into stages for application developers: inventory dependencies, prioritize work, adopt supported implementations, test, and roll out. Start the preparation stages even when a dependency cannot yet migrate.</p>
+<h2 id="stage-1-inventory-cryptographic-dependencies">Stage 1: Inventory cryptographic dependencies<a class="headerlink" href="#stage-1-inventory-cryptographic-dependencies" title="Permanent link">&para;</a></h2>
+<p>Create a <a href="https://pages.nist.gov/nccoe-migration-post-quantum-cryptography/FAQ/index.html#what-is-a-cryptographic-inventory">cryptographic inventory</a> with one entry per use of cryptography. Include dependencies managed by your platform or service provider, not just direct calls in application code.</p>
+<table>
+<thead>
+<tr>
+<th>Record</th>
+<th>Include</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Purpose and lifetime</td>
+<td>Transport, stored data, key protection, or signatures; how long confidentiality or trust must last.</td>
+</tr>
+<tr>
+<td>Implementation</td>
+<td>Protocol, algorithms and parameters, library or service version, key and certificate identifiers. Store metadata, never secret key material.</td>
+</tr>
+<tr>
+<td>Dependencies</td>
+<td>Clients, servers, proxies, signing and verification services, key management services, hardware security modules, and backups.</td>
+</tr>
+<tr>
+<td>Ownership</td>
+<td>Responsible team or supplier, supported upgrade path, and components that cannot be updated.</td>
+</tr>
+</tbody>
+</table>
+<p>Map each transport connection separately, including connections from a gateway to the application. Trace how stored data's encryption keys are protected and recovered. Inventory signature verifiers as well as signers.</p>
+<p><strong>Complete when:</strong> each dependency has an owner and an identified migration path or a recorded blocker.</p>
+<h2 id="stage-2-prioritize-migration-work">Stage 2: Prioritize migration work<a class="headerlink" href="#stage-2-prioritize-migration-work" title="Permanent link">&para;</a></h2>
+<p>Prioritize data that must stay confidential for years and systems that will be difficult to update later, following the <a href="https://www.ncsc.gov.uk/guidance/pqc-migration-timelines">NCSC migration planning guidance</a>. Assign an owner and target date to each migration item.</p>
+<ul>
+<li><strong>Long-lived confidentiality:</strong> prioritize exposed connections and stored data whose keys depend on RSA or elliptic curve cryptography. Updating encryption later cannot protect copies an adversary has already collected.</li>
+<li><strong>Long-lived trust:</strong> plan early for software and firmware verification, trust anchors, and signed records that must remain trustworthy for years. Include the time needed to update every verifier.</li>
+<li><strong>Blocked dependencies:</strong> request a supported release and migration plan from the supplier. Record the remaining exposure, a review date, and whether replacement is necessary.</li>
+</ul>
+<p>Prefer AES-256 for additional quantum security margin, consistent with the <a href="Cryptographic_Storage_Cheat_Sheet.html#algorithms">Cryptographic Storage Cheat Sheet</a>. Use a secure encryption mode. AES-128 remains permitted: <a href="https://csrc.nist.gov/Projects/post-quantum-cryptography/faqs">NIST's PQC FAQ</a> allows continued use of AES-128, AES-192, and AES-256. Check the public-key protection of encryption keys even when the data itself uses AES.</p>
+<p><strong>Complete when:</strong> the backlog separates confidentiality and signature work, with explicit decisions for dependencies that cannot yet migrate.</p>
+<h2 id="stage-3-adopt-supported-implementations">Stage 3: Adopt supported implementations<a class="headerlink" href="#stage-3-adopt-supported-implementations" title="Permanent link">&para;</a></h2>
+<p>Upgrade maintained libraries and platform services to implementations of standardized algorithms. Select parameters through the supported protocol and your security requirements. Algorithm support alone does not establish protocol interoperability.</p>
+<table>
+<thead>
+<tr>
+<th>Use case</th>
+<th>Developer action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Key establishment</td>
+<td>Use a supported integration of the Module-Lattice-Based Key-Encapsulation Mechanism, <a href="https://csrc.nist.gov/pubs/fips/203/final">ML-KEM (FIPS 203)</a>. It establishes a shared secret for symmetric cryptography; it does not directly encrypt application data or authenticate the peer.</td>
+</tr>
+<tr>
+<td>Transport</td>
+<td>Pilot a supported classical + PQC hybrid exchange, such as <a href="https://www.rfc-editor.org/rfc/rfc10024.html">X25519MLKEM768</a>, following the <a href="Transport_Layer_Security_Cheat_Sheet.html#set-the-appropriate-diffie-hellman-groups">Transport Layer Security (TLS) Cheat Sheet</a>. Keep certificate and hostname validation enabled.</td>
+</tr>
+<tr>
+<td>Signatures</td>
+<td>Plan a separate migration using a supported signature format and verifier, such as an integration of the Module-Lattice-Based Digital Signature Algorithm, <a href="https://csrc.nist.gov/pubs/fips/204/final">ML-DSA (FIPS 204)</a>. Coordinate signer and verifier upgrades; follow the <a href="JSON_Web_Token_Cheat_Sheet.html#public-key-signatures">JSON Web Token (JWT) guidance</a> for tokens.</td>
+</tr>
+<tr>
+<td>Stored data</td>
+<td>Use your provider's supported migration process for public-key protection of data keys, including existing wrapped keys. Follow the <a href="Key_Management_Cheat_Sheet.html#cryptoperiods-and-rotation">key rotation and existing-data guidance</a> and retain recovery access during migration.</td>
+</tr>
+</tbody>
+</table>
+<p>A hybrid construction combines classical and post-quantum algorithms. Use the protocol's implementation rather than constructing your own combination. <a href="https://www.rfc-editor.org/rfc/rfc9794.html#section-5">RFC 9794, Section 5</a> distinguishes hybrid confidentiality from authentication: a hybrid TLS key exchange does not make classical certificate signatures quantum-resistant.</p>
+<p>For certificate-based authentication, check the public-key and signature algorithms in the end-entity (leaf) and intermediate certificates, the configured <a href="https://www.rfc-editor.org/rfc/rfc5280.html#section-6.1.1">trust anchor's public-key algorithm</a>, and the runtime's certificate-validation support. <a href="https://www.rfc-editor.org/rfc/rfc9794.html#section-6">A hybrid leaf certificate alone does not guarantee hybrid authentication of the sender's identity</a>.</p>
+<p>Where a supported dual-signature scheme requires both signatures, enforce both verifications. Accepting either one permits classical-only acceptance; <a href="https://csrc.nist.gov/Projects/post-quantum-cryptography/faqs">NIST describes dual-signature verification</a> as requiring all component signatures to succeed. Do not append a custom signature field to an existing token or certificate format.</p>
+<p>For signed records needing long-term proof, validate them and preserve evidence through a supported <a href="https://www.rfc-editor.org/rfc/rfc4998.html#section-1.1">archive timestamp and renewal process</a> before the protecting algorithms become weak. Retaining an old verifier alone does not preserve that proof.</p>
+<p><strong>Complete when:</strong> a supported migration works in a test environment, and the team has documented which security properties it provides.</p>
+<h2 id="stage-4-test-the-full-application-path">Stage 4: Test the full application path<a class="headerlink" href="#stage-4-test-the-full-application-path" title="Permanent link">&para;</a></h2>
+<p>Test with the actual algorithms and parameter sets you will deploy. <a href="https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.39-upd1.pdf">NIST's crypto agility guidance, Sections 3.2 and 6.2</a> calls out larger cryptographic objects and protecting algorithm negotiation.</p>
+<ul>
+<li>Exercise real clients, proxies, gateways, and backend connections. Verify the negotiated key exchange for new connections. For <a href="https://datatracker.ietf.org/doc/html/rfc9846#section-4.3.9">resumed TLS sessions</a>, check the resumption mode and how the original connection and resumption secrets were protected.</li>
+<li>Measure handshake and verification costs under expected load. Check certificate, signature, message, and database field limits. Keep size limits explicit when increasing them.</li>
+<li>Validate complete certificate paths using the deployed runtime and trust configuration. Test rejection of invalid signatures, untrusted certificates, and disallowed algorithms. If both signatures are required, either missing or invalid signature must cause rejection.</li>
+<li>Decide where classical fallback is temporarily allowed. For paths requiring PQC, verify that failures cannot silently trigger a classical-only retry.</li>
+<li>Test existing data, older signed artifacts, backup restoration, and key recovery before retiring old keys or formats.</li>
+</ul>
+<p><strong>Complete when:</strong> compatibility, rejection behavior, recovery, and rollback tests pass for the intended deployment policy.</p>
+<h2 id="stage-5-roll-out-and-retire-temporary-exceptions">Stage 5: Roll out and retire temporary exceptions<a class="headerlink" href="#stage-5-roll-out-and-retire-temporary-exceptions" title="Permanent link">&para;</a></h2>
+<p>Deploy to a small group of services or clients, then expand using the tests and monitoring results. Keep an approved rollback plan and explicit criteria for ending classical-only support, as recommended by the <a href="https://www.ncsc.gov.uk/guidance/pqc-migration-timelines">NCSC migration guidance</a>.</p>
+<ul>
+<li>Record negotiated algorithms and verification outcomes without logging secrets. Alert on unexpected classical-only use and verification failures.</li>
+<li>Treat a rollback to classical-only protection as a security exception with an owner and expiry date. Where PQC is required, pause the affected operation instead of silently weakening the policy.</li>
+<li>Track library security updates and applicable standards. Remove temporary fallback only after required peers and recovery workflows have migrated. Preserve required access to older data and signed records under an explicit legacy policy. Once PQC verification is required, restrict classical-only exceptions to identified legacy artifacts; do not use them to accept new artifacts.</li>
+</ul>
+<p><strong>Complete when:</strong> required paths demonstrably use the intended protection, and remaining exceptions have owners and retirement dates. Keep the inventory current as dependencies change.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://www.ncsc.gov.uk/guidance/pqc-migration-timelines">NCSC: Timelines for migration to post-quantum cryptography</a></li>
+<li><a href="https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.39-upd1.pdf">NIST CSWP 39-upd1: Considerations for Achieving Crypto Agility</a></li>
+<li><a href="https://www.rfc-editor.org/rfc/rfc9794.html">RFC 9794: Terminology for Post-Quantum Traditional Hybrid Schemes</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

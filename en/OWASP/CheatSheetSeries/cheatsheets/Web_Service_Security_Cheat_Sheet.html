@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Web Service Security | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Web Service Security">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Web_Service_Security_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="web-service-security-cheat-sheet">Web Service Security Cheat Sheet<a class="headerlink" href="#web-service-security-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>This article is focused on providing guidance for securing web services and preventing web services related attacks.</p>
+<p>Please notice that due to the difference in implementation between different frameworks, this cheat sheet is kept at a high level.</p>
+<h2 id="transport-confidentiality">Transport Confidentiality<a class="headerlink" href="#transport-confidentiality" title="Permanent link">&para;</a></h2>
+<p>Transport confidentiality protects against eavesdropping and man-in-the-middle attacks against web service communications to/from the server.</p>
+<p><strong>Rule</strong>: All communication with and between web services containing sensitive features, an authenticated session, or transfer of sensitive data must be encrypted using well-configured <a href="https://en.wikipedia.org/wiki/Transport_Layer_Security">TLS</a>. This is recommended even if the messages themselves are encrypted because <a href="https://en.wikipedia.org/wiki/Transport_Layer_Security">TLS</a> provides numerous benefits beyond traffic confidentiality including integrity protection, replay defenses, and server authentication. For more information on how to do this properly see the <a href="Transport_Layer_Security_Cheat_Sheet.html">Transport Layer Security Cheat Sheet</a>.</p>
+<h2 id="server-authentication">Server Authentication<a class="headerlink" href="#server-authentication" title="Permanent link">&para;</a></h2>
+<p><strong>Rule</strong>: TLS must be used to authenticate the service provider to the service consumer. The service consumer should verify the server certificate is issued by a trusted provider, is not expired, is not revoked, matches the domain name of the service, and that the server has proven that it has the private key associated with the public key certificate (by properly signing something or successfully decrypting something encrypted with the associated public key).</p>
+<h2 id="user-authentication">User Authentication<a class="headerlink" href="#user-authentication" title="Permanent link">&para;</a></h2>
+<p>User authentication verifies the identity of the user or the system trying to connect to the service. Such authentication is usually a function of the container of the web service.</p>
+<p><strong>Rule</strong>: If used, Basic Authentication must be conducted over <a href="https://en.wikipedia.org/wiki/Transport_Layer_Security">TLS</a>, but Basic Authentication is not recommended because it discloses secrets in plain text (base64 encoded) in HTTP Headers.</p>
+<p><strong>Rule</strong>: Client Certificate Authentication using <a href="https://en.wikipedia.org/wiki/Transport_Layer_Security">Mutual-TLS</a> is a common form of authentication that is recommended where appropriate. See: <a href="Authentication_Cheat_Sheet.html">Authentication Cheat Sheet</a>.</p>
+<h2 id="transport-encoding">Transport Encoding<a class="headerlink" href="#transport-encoding" title="Permanent link">&para;</a></h2>
+<p><a href="https://en.wikipedia.org/wiki/SOAP">SOAP</a> encoding styles are meant to move data between software objects into XML format and back again.</p>
+<p><strong>Rule</strong>: Enforce the same encoding style between the client and the server.</p>
+<h2 id="message-integrity">Message Integrity<a class="headerlink" href="#message-integrity" title="Permanent link">&para;</a></h2>
+<p>This is for data at rest. The integrity of data in transit can easily be provided by <a href="https://en.wikipedia.org/wiki/Transport_Layer_Security">TLS</a>.</p>
+<p>When using <a href="https://en.wikipedia.org/wiki/Public-key_cryptography">public key cryptography</a>, encryption does guarantee confidentiality but it does not guarantee integrity since the receiver's public key is public. For the same reason, encryption does not ensure the identity of the sender.</p>
+<p><strong>Rule</strong>: For XML data, use XML digital signatures to provide message integrity using the sender's private key. This signature can be validated by the recipient using the sender's digital certificate (public key).</p>
+<h2 id="message-confidentiality">Message Confidentiality<a class="headerlink" href="#message-confidentiality" title="Permanent link">&para;</a></h2>
+<p>Data elements meant to be kept confidential must be encrypted using a strong encryption cipher with an adequate key length to deter brute-forcing.</p>
+<p><strong>Rule</strong>: Messages containing sensitive data must be encrypted using a strong encryption cipher. This could be transport encryption or message encryption.</p>
+<p><strong>Rule</strong>: Messages containing sensitive data that must remain encrypted at rest after receipt must be encrypted with strong data encryption, not just transport encryption.</p>
+<h2 id="authorization">Authorization<a class="headerlink" href="#authorization" title="Permanent link">&para;</a></h2>
+<p>Web services need to authorize web service clients the same way web applications authorize users. A web service needs to make sure a web service client is authorized to perform a certain action (coarse-grained) on the requested data (fine-grained).</p>
+<p><strong>Rule</strong>: A web service should authorize its clients whether they have access to the method in question. Following an authentication challenge, the web service should check the privileges of the requesting entity whether they have access to the requested resource. This should be done on every request, and a challenge-response Authorization mechanism added to sensitive resources like password changes, primary contact details such as email, physical address, payment or delivery instructions.</p>
+<p><strong>Rule</strong>: Ensure access to administration and management functions within the Web Service Application is limited to web service administrators. Ideally, any administrative capabilities would be in an application that is completely separate from the web services being managed by these capabilities, thus completely separating normal users from these sensitive functions.</p>
+<h2 id="schema-validation">Schema Validation<a class="headerlink" href="#schema-validation" title="Permanent link">&para;</a></h2>
+<p>Schema validation enforces constraints and syntax defined by the schema.</p>
+<p><strong>Rule</strong>: Web services must validate <a href="https://en.wikipedia.org/wiki/SOAP">SOAP</a> payloads against their associated XML schema definition (<a href="https://www.w3schools.com/xml/schema_intro.asp">XSD</a>).</p>
+<p><strong>Rule</strong>: The <a href="https://www.w3schools.com/xml/schema_intro.asp">XSD</a> defined for a <a href="https://en.wikipedia.org/wiki/SOAP">SOAP</a> web service should, at a minimum, define the maximum length and character set of every parameter allowed to pass into and out of the web service.</p>
+<p><strong>Rule</strong>: The <a href="https://www.w3schools.com/xml/schema_intro.asp">XSD</a> defined for a <a href="https://en.wikipedia.org/wiki/SOAP">SOAP</a> web service should define strong (ideally allow-list) validation patterns for all fixed format parameters (e.g., zip codes, phone numbers, list values, etc.).</p>
+<h2 id="content-validation">Content Validation<a class="headerlink" href="#content-validation" title="Permanent link">&para;</a></h2>
+<p><strong>Rule</strong>: Like any web application, web services need to validate input before consuming it. Content validation for XML input should include:</p>
+<ul>
+<li>Validation against malformed XML entities.</li>
+<li>Validation against <a href="https://en.wikipedia.org/wiki/Billion_laughs_attack">XML Bomb attacks</a>.</li>
+<li>Validating inputs using a strong allowlist.</li>
+<li>Validating against <a href="https://owasp.org/www-community/vulnerabilities/XML_External_Entity_%28XXE%29_Processing">external entity attacks</a>.</li>
+</ul>
+<h2 id="output-encoding">Output Encoding<a class="headerlink" href="#output-encoding" title="Permanent link">&para;</a></h2>
+<p>Web services need to ensure that the output sent to clients is encoded to be consumed as data and not as scripts. This gets pretty important when web service clients use the output to render HTML pages either directly or indirectly using AJAX objects.</p>
+<p><strong>Rule</strong>: All the rules of output encoding applies as per <a href="Cross_Site_Scripting_Prevention_Cheat_Sheet.html">Cross Site Scripting Prevention Cheat Sheet</a>.</p>
+<h2 id="virus-protection">Virus Protection<a class="headerlink" href="#virus-protection" title="Permanent link">&para;</a></h2>
+<p><a href="https://en.wikipedia.org/wiki/SOAP">SOAP</a> provides the ability to attach files and documents to <a href="https://en.wikipedia.org/wiki/SOAP">SOAP</a> messages. This gives the opportunity for hackers to attach viruses and malware to these <a href="https://en.wikipedia.org/wiki/SOAP">SOAP</a> messages.</p>
+<p><strong>Rule</strong>: Ensure Virus Scanning technology is installed and preferably inline so files and attachments could be checked before being saved on disk.</p>
+<p><strong>Rule</strong>: Ensure Virus Scanning technology is regularly updated with the latest virus definitions/rules.</p>
+<h2 id="message-size">Message Size<a class="headerlink" href="#message-size" title="Permanent link">&para;</a></h2>
+<p>Web services like web applications could be a target for DOS attacks by automatically sending the web services thousands of large size <a href="https://en.wikipedia.org/wiki/SOAP">SOAP</a> messages. This either cripples the application making it unable to respond to legitimate messages or it could take it down entirely.</p>
+<p><strong>Rule</strong>: <a href="https://en.wikipedia.org/wiki/SOAP">SOAP</a> Messages size should be limited to an appropriate size limit. Larger size limit (or no limit at all) increases the chances of a successful DoS attack.</p>
+<h2 id="availability">Availability<a class="headerlink" href="#availability" title="Permanent link">&para;</a></h2>
+<h3 id="resources-limiting">Resources Limiting<a class="headerlink" href="#resources-limiting" title="Permanent link">&para;</a></h3>
+<p>During regular operation, web services require computational power such as CPU cycles and memory. Due to malfunctioning or while under attack, a web service may required too much resources, leaving the host system unstable.</p>
+<p><strong>Rule</strong>: Limit the amount of CPU cycles the web service can use based on expected service rate, in order to have a stable system.</p>
+<p><strong>Rule</strong>: Limit the amount of memory the web service can use to avoid system running out of memory. In some cases the host system may start killing processes to free up memory.</p>
+<p><strong>Rule</strong>: Limit the number of simultaneous open files, network connections and started processes.</p>
+<h3 id="message-throughput">Message Throughput<a class="headerlink" href="#message-throughput" title="Permanent link">&para;</a></h3>
+<p>Throughput represents the number of web service requests served during a specific amount of time.</p>
+<p><strong>Rule</strong>: Enforce request-rate and execution-time limits based on tested service capacity and the cost of each operation. Tune stricter limits for expensive operations, following <a href="https://api-security.owasp.org/editions/2023/en/0xa4-unrestricted-resource-consumption/#how-to-prevent">OWASP's resource-consumption guidance</a>. Maximizing throughput alone does not prevent resource exhaustion.</p>
+<h3 id="xml-denial-of-service-protection">XML Denial of Service Protection<a class="headerlink" href="#xml-denial-of-service-protection" title="Permanent link">&para;</a></h3>
+<p>XML Denial of Service is probably the most serious attack against web services. So the web service must provide the following validation:</p>
+<p><strong>Rule</strong>: Validation against recursive payloads.</p>
+<p><strong>Rule</strong>: Validation against oversized payloads.</p>
+<p><strong>Rule</strong>: Protection against <a href="https://www.ws-attacks.org/XML_Entity_Expansion">XML entity expansion</a>.</p>
+<p><strong>Rule</strong>: Reject XML element names that exceed configured length limits. SOAP action identifiers are separate from XML element names; for example, the <a href="https://www.w3.org/TR/soap12-part2/#ActionFeature">SOAP 1.2 Action feature</a> uses a URI value that can guide message dispatch or routing.</p>
+<p>This protection should be provided by your XML parser/schema validator. To verify, build test cases to make sure your parser to resistant to these types of attacks.</p>
+<h2 id="endpoint-security-profile">Endpoint Security Profile<a class="headerlink" href="#endpoint-security-profile" title="Permanent link">&para;</a></h2>
+<p><strong>Rule</strong>: Treat Web Services Interoperability (WS-I) Basic Profile conformance as an interoperability requirement, not a security baseline. Its <a href="https://docs.oasis-open.org/ws-brsp/BasicProfile/v1.2/BasicProfile-v1.2.html#_Toc392058316">security section</a> permits conformant services without security countermeasures. Independently enforce the transport security, authentication, authorization, and resource limits described above.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://csrc.nist.gov/pubs/sp/800/95/final">NIST SP 800-95: Guide to Secure Web Services</a></li>
+<li><a href="https://www.w3.org/TR/xmlenc-core1/">W3C XML Encryption Syntax and Processing Version 1.1</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Secure Code Review | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Secure Code Review">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Secure_Code_Review_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="secure-code-review-cheat-sheet">Secure Code Review Cheat Sheet<a class="headerlink" href="#secure-code-review-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p><strong>Secure Code Review</strong> is the process of manually examining source code to identify security vulnerabilities that automated tools often miss. It involves analyzing application logic, data flow, and implementation details to detect security flaws that require human expertise and contextual understanding.</p>
+<p><strong>Manual Code Review</strong> complements automated security testing tools (SAST/DAST) by focusing on areas where human analysis provides the most value, including business logic validation, complex security implementations, and context-specific vulnerabilities. While automated tools can assist by highlighting potential areas of concern, the core analysis relies on human judgment and domain expertise.</p>
+<p><strong>Security-Focused Review</strong> differs from functional code review by specifically targeting security concerns such as input validation, authentication mechanisms, authorization controls, cryptographic implementations, and potential attack vectors.</p>
+<h3 id="review-types">Review Types<a class="headerlink" href="#review-types" title="Permanent link">&para;</a></h3>
+<p><strong>Baseline Reviews</strong> examine the entire codebase comprehensively. Use for:</p>
+<ul>
+<li>New applications or major releases</li>
+<li>Legacy system onboarding</li>
+<li>Compliance requirements</li>
+<li>Post-incident analysis</li>
+</ul>
+<p><strong>Diff-Based Reviews</strong> focus on code changes only. Use for:</p>
+<ul>
+<li>Pull requests and commits</li>
+<li>Daily development workflow</li>
+<li>Feature completion</li>
+<li>Continuous security validation</li>
+</ul>
+<p>This cheat sheet provides practical guidance for conducting effective manual security code reviews, with emphasis on both baseline and incremental review methodologies.</p>
+<h2 id="review-methodology">Review Methodology<a class="headerlink" href="#review-methodology" title="Permanent link">&para;</a></h2>
+<h3 id="preparation">Preparation<a class="headerlink" href="#preparation" title="Permanent link">&para;</a></h3>
+<p><strong>For All Reviews:</strong></p>
+<ul>
+<li>Understand application architecture and business requirements</li>
+<li>Gather <a href="Threat_Modeling_Cheat_Sheet.html">threat models</a> and previous security findings</li>
+<li>Identify critical assets and high-risk functions</li>
+<li>Review security requirements and documentation</li>
+</ul>
+<p><strong>Additional for Baseline Reviews:</strong></p>
+<ul>
+<li>Map complete <a href="Attack_Surface_Analysis_Cheat_Sheet.html">application boundaries and dependencies</a></li>
+<li>Analyze overall security architecture</li>
+<li>Review security incident history</li>
+<li>Audit all third-party libraries</li>
+</ul>
+<p><strong>Additional for Diff-Based Reviews:</strong></p>
+<ul>
+<li>Identify modified files and affected components</li>
+<li>Assess impact on existing security controls</li>
+<li>Understand purpose of changes</li>
+<li>Prioritize high-risk modifications</li>
+</ul>
+<h3 id="review-process">Review Process<a class="headerlink" href="#review-process" title="Permanent link">&para;</a></h3>
+<p><strong>Baseline Review Steps:</strong></p>
+<ol>
+<li>Architecture review for security anti-patterns</li>
+<li>Entry point analysis and input validation</li>
+<li>Authentication and authorization verification</li>
+<li>Data flow tracing</li>
+<li>Business logic analysis</li>
+<li>Cryptographic implementation review</li>
+<li>Error handling verification</li>
+<li>Configuration and deployment review</li>
+</ol>
+<p><strong>Diff-Based Review Steps:</strong></p>
+<ol>
+<li>Analyze impact on existing security controls</li>
+<li>Identify new attack vectors</li>
+<li>Verify security at modified trust boundaries</li>
+<li>Check new integrations</li>
+<li>Ensure no security regression</li>
+<li>Apply relevant security patterns</li>
+</ol>
+<h2 id="common-vulnerability-patterns">Common Vulnerability Patterns<a class="headerlink" href="#common-vulnerability-patterns" title="Permanent link">&para;</a></h2>
+<p>For request forgery and redirect checks, also consult the <a href="Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html">CSRF Prevention</a>, <a href="Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html">SSRF Prevention</a>, and <a href="Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html">Unvalidated Redirects and Forwards</a> cheat sheets.</p>
+<h3 id="input-validation-vulnerabilities">Input Validation Vulnerabilities<a class="headerlink" href="#input-validation-vulnerabilities" title="Permanent link">&para;</a></h3>
+<p>Check for missing server-side validation, improper sanitization, and weak input filtering. For more information, see <a href="Input_Validation_Cheat_Sheet.html">Input Validation Cheat Sheet</a> and <a href="Mass_Assignment_Cheat_Sheet.html">Mass Assignment Cheat Sheet</a>.</p>
+<h3 id="injection-vulnerabilities">Injection Vulnerabilities<a class="headerlink" href="#injection-vulnerabilities" title="Permanent link">&para;</a></h3>
+<p><strong>SQL Injection:</strong></p>
+<p>Look for string concatenation in database queries and unsafe query construction. For more information, see <a href="SQL_Injection_Prevention_Cheat_Sheet.html">SQL Injection Prevention Cheat Sheet</a>.</p>
+<p><strong>Cross-Site Scripting (XSS):</strong></p>
+<p>Review output encoding, DOM manipulation, and user input rendering. For more information, see <a href="Cross_Site_Scripting_Prevention_Cheat_Sheet.html">Cross Site Scripting Prevention Cheat Sheet</a>.</p>
+<p><strong>Path Traversal:</strong></p>
+<p>Check for unsafe file path construction and directory traversal vulnerabilities. For more information, see <a href="File_Upload_Cheat_Sheet.html">File Upload Cheat Sheet</a>.</p>
+<p><strong>Command Injection:</strong></p>
+<p>Identify direct command execution with user input and unsafe system calls. For more information, see <a href="OS_Command_Injection_Defense_Cheat_Sheet.html">OS Command Injection Defense Cheat Sheet</a>.</p>
+<p><strong>NoSQL Injection:</strong></p>
+<p>Examine NoSQL query construction and parameter binding. For more information, see <a href="NoSQL_Security_Cheat_Sheet.html">NoSQL Security Cheat Sheet</a>.</p>
+<h3 id="authentication-session-management-vulnerabilities">Authentication &amp; Session Management Vulnerabilities<a class="headerlink" href="#authentication-session-management-vulnerabilities" title="Permanent link">&para;</a></h3>
+<p>Review authentication mechanisms, session token generation, and user credential handling. For more information, refer to <a href="Authentication_Cheat_Sheet.html">Authentication Cheat Sheet</a> and <a href="Session_Management_Cheat_Sheet.html">Session Management Cheat Sheet</a>.</p>
+<h3 id="access-control-vulnerabilities">Access Control Vulnerabilities<a class="headerlink" href="#access-control-vulnerabilities" title="Permanent link">&para;</a></h3>
+<p>Examine authorization checks, role-based access controls, and privilege escalation prevention. For more information, see <a href="Authorization_Cheat_Sheet.html">Authorization Cheat Sheet</a>.</p>
+<h3 id="deserialization-vulnerabilities">Deserialization Vulnerabilities<a class="headerlink" href="#deserialization-vulnerabilities" title="Permanent link">&para;</a></h3>
+<p><strong>Insecure Deserialization:</strong></p>
+<p>Check for unsafe deserialization of untrusted data and object injection vulnerabilities. For more information, see <a href="Deserialization_Cheat_Sheet.html">Deserialization Cheat Sheet</a>.</p>
+<p><strong>XML External Entity (XXE):</strong></p>
+<p>Review XML parsing configurations and external entity processing. For more information, see <a href="XML_External_Entity_Prevention_Cheat_Sheet.html">XML External Entity Prevention Cheat Sheet</a>.</p>
+<h3 id="cryptographic-implementation-flaws">Cryptographic Implementation Flaws<a class="headerlink" href="#cryptographic-implementation-flaws" title="Permanent link">&para;</a></h3>
+<p>Examine encryption algorithms, key management, and cryptographic implementations. For more information, refer to <a href="Cryptographic_Storage_Cheat_Sheet.html">Cryptographic Storage Cheat Sheet</a>.</p>
+<h2 id="review-techniques">Review Techniques<a class="headerlink" href="#review-techniques" title="Permanent link">&para;</a></h2>
+<h3 id="code-pattern-analysis">Code Pattern Analysis<a class="headerlink" href="#code-pattern-analysis" title="Permanent link">&para;</a></h3>
+<p>Focus on high-risk code patterns:</p>
+<ul>
+<li>Input processing and validation functions</li>
+<li>Database query construction and ORM usage</li>
+<li>File operations and path handling</li>
+<li>Authentication and session management logic</li>
+<li>Authorization and access control checks</li>
+<li>Cryptographic operations and key management</li>
+<li>Error handling and logging mechanisms</li>
+<li>Configuration loading and environment variables</li>
+</ul>
+<h3 id="data-flow-analysis">Data Flow Analysis<a class="headerlink" href="#data-flow-analysis" title="Permanent link">&para;</a></h3>
+<p>Trace data through the application:</p>
+<ol>
+<li><strong>Identify Sources</strong>: User inputs, file uploads, API calls, database reads, environment variables</li>
+<li><strong>Follow Processing</strong>: Validation, transformation, business logic, caching</li>
+<li><strong>Check Sinks</strong>: Database queries, file writes, output rendering, logging, external APIs</li>
+<li><strong>Validate Boundaries</strong>: Input validation and output encoding at trust boundaries</li>
+<li><strong>Trust Zones</strong>: Verify security controls at each trust boundary crossing</li>
+<li><strong>Data Classification</strong>: Ensure sensitive data receives appropriate protection</li>
+</ol>
+<h3 id="threat-based-review">Threat-Based Review<a class="headerlink" href="#threat-based-review" title="Permanent link">&para;</a></h3>
+<p>Align review with common attack patterns:</p>
+<ul>
+<li><strong>OWASP Top 10</strong>: Focus on prevalent web application risks</li>
+<li><strong>STRIDE Model</strong>: Spoofing, Tampering, Repudiation, Information Disclosure, DoS, Elevation</li>
+<li><strong>Attack Trees</strong>: Map potential attack paths through the application</li>
+<li><strong>Abuse Cases</strong>: Consider how features could be misused by attackers</li>
+<li><strong>Security Controls</strong>: Verify defense-in-depth implementation</li>
+</ul>
+<h3 id="business-logic-review">Business Logic Review<a class="headerlink" href="#business-logic-review" title="Permanent link">&para;</a></h3>
+<p>Use the <a href="Abuse_Case_Cheat_Sheet.html">Abuse Case Cheat Sheet</a> to identify misuse scenarios.</p>
+<p>Analyze application workflows for:</p>
+<ul>
+<li>State management and transition validation</li>
+<li>Race conditions and concurrency issues</li>
+<li>Transaction integrity and rollback mechanisms</li>
+<li>Resource limits and quota enforcement</li>
+<li>Authorization at each workflow step</li>
+<li>Workflow bypass opportunities</li>
+</ul>
+<h2 id="review-checklists">Review Checklists<a class="headerlink" href="#review-checklists" title="Permanent link">&para;</a></h2>
+<h3 id="input-validation">Input Validation<a class="headerlink" href="#input-validation" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Server-side validation</strong>: All inputs validated on server regardless of client-side checks</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Allowlist validation</strong>: Uses allowlists rather than blocklists for input validation</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Output encoding</strong>: Context-appropriate encoding (HTML, JavaScript, CSS, URL)</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>File upload security</strong>: Content-based validation, size limits, safe storage</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>SQL injection prevention</strong>: <a href="SQL_Injection_Prevention_Cheat_Sheet.html#primary-defenses">Parameterized queries or safely implemented stored procedures</a> used, with user-controlled data values passed as parameters instead of concatenated into SQL</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Length limits</strong>: Input length restrictions enforced</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Character handling</strong>: Special characters and Unicode properly processed</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Error messages</strong>: No sensitive information disclosed in error responses</li>
+</ul>
+<h3 id="authentication-session-management">Authentication &amp; Session Management<a class="headerlink" href="#authentication-session-management" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Password security</strong>: Strong hashing algorithms and salt usage (for more information, see <a href="Password_Storage_Cheat_Sheet.html">Password Storage Cheat Sheet</a>)</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Account protection</strong>: Lockout mechanisms with appropriate thresholds</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Session management</strong>: Secure token generation (≥128 bits entropy)</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Session lifecycle</strong>: Proper invalidation on logout/timeout</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Re-authentication</strong>: Required for sensitive operations</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Multi-factor authentication</strong>: Implementation for high-risk accounts (for more information, see <a href="Multifactor_Authentication_Cheat_Sheet.html">Multifactor Authentication Cheat Sheet</a>)</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Password reset</strong>: Secure, time-limited reset mechanisms (for more information, see <a href="Forgot_Password_Cheat_Sheet.html">Forgot Password Cheat Sheet</a>)</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Session security</strong>: HttpOnly, Secure, SameSite cookie attributes</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Concurrent sessions</strong>: Appropriate limits and monitoring</li>
+</ul>
+<h3 id="authorization">Authorization<a class="headerlink" href="#authorization" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Server-side enforcement</strong>: All access controls enforced server-side</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Fail-safe defaults</strong>: Default deny access policy</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>IDOR prevention</strong>: Proper authorization for resource access (see <a href="Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html">Insecure Direct Object Reference Prevention Cheat Sheet</a>)</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Function-level controls</strong>: Administrative functions properly protected</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Role validation</strong>: Role assignments cannot be manipulated</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Privilege escalation</strong>: Horizontal and vertical escalation prevented</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Centralized decisions</strong>: Access control logic centralized</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Post-authentication checks</strong>: Authorization verified after authentication</li>
+</ul>
+<h3 id="cryptography">Cryptography<a class="headerlink" href="#cryptography" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Strong algorithms</strong>: Modern algorithms (AES-256, RSA-2048+, ECDSA P-256+)</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Key management</strong>: Proper key generation, storage, and rotation (for more information, see <a href="Key_Management_Cheat_Sheet.html">Key Management Cheat Sheet</a>)</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Certificate validation</strong>: Proper validation including hostname verification</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Random generation</strong>: Cryptographically secure random number generation</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Data protection</strong>: Encryption at rest and in transit</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>IV/Nonce handling</strong>: Follow the selected mode's requirements for initialization vectors (IVs) and nonces. For example, <a href="https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38a.pdf#page=27">cipher block chaining (CBC) requires unpredictable IVs</a>, while <a href="https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf#page=26">Galois/Counter Mode (GCM) requires IV uniqueness under each key</a> and permits deterministic generation</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Library maintenance</strong>: Up-to-date cryptographic libraries</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Side-channel protection</strong>: Consideration of timing and other side-channel attacks</li>
+</ul>
+<h3 id="business-logic">Business Logic<a class="headerlink" href="#business-logic" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Workflow integrity</strong>: Proper state validation in multi-step processes</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Race condition prevention</strong>: Synchronization in concurrent operations</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Transaction atomicity</strong>: Proper rollback and consistency mechanisms</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Resource limits</strong>: Rate limiting and resource quotas implemented (see <a href="Denial_of_Service_Cheat_Sheet.html">Denial of Service Cheat Sheet</a>)</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Business rule enforcement</strong>: Cannot bypass rules through direct API access</li>
+</ul>
+<h3 id="configuration-deployment">Configuration &amp; Deployment<a class="headerlink" href="#configuration-deployment" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Secure defaults</strong>: Security-focused default configurations</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Environment separation</strong>: Proper isolation between environments</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Secrets management</strong>: No hardcoded secrets, proper secret storage and rotation (for more information, see <a href="Secrets_Management_Cheat_Sheet.html">Secrets Management Cheat Sheet</a>)</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Error handling</strong>: Graceful error handling without information disclosure (for more information, see <a href="Error_Handling_Cheat_Sheet.html">Error Handling Cheat Sheet</a>)</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Logging security</strong>: Sensitive data not logged, proper log protection (for more information, see <a href="Logging_Cheat_Sheet.html">Logging Cheat Sheet</a>)</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Security headers</strong>: Appropriate HTTP security headers configured (for more information, see <a href="HTTP_Headers_Cheat_Sheet.html">HTTP Headers Cheat Sheet</a>)</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>TLS configuration</strong>: Strong cipher suites and protocol versions (for more information, see <a href="Transport_Layer_Security_Cheat_Sheet.html">Transport Layer Security Cheat Sheet</a>)</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Dependency management</strong>: Up-to-date libraries without known vulnerabilities (for more information, see <a href="Vulnerable_Dependency_Management_Cheat_Sheet.html">Vulnerable Dependency Management Cheat Sheet</a>)</li>
+</ul>
+<h3 id="security-monitoring">Security Monitoring<a class="headerlink" href="#security-monitoring" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Security events</strong>: Authentication failures, authorization violations logged</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Anomaly detection</strong>: Unusual patterns and behaviors monitored</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Audit trails</strong>: Complete audit logs for sensitive operations</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Real-time alerts</strong>: Critical security events trigger immediate notifications</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Log integrity</strong>: Logs protected from tampering and unauthorized access</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <strong>Incident response</strong>: Clear procedures for security incident handling</li>
+</ul>
+<h2 id="tools-and-techniques">Tools and Techniques<a class="headerlink" href="#tools-and-techniques" title="Permanent link">&para;</a></h2>
+<h3 id="code-editors">Code Editors<a class="headerlink" href="#code-editors" title="Permanent link">&para;</a></h3>
+<p>Use editors with security extensions:</p>
+<ul>
+<li>Visual Studio Code with ESLint, SonarLint</li>
+<li>IntelliJ IDEA with SpotBugs, SonarLint</li>
+<li>Eclipse with security plugins</li>
+<li>Vim/Neovim with security linters</li>
+</ul>
+<h3 id="command-line-pattern-detection">Command-Line Pattern Detection<a class="headerlink" href="#command-line-pattern-detection" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Find hardcoded secrets</span>
+grep<span class="w"> </span>-ri<span class="w"> </span><span class="s2">"password\s*=\|api_key\s*=\|secret\s*="</span><span class="w"> </span>source/
+
+<span class="c1"># Find unsafe functions</span>
+grep<span class="w"> </span>-r<span class="w"> </span><span class="s2">"eval(\|exec(\|innerHTML\|document\.write"</span><span class="w"> </span>source/
+
+<span class="c1"># Find potential injections</span>
+grep<span class="w"> </span>-r<span class="w"> </span><span class="s2">"SELECT.*+\|executeQuery.*+"</span><span class="w"> </span>source/
+</code></pre></div>
+<h3 id="manual-review-focus-areas">Manual Review Focus Areas<a class="headerlink" href="#manual-review-focus-areas" title="Permanent link">&para;</a></h3>
+<p><strong>Human Expertise Advantages:</strong></p>
+<ul>
+<li><strong>Business Logic Flaws</strong>: Complex workflows and state management issues that require domain understanding</li>
+<li><strong>Context-Specific Vulnerabilities</strong>: Security issues that depend on application-specific business rules</li>
+<li><strong>Authorization Logic</strong>: Complex permission models and access control implementations</li>
+<li><strong>Race Conditions</strong>: Timing-based vulnerabilities in concurrent operations</li>
+<li><strong>Cryptographic Misuse</strong>: Proper implementation of cryptographic primitives and protocols</li>
+<li><strong>Architecture Security</strong>: High-level design flaws and security anti-patterns</li>
+</ul>
+<p><strong>Manual Analysis Techniques:</strong></p>
+<ul>
+<li><strong>Code Path Tracing</strong>: Following execution paths through complex business logic</li>
+<li><strong>State Analysis</strong>: Understanding application state transitions and validation</li>
+<li><strong>Trust Boundary Mapping</strong>: Identifying and analyzing security control points</li>
+<li><strong>Threat Modeling Integration</strong>: Applying threat models to specific code implementations</li>
+<li><strong>Attack Scenario Simulation</strong>: Mentally simulating attack paths through the code</li>
+</ul>
+<h3 id="automated-tool-integration">Automated Tool Integration<a class="headerlink" href="#automated-tool-integration" title="Permanent link">&para;</a></h3>
+<p><strong>Supporting Manual Reviews:</strong></p>
+<ul>
+<li><strong>SAST Tool Triage</strong>: Use automated findings to prioritize manual review areas</li>
+<li><strong>Dependency Scanning</strong>: Identify vulnerable libraries requiring manual assessment</li>
+<li><strong>Code Quality Metrics</strong>: Focus manual effort on complex or frequently changed code</li>
+<li><strong>Pattern Detection</strong>: Use tools to highlight potential security anti-patterns for human analysis</li>
+</ul>
+<p><strong>Tool Integration Strategy:</strong></p>
+<ul>
+<li><strong>Pre-Review Scanning</strong>: Run automated tools before manual review to identify obvious issues</li>
+<li><strong>Complementary Analysis</strong>: Use tool findings to guide deeper manual investigation</li>
+<li><strong>False Positive Filtering</strong>: Apply human judgment to validate automated findings</li>
+<li><strong>Coverage Gaps</strong>: Focus manual review on areas automated tools cannot effectively analyze</li>
+</ul>
+<p><strong>Security Metrics:</strong></p>
+<ul>
+<li><strong>Manual Review Coverage</strong>: Percentage of critical code paths reviewed by humans</li>
+<li><strong>Finding Quality</strong>: Ratio of valid security issues to total findings</li>
+<li><strong>Review Efficiency</strong>: Time spent on manual review vs. security value delivered</li>
+<li><strong>Trend Analysis</strong>: Security posture improvement over time</li>
+</ul>
+<h3 id="documentation-templates">Documentation Templates<a class="headerlink" href="#documentation-templates" title="Permanent link">&para;</a></h3>
+<p><strong>Finding Report Template:</strong></p>
+<div class="highlight"><pre><span></span><code>Title: [Vulnerability Type] in [Component]
+Severity: [Critical/High/Medium/Low]
+CWE: [CWE Number and Name]
+Location: [File:Line or Function]
+Description: [Detailed explanation of the vulnerability]
+Impact: [Security implications and potential attack scenarios]
+Reproduction: [Steps to reproduce or proof of concept]
+Recommendation: [Specific fix guidance with code examples]
+References: [CWE links, OWASP references, vendor documentation]
+Status: [Open/In Progress/Fixed/Accepted Risk]
+Assignee: [Developer responsible for fix]
+Due Date: [Target fix date]
+</code></pre></div>
+<p><strong>Review Summary Template:</strong></p>
+<div class="highlight"><pre><span></span><code>Review Summary
+==============
+Application: [Application Name]
+Version: [Version/Commit Hash]
+Reviewer(s): [Names]
+Review Date: [Date]
+Scope: [Files/Components Reviewed]
+
+Findings Summary:
+- Critical: [Count]
+- High: [Count] 
+- Medium: [Count]
+- Low: [Count]
+- Informational: [Count]
+
+Key Recommendations:
+1. [Priority recommendation]
+2. [Priority recommendation]
+3. [Priority recommendation]
+
+Overall Risk Assessment: [Low/Medium/High/Critical]
+</code></pre></div>
+<h2 id="integration-with-sdlc">Integration with SDLC<a class="headerlink" href="#integration-with-sdlc" title="Permanent link">&para;</a></h2>
+<h3 id="review-timing">Review Timing<a class="headerlink" href="#review-timing" title="Permanent link">&para;</a></h3>
+<h4 id="baseline-review-integration">Baseline Review Integration<a class="headerlink" href="#baseline-review-integration" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Project Initiation</strong>: Comprehensive security assessment of existing codebase</li>
+<li><strong>Major Releases</strong>: Full security review before significant version releases</li>
+<li><strong>Architecture Changes</strong>: Complete review when fundamental design changes occur</li>
+<li><strong>Compliance Cycles</strong>: Periodic comprehensive reviews for regulatory requirements</li>
+<li><strong>Security Incidents</strong>: Thorough review following security breaches or major vulnerabilities</li>
+<li><strong>Onboarding Legacy Systems</strong>: Initial security assessment when bringing existing applications under secure development practices</li>
+</ul>
+<h4 id="diff-based-review-integration">Diff-Based Review Integration<a class="headerlink" href="#diff-based-review-integration" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Pull Requests</strong>: Security-focused review of code changes as part of standard PR process</li>
+<li><strong>Pre-commit Hooks</strong>: Lightweight security checks on developer commits</li>
+<li><strong>Feature Completion</strong>: Security review of completed user stories or features</li>
+<li><strong>Sprint Reviews</strong>: Regular assessment of security implications of sprint deliverables</li>
+<li><strong>Hotfix Reviews</strong>: Rapid security assessment of emergency fixes</li>
+<li><strong>Continuous Integration</strong>: Automated triggering of security reviews based on code changes</li>
+</ul>
+<h4 id="hybrid-approach">Hybrid Approach<a class="headerlink" href="#hybrid-approach" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>Risk-Based Scheduling</strong>: Combine baseline reviews for high-risk components with diff-based reviews for routine changes</li>
+<li><strong>Incremental Baseline Updates</strong>: Gradually expand baseline review coverage over multiple development cycles</li>
+<li><strong>Trigger-Based Reviews</strong>: Escalate from diff-based to baseline review when significant security concerns are identified</li>
+</ul>
+<p>For CI/CD integration and automated security testing, for more information see <a href="CI_CD_Security_Cheat_Sheet.html">CI CD Security Cheat Sheet</a>.</p>
+<h3 id="team-collaboration">Team Collaboration<a class="headerlink" href="#team-collaboration" title="Permanent link">&para;</a></h3>
+<p><strong>Roles:</strong></p>
+<ul>
+<li><strong>Security reviewers</strong>: Conduct analysis and provide guidance</li>
+<li><strong>Developers</strong>: Implement fixes and follow secure coding practices</li>
+<li><strong>Security champions</strong>: Bridge security and development teams</li>
+</ul>
+<p><strong>Best Practices:</strong></p>
+<ul>
+<li>Use standardized checklists and templates</li>
+<li>Maintain a knowledge base of common issues</li>
+<li>Track metrics on review effectiveness</li>
+<li>Provide regular security training</li>
+<li>Integrate with existing development workflows</li>
+</ul>
+<h2 id="advanced-techniques">Advanced Techniques<a class="headerlink" href="#advanced-techniques" title="Permanent link">&para;</a></h2>
+<h3 id="race-condition-analysis">Race Condition Analysis<a class="headerlink" href="#race-condition-analysis" title="Permanent link">&para;</a></h3>
+<p>Focus on Time-of-Check vs Time-of-Use (TOCTOU) vulnerabilities and ensure atomic operations.</p>
+<h3 id="business-logic-analysis">Business Logic Analysis<a class="headerlink" href="#business-logic-analysis" title="Permanent link">&para;</a></h3>
+<p>Analyze workflows for:</p>
+<ul>
+<li>State transitions and validation</li>
+<li>Opportunities to bypass steps or validation</li>
+<li>Proper validation at each workflow step</li>
+<li>Rollback mechanisms and cleanup on failures</li>
+<li>Behavior under concurrent access</li>
+<li>Boundary conditions and error scenarios</li>
+</ul>
+<h3 id="security-architecture-review">Security Architecture Review<a class="headerlink" href="#security-architecture-review" title="Permanent link">&para;</a></h3>
+<p>Review architecture patterns for consistent security enforcement and proper API security controls; see the <a href="Secure_Product_Design_Cheat_Sheet.html">Secure Product Design Cheat Sheet</a>.</p>
+<h3 id="memory-safety">Memory Safety<a class="headerlink" href="#memory-safety" title="Permanent link">&para;</a></h3>
+<p>Review buffer management, integer overflow protection, and resource limits.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://raw.githubusercontent.com/OWASP/www-project-code-review-guide/master/assets/OWASP_Code_Review_Guide_v2.pdf">OWASP Code Review Guide, Version 2</a></li>
+<li><a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-218.pdf">NIST SP 800-218: Secure Software Development Framework (SSDF) Version 1.1</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

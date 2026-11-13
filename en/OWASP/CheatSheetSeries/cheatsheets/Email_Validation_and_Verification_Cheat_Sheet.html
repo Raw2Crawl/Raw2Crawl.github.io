@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Email Validation and Verification | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Email Validation and Verification">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Email_Validation_and_Verification_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="email-validation-and-verification-in-identity-systems-cheat-sheet">Email Validation and Verification in Identity Systems Cheat Sheet<a class="headerlink" href="#email-validation-and-verification-in-identity-systems-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>Email addresses are widely used as primary identifiers in authentication and account recovery workflows. Improper handling of email validation, normalization, and verification can lead to account takeover, user enumeration, and identity confusion.</p>
+<p>This cheat sheet provides guidance on securely handling email addresses within identity systems. See the <a href="Authentication_Cheat_Sheet.html">Authentication Cheat Sheet</a> for broader identity controls.</p>
+<h2 id="goals">Goals<a class="headerlink" href="#goals" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Safely treat email as an identifier</li>
+<li>Prevent account takeover via email-based flows</li>
+<li>Reduce user enumeration risk</li>
+<li>Define secure verification and change workflows</li>
+</ul>
+<h2 id="threat-model">Threat Model<a class="headerlink" href="#threat-model" title="Permanent link">&para;</a></h2>
+<p>Attackers may attempt to:</p>
+<ul>
+<li>Register equivalent or visually similar email addresses</li>
+<li>Exploit inconsistent normalization logic</li>
+<li>Abuse password reset functionality</li>
+<li>Enumerate valid accounts</li>
+<li>Take over accounts through email change workflows</li>
+</ul>
+<h2 id="email-canonicalization">Email Canonicalization<a class="headerlink" href="#email-canonicalization" title="Permanent link">&para;</a></h2>
+<p>Applications must define a consistent normalization strategy before storing or comparing email addresses.</p>
+<h3 id="recommendations">Recommendations<a class="headerlink" href="#recommendations" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Normalize the domain portion to lowercase</li>
+<li>Avoid provider-specific transformations (e.g., Gmail dot removal) unless fully controlled</li>
+<li>Store both:<ul>
+<li>Original input (for display and communication)</li>
+<li>Canonical form (for comparison according to your policy)</li>
+</ul>
+</li>
+<li>Document the comparison policy explicitly and apply it consistently across registration, login, password reset, account recovery, and account linking flows</li>
+</ul>
+<h2 id="email-format-validation">Email Format Validation<a class="headerlink" href="#email-format-validation" title="Permanent link">&para;</a></h2>
+<p>Strict regex-based validation often rejects valid addresses or introduces inconsistencies.</p>
+<h3 id="recommendations_1">Recommendations<a class="headerlink" href="#recommendations_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use well-tested libraries instead of custom regex</li>
+<li>Accept a broad range of valid formats</li>
+<li>Reject clearly malformed input only</li>
+</ul>
+<h2 id="unicode-and-idn-considerations">Unicode and IDN Considerations<a class="headerlink" href="#unicode-and-idn-considerations" title="Permanent link">&para;</a></h2>
+<p>Unicode introduces spoofing risks via visually similar characters.</p>
+<h3 id="recommendations_2">Recommendations<a class="headerlink" href="#recommendations_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Normalize Unicode input</li>
+<li>Convert internationalized domains to punycode for comparison</li>
+<li>Be aware of homoglyph attacks (e.g., Latin vs Cyrillic characters)</li>
+<li>Be especially cautious with internationalized local-parts, because normalization and comparison behavior may differ across systems</li>
+</ul>
+<h2 id="case-sensitivity">Case Sensitivity<a class="headerlink" href="#case-sensitivity" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Domain part: always case-insensitive</li>
+<li>Local part: technically case-sensitive under SMTP, though many providers do not enforce this in practice</li>
+</ul>
+<h3 id="recommendation">Recommendation<a class="headerlink" href="#recommendation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Preserve the original email address as entered by the user</li>
+<li>Define an explicit comparison policy for the local part based on your identity architecture and interoperability requirements</li>
+<li>Only fold or normalize the local part when the system fully owns that behavior and the decision will not create account-collision or mistaken-account risk</li>
+</ul>
+<h2 id="email-ownership-verification">Email Ownership Verification<a class="headerlink" href="#email-ownership-verification" title="Permanent link">&para;</a></h2>
+<p>Email ownership must be verified before enabling account use.</p>
+<h3 id="recommendations_3">Recommendations<a class="headerlink" href="#recommendations_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use cryptographically secure, random tokens</li>
+<li>Ensure tokens are:<ul>
+<li>Single-use</li>
+<li>Time-limited</li>
+</ul>
+</li>
+<li>Do not activate accounts before verification is completed</li>
+</ul>
+<h2 id="password-reset-flows">Password Reset Flows<a class="headerlink" href="#password-reset-flows" title="Permanent link">&para;</a></h2>
+<p>Password reset is a high-risk operation. See the <a href="Forgot_Password_Cheat_Sheet.html">Forgot Password Cheat Sheet</a> for recovery controls.</p>
+<h3 id="recommendations_4">Recommendations<a class="headerlink" href="#recommendations_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use single-use, time-limited tokens</li>
+<li>Do not disclose whether an email exists in the system</li>
+<li>Invalidate tokens after use or expiration</li>
+<li>Rate limit reset requests</li>
+</ul>
+<h2 id="email-change-workflows">Email Change Workflows<a class="headerlink" href="#email-change-workflows" title="Permanent link">&para;</a></h2>
+<p>Changing an email address is equivalent to changing identity.</p>
+<h3 id="recommendations_5">Recommendations<a class="headerlink" href="#recommendations_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Require re-authentication</li>
+<li>Notify the existing email address of the change</li>
+<li>Require confirmation of the new email address</li>
+<li>Consider requiring confirmation from both addresses for high-risk systems</li>
+</ul>
+<h2 id="anti-enumeration-controls">Anti-Enumeration Controls<a class="headerlink" href="#anti-enumeration-controls" title="Permanent link">&para;</a></h2>
+<p>Attackers should not be able to determine whether an email is registered.</p>
+<h3 id="recommendations_6">Recommendations<a class="headerlink" href="#recommendations_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use consistent responses for login and reset flows</li>
+<li>Avoid timing discrepancies between valid and invalid cases</li>
+<li>Implement rate limiting and monitoring</li>
+</ul>
+<h2 id="temporary-email-abuse">Temporary Email Abuse<a class="headerlink" href="#temporary-email-abuse" title="Permanent link">&para;</a></h2>
+<p>Disposable email services can be used to bypass controls.</p>
+<h3 id="recommendations_7">Recommendations<a class="headerlink" href="#recommendations_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Maintain a list of known disposable domains if appropriate</li>
+<li>Prefer risk-based controls over strict blocking</li>
+<li>Monitor for suspicious patterns of account creation</li>
+</ul>
+<h2 id="email-as-an-authentication-factor">Email as an Authentication Factor<a class="headerlink" href="#email-as-an-authentication-factor" title="Permanent link">&para;</a></h2>
+<p>Email should not be treated as a strong authentication factor.</p>
+<h3 id="recommendations_8">Recommendations<a class="headerlink" href="#recommendations_8" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Treat email as a weak factor</li>
+<li>Require multi-factor authentication (MFA) for sensitive operations</li>
+<li>Do not rely on email alone for account security</li>
+</ul>
+<h2 id="logging-and-monitoring">Logging and Monitoring<a class="headerlink" href="#logging-and-monitoring" title="Permanent link">&para;</a></h2>
+<p>Monitoring email-related flows helps detect abuse.</p>
+<h3 id="recommendations_9">Recommendations<a class="headerlink" href="#recommendations_9" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Log verification attempts and failures</li>
+<li>Monitor password reset activity</li>
+<li>Detect abnormal patterns (e.g., high-frequency requests)</li>
+<li>Avoid logging full email addresses; mask or pseudonymize them where logging is necessary (e.g., <code>j***@example.com</code>)</li>
+<li>Never log verification, reset, or authentication tokens or full verification/reset URLs</li>
+<li>Treat email addresses and related identifiers in logs as personal or sensitive data and restrict access accordingly</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://datatracker.ietf.org/doc/html/rfc5322">RFC 5322: Internet Message Format</a></li>
+<li><a href="https://www.rfc-editor.org/info/rfc5321/">RFC 5321: Simple Mail Transfer Protocol</a></li>
+<li><a href="https://pages.nist.gov/800-63-4/sp800-63b.html">NIST SP 800-63B-4: Authentication and Authenticator Management</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

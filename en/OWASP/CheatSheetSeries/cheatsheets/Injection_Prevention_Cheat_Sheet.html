@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Injection Prevention | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Injection Prevention">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Injection_Prevention_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="injection-prevention-cheat-sheet">Injection Prevention Cheat Sheet<a class="headerlink" href="#injection-prevention-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>This article is focused on providing clear, simple, actionable guidance for preventing injection flaws in your applications. Injection attacks, for example <a href="https://owasp.org/www-community/attacks/SQL_Injection">SQL Injection</a>, are unfortunately very common.</p>
+<p>Application accessibility is a very important factor in protection and prevention of injection flaws. Only the minority of all applications within a company/enterprise are developed in house, where as most applications are from external sources. Open source applications give at least the opportunity to fix problems, but closed source applications need a different approach to injection flaws.</p>
+<p>Injection flaws occur when an application sends untrusted data to an interpreter. Injection flaws are very prevalent, particularly in legacy code, often found in SQL queries, LDAP queries, XPath queries, OS commands, program arguments, etc. Injection flaws are easy to discover when examining code, but more difficult via testing. Scanners and fuzzers can help attackers find them.</p>
+<p>Depending on the accessibility different actions must be taken in order to fix them. It is always the best way to fix the problem in source code itself, or even redesign some parts of the applications. But if the source code is not available or it is simply uneconomical to fix legacy software only virtual patching makes sense.</p>
+<h2 id="application-types">Application Types<a class="headerlink" href="#application-types" title="Permanent link">&para;</a></h2>
+<p>Three classes of applications can usually be seen within a company. Those 3 types are needed to identify the actions which need to take place in order to prevent/fix injection flaws.</p>
+<h3 id="a1-new-application">A1: New Application<a class="headerlink" href="#a1-new-application" title="Permanent link">&para;</a></h3>
+<p>A new web application in the design phase, or in early stage development.</p>
+<h3 id="a2-productive-open-source-application">A2: Productive Open Source Application<a class="headerlink" href="#a2-productive-open-source-application" title="Permanent link">&para;</a></h3>
+<p>An already productive application, which can be easily adapted. A Model-View-Controller (MVC) type application is just one example of having a easily accessible application architecture.</p>
+<h3 id="a3-productive-closed-source-application">A3: Productive Closed Source Application<a class="headerlink" href="#a3-productive-closed-source-application" title="Permanent link">&para;</a></h3>
+<p>A productive application which cannot or only with difficulty be modified.</p>
+<h2 id="forms-of-injection">Forms of Injection<a class="headerlink" href="#forms-of-injection" title="Permanent link">&para;</a></h2>
+<p>Use the guidance for the query language or interpreter your application uses:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>When</th>
+<th>Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SQL injection</td>
+<td>Builds SQL queries</td>
+<td><a href="SQL_Injection_Prevention_Cheat_Sheet.html">SQL Injection Prevention</a> and <a href="Query_Parameterization_Cheat_Sheet.html">Query Parameterization</a></td>
+</tr>
+<tr>
+<td>Object-relational mapper query injection</td>
+<td>Builds query strings with tools such as Hibernate, JPA, LINQ, etc.</td>
+<td><a href="SQL_Injection_Prevention_Cheat_Sheet.html">SQL Injection Prevention</a> and <a href="Query_Parameterization_Cheat_Sheet.html">Query Parameterization</a></td>
+</tr>
+<tr>
+<td>NoSQL injection</td>
+<td>Builds queries for a NoSQL database</td>
+<td><a href="NoSQL_Security_Cheat_Sheet.html">NoSQL Security</a></td>
+</tr>
+<tr>
+<td>Cross-site scripting (XSS)</td>
+<td>Places untrusted data into browser content</td>
+<td><a href="Cross_Site_Scripting_Prevention_Cheat_Sheet.html">Cross Site Scripting Prevention</a> and <a href="DOM_based_XSS_Prevention_Cheat_Sheet.html">DOM based XSS Prevention</a></td>
+</tr>
+<tr>
+<td>LDAP injection</td>
+<td>Builds LDAP queries</td>
+<td><a href="LDAP_Injection_Prevention_Cheat_Sheet.html">LDAP Injection Prevention</a></td>
+</tr>
+<tr>
+<td>XPath injection</td>
+<td>Builds XPath queries</td>
+<td><a href="XPath_Injection_Prevention_Cheat_Sheet.html">XPath Injection Prevention</a></td>
+</tr>
+<tr>
+<td>OS command injection</td>
+<td>Invokes operating system commands</td>
+<td><a href="OS_Command_Injection_Defense_Cheat_Sheet.html">OS Command Injection Defense</a></td>
+</tr>
+<tr>
+<td>Argument injection</td>
+<td>Passes untrusted input as command arguments</td>
+<td><a href="OS_Command_Injection_Defense_Cheat_Sheet.html#argument-injection">Argument Injection</a></td>
+</tr>
+</tbody>
+</table>
+<p>For Java-specific guidance, see <a href="Injection_Prevention_in_Java_Cheat_Sheet.html">Injection Prevention in Java</a>.</p>
+<h3 id="query-languages">Query languages<a class="headerlink" href="#query-languages" title="Permanent link">&para;</a></h3>
+<h4 id="xpath-injection">XPath Injection<a class="headerlink" href="#xpath-injection" title="Permanent link">&para;</a></h4>
+<p>See the <a href="XPath_Injection_Prevention_Cheat_Sheet.html">XPath Injection Prevention Cheat Sheet</a> for defenses and a parameterized query example.</p>
+<h3 id="scripting-languages">Scripting languages<a class="headerlink" href="#scripting-languages" title="Permanent link">&para;</a></h3>
+<p>All scripting languages used in web applications have a form of an <code>eval</code> call which receives code at runtime and executes it. If code is crafted using unvalidated and unescaped user input code injection can occur which allows an attacker to subvert application logic and eventually to gain local access.</p>
+<p>Every time a scripting language is used, the actual implementation of the 'higher' scripting language is done using a 'lower' language like C. If the scripting language has a flaw in the data handling code '<a href="http://projects.webappsec.org/w/page/13246949/Null%20Byte%20Injection">Null Byte Injection</a>' attack vectors can be deployed to gain access to other areas in memory, which results in a successful attack.</p>
+<h3 id="operating-system-commands">Operating System Commands<a class="headerlink" href="#operating-system-commands" title="Permanent link">&para;</a></h3>
+<p>OS command injection is a technique used via a web interface in order to execute OS commands on a web server. The user supplies operating system commands through a web interface in order to execute OS commands.</p>
+<p>Any web interface that is not properly sanitized is subject to this exploit. With the ability to execute OS commands, the user can upload malicious programs or even obtain passwords. OS command injection is preventable when security is emphasized during the design and development of applications.</p>
+<h4 id="how-to-test-for-the-issue">How to test for the issue<a class="headerlink" href="#how-to-test-for-the-issue" title="Permanent link">&para;</a></h4>
+<h5 id="during-code-review">During code review<a class="headerlink" href="#during-code-review" title="Permanent link">&para;</a></h5>
+<p>Check if any command execute methods are called and in unvalidated user input are taken as data for that command.</p>
+<p>Out side of that, appending a semicolon to the end of a URL query parameter followed by an operating system command, will execute the command. <code>%3B</code> is URL encoded and decodes to semicolon. This is because the <code>;</code> is interpreted as a command separator.</p>
+<p>Example: <code>http://sensitive/something.php?dir=%3Bcat%20/etc/passwd</code></p>
+<p>If the application responds with the output of the <code>/etc/passwd</code> file then you know the attack has been successful. Many web application scanners can be used to test for this attack as they inject variations of command injections and test the response.</p>
+<p>Equally Static Code Analysis tools check the data flow of untrusted user input into a web application and check if the data is then entered into a dangerous method which executes the user input as a command.</p>
+<h4 id="remediation">Remediation<a class="headerlink" href="#remediation" title="Permanent link">&para;</a></h4>
+<p>If it is considered unavoidable the call to a system command incorporated with user-supplied, the following two layers of defense should be used within software in order to prevent attacks</p>
+<ol>
+<li><strong>Parameterization</strong> - If available, use structured mechanisms that automatically enforce the separation between data and command. These mechanisms can help to provide the relevant quoting, encoding.</li>
+<li><strong>Input validation</strong> - the values for commands and the relevant arguments should be both validated. There are different degrees of validation for the actual command and its arguments:<ul>
+<li>When it comes to the <strong>commands</strong> used, these must be validated against a list of allowed commands.</li>
+<li>In regards to the <strong>arguments</strong> used for these commands, they should be validated using the following options:<ul>
+<li>Positive or allowlist input validation - where are the arguments allowed explicitly defined</li>
+<li>Allow-list Regular Expression - where is explicitly defined a list of good characters allowed and the maximum length of the string. Ensure that metacharacters like <code>&amp; | ; $ &gt; &lt; \</code> \ !` and whitespaces are not part of the Regular Expression. For example, the following regular expression only allows lowercase letters and numbers, and does not contain metacharacters. The length is also being limited to 3-10 characters:</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p><code>^[a-z0-9]{3,10}$</code></p>
+<h4 id="example-code-java">Example code - Java<a class="headerlink" href="#example-code-java" title="Permanent link">&para;</a></h4>
+<h5 id="incorrect-usage">Incorrect Usage<a class="headerlink" href="#incorrect-usage" title="Permanent link">&para;</a></h5>
+<div class="highlight"><pre><span></span><code><span class="n">ProcessBuilder</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ProcessBuilder</span><span class="p">(</span><span class="s">"C:\\DoStuff.exe -arg1 -arg2"</span><span class="p">);</span>
+</code></pre></div>
+<p>This creates a builder with one command-list element, not a program followed by two arguments. <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ProcessBuilder.html"><code>ProcessBuilder</code></a> represents the executable and its arguments as a list. The snippet does not start a process or demonstrate shell-command injection.</p>
+<h5 id="correct-usage">Correct Usage<a class="headerlink" href="#correct-usage" title="Permanent link">&para;</a></h5>
+<p>This illustrative example starts a process with a modified working directory and passes the executable and each argument separately. Keep the executable and working directory trusted, and validate any untrusted arguments for the invoked program. Argument separation does not replace <a href="OS_Command_Injection_Defense_Cheat_Sheet.html#layer-2">argument validation</a>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">ProcessBuilder</span><span class="w"> </span><span class="n">pb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ProcessBuilder</span><span class="p">(</span><span class="s">"TrustedCmd"</span><span class="p">,</span><span class="w"> </span><span class="s">"TrustedArg1"</span><span class="p">,</span><span class="w"> </span><span class="s">"TrustedArg2"</span><span class="p">);</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">env</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pb</span><span class="p">.</span><span class="na">environment</span><span class="p">();</span>
+<span class="n">pb</span><span class="p">.</span><span class="na">directory</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">File</span><span class="p">(</span><span class="s">"TrustedDir"</span><span class="p">));</span>
+<span class="n">Process</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pb</span><span class="p">.</span><span class="na">start</span><span class="p">();</span>
+</code></pre></div>
+<h3 id="network-protocols">Network Protocols<a class="headerlink" href="#network-protocols" title="Permanent link">&para;</a></h3>
+<p>Web applications often communicate with network daemons (like SMTP, IMAP, FTP) where user input becomes part of the communication stream. Here it is possible to inject command sequences to abuse an established session.</p>
+<h2 id="injection-prevention-rules">Injection Prevention Rules<a class="headerlink" href="#injection-prevention-rules" title="Permanent link">&para;</a></h2>
+<h3 id="rule-1-perform-proper-input-validation">Rule #1 (Perform proper input validation)<a class="headerlink" href="#rule-1-perform-proper-input-validation" title="Permanent link">&para;</a></h3>
+<p>Perform proper input validation. Positive or allowlist input validation with appropriate canonicalization is also recommended, but <strong>is not a complete defense</strong> as many applications require special characters in their input.</p>
+<h3 id="rule-2-use-a-safe-api">Rule #2 (Use a safe API)<a class="headerlink" href="#rule-2-use-a-safe-api" title="Permanent link">&para;</a></h3>
+<p>The preferred option is to use a safe API which avoids the use of the interpreter entirely or provides a parameterized interface. Be careful of APIs, such as stored procedures, that are parameterized, but can still introduce injection under the hood.</p>
+<h3 id="rule-3-contextually-escape-user-data">Rule #3 (Contextually escape user data)<a class="headerlink" href="#rule-3-contextually-escape-user-data" title="Permanent link">&para;</a></h3>
+<p>If a parameterized API is not available, you should carefully escape special characters using the specific escape syntax for that interpreter.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://docs.oracle.com/javase/tutorial/jdbc/basics/prepared.html">Oracle JDBC: Using Prepared Statements</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Authentication Patterns | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Authentication Patterns">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Authentication_Patterns_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="authentication-patterns-cheat-sheet">Authentication Patterns Cheat Sheet<a class="headerlink" href="#authentication-patterns-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>Authentication can be enforced at different layers of a system's architecture. This cheat sheet compares the main patterns, where verification happens in each, and what that means for trust boundaries:</p>
+<ul>
+<li><strong>Service-Level:</strong> each service verifies identity itself, or delegates it to a proxy tightly coupled to it.</li>
+<li><strong>Edge-Level:</strong> authentication is centralized in a shared component at the system boundary.</li>
+<li><strong>Network-Layer (Node-Level):</strong> peers are authenticated cryptographically at the network layer, transparently to applications.</li>
+</ul>
+<p>The patterns apply to <strong>external</strong> actors (end users and client applications outside the system) and to <strong>internal</strong> actors (services, other workloads, and the nodes they run on), although the mechanisms and trust assumptions differ. Most systems authenticate in two phases:</p>
+<ul>
+<li><strong>Primary authentication</strong> verifies a credential and links it to a known identity: a password, a signed challenge such as a <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API">WebAuthn assertion</a>, or, for internal actors, a machine certificate or a workload identity such as a <a href="https://spiffe.io/docs/latest/spiffe-about/overview/">SPIFFE ID</a>.</li>
+<li><strong>Authentication proof verification</strong> checks the reusable artifact issued after primary authentication (a session cookie, token, or assertion at the application layer; a TLS session key or IPsec Security Association at lower layers) so that primary authentication is not repeated on every request. <a href="https://pages.nist.gov/800-63-4/sp800-63b.html#sessmgmt">NIST SP 800-63B</a> describes this as session management based on a session secret.</li>
+</ul>
+<p>Where the distinction does not matter, this cheat sheet uses <strong>authentication data</strong> for both. The patterns differ in <strong>what</strong> is verified (credentials or proofs), <strong>where</strong> verification happens, and <strong>which</strong> implications this has for system design and trust boundaries.</p>
+<p>For authorization and for propagating an authenticated identity between services, see the <a href="Microservices_Security_Cheat_Sheet.html">Microservices Security Cheat Sheet</a>, in particular its <a href="Microservices_Security_Cheat_Sheet.html#edge-level-authorization">edge-level</a>, <a href="Microservices_Security_Cheat_Sheet.html#external-entity-identity-propagation">identity propagation</a>, and <a href="Microservices_Security_Cheat_Sheet.html#service-to-service-authentication">service-to-service authentication</a> sections.</p>
+<h2 id="service-level-embedded-authentication">Service-Level Embedded Authentication<a class="headerlink" href="#service-level-embedded-authentication" title="Permanent link">&para;</a></h2>
+<p>In this pattern, each service handles primary authentication itself: it manages identities and credentials, verifies them, and implements the authentication workflows, typically with username/password or API keys. All authentication logic and subject data storage live inside the service, in custom code or built-in libraries. If you have to maintain such a service, the credential handling must follow the <a href="/en/OWASP/CheatSheetSeries/cheatsheets/Authentication_Cheat_Sheet.html">Authentication Cheat Sheet</a> and the <a href="/en/OWASP/CheatSheetSeries/cheatsheets/Password_Storage_Cheat_Sheet.html">Password Storage Cheat Sheet</a>.</p>
+<p><img alt="Service-Level Embedded Authentication" src="../assets/Service_Level_Embedded_Authentication.png" /></p>
+<h3 id="pros">Pros<a class="headerlink" href="#pros" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Simplicity:</strong> Each service is self-contained and needs no external authentication infrastructure.</li>
+<li><strong>Customization freedom:</strong> Authentication behavior can be adapted to service-specific requirements without external constraints.</li>
+<li><strong>Support for external and internal actors:</strong> Because the service controls all authentication functionality, it can orchestrate different authentication contexts (internal services and external users), at the price of significant complexity (see the authentication orchestration con below).</li>
+</ul>
+<h3 id="cons">Cons<a class="headerlink" href="#cons" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Inconsistency:</strong> Authentication behavior, credential storage, and flows differ across services, which fragments the system, degrades the user experience, and rules out Single Sign-On (SSO).</li>
+<li><strong>Security risk:</strong> Authentication code is duplicated across services, increasing the risk of vulnerabilities and complicating audits.</li>
+<li><strong>Maintenance burden:</strong> Changing authentication methods (for example, introducing multi-factor authentication (MFA)) requires updates across all affected services.</li>
+<li><strong>Limited scalability:</strong> Each service manages its own identities, which does not scale to service-to-service authentication across a large system.</li>
+<li><strong>Limited observability and governance:</strong> Without centralized monitoring, credential reuse, account compromise, or brute-force attacks against one service remain invisible to the others, hindering coordinated detection and response.</li>
+<li><strong>Authentication orchestration:</strong> Supporting multi-principal subjects (multiple authentication configurations, protocol chaining, and subject-specific variations for contexts such as first- and third-party access, or external clients next to service-to-service calls) adds significant complexity.</li>
+<li><strong>Coupling of external authentication data with internal trust assumptions:</strong> Using the same authentication data for external clients and internal services increases the risk of leakage and unauthorized access. If an internal service is exposed through a misconfiguration, or an attacker gains internal access, the leaked authentication data grants access to sensitive resources.</li>
+</ul>
+<h2 id="service-level-code-mediated-authentication">Service-Level Code-Mediated Authentication<a class="headerlink" href="#service-level-code-mediated-authentication" title="Permanent link">&para;</a></h2>
+<p>This pattern addresses key limitations of <a href="#service-level-embedded-authentication">Service-Level Embedded Authentication</a>: fragmented identity management, duplicated credential stores, and lack of SSO. The service no longer verifies credentials directly. Instead, an external Identity Provider (IdP) authenticates the subject and issues authentication proofs; the service verifies these itself and extracts identity attributes for request processing.</p>
+<p><img alt="Service-Level Code-Mediated Authentication" src="../assets/Service_Level_Code_Mediated_Authentication.png" /></p>
+<h3 id="pros_1">Pros<a class="headerlink" href="#pros_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>SSO support:</strong> Identity and credential lifecycle is consolidated in the IdP, enabling SSO and reducing duplication.</li>
+<li><strong>Lower security risks:</strong> Centralized authentication reduces the attack surface related to credential handling.</li>
+<li><strong>Improved user experience:</strong> Consistent authentication flows and session handling across services.</li>
+<li><strong>Interoperability:</strong> Widely adopted protocols like <a href="https://openid.net/specs/openid-connect-core-1_0.html">OpenID Connect (OIDC)</a> and <a href="https://www.oasis-open.org/standard/saml/">SAML</a> provide flexibility and broad integration possibilities with various IdPs.</li>
+<li><strong>Customization freedom:</strong> Services can still tailor authentication behavior to specific needs, for example where standards like OIDC are not applicable.</li>
+<li><strong>Support for external and internal actors:</strong> As in the <a href="#service-level-embedded-authentication">embedded pattern</a>, with the same orchestration complexity.</li>
+</ul>
+<h3 id="cons_1">Cons<a class="headerlink" href="#cons_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol handling overhead:</strong> Each service must implement and maintain logic for authentication proof verification and protocol-specific behavior.</li>
+<li><strong>Misconfiguration risks:</strong> Incorrect verification logic, such as missing expiration checks or improper use of cryptography, can introduce severe security vulnerabilities.</li>
+<li><strong>Authentication orchestration:</strong> Same complexity as in the <a href="#service-level-embedded-authentication">embedded pattern</a>.</li>
+<li><strong>Coupling of external authentication data with internal trust assumptions:</strong> Same risk as in the <a href="#service-level-embedded-authentication">embedded pattern</a>.</li>
+</ul>
+<h2 id="service-level-proxy-mediated-authentication">Service-Level Proxy-Mediated Authentication<a class="headerlink" href="#service-level-proxy-mediated-authentication" title="Permanent link">&para;</a></h2>
+<p>This pattern builds on the <a href="#service-level-code-mediated-authentication">previous pattern</a> but moves authentication logic out of the service into a dedicated proxy deployed as a sidecar alongside it. The proxy sits in front of the application, verifies authentication proofs with the Identity Provider (IdP), injects identity context into the request (typically as headers), and forwards it locally to the service.</p>
+<p><img alt="Service-Level Proxy-Mediated Authentication" src="../assets/Service_Level_Proxy_Mediated_Authentication.png" /></p>
+<h3 id="pros_2">Pros<a class="headerlink" href="#pros_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>All benefits of the code-mediated pattern:</strong> SSO, centralized credential handling, a consistent user experience, and standards-based interoperability (see <a href="#service-level-code-mediated-authentication">above</a>).</li>
+<li><strong>Separation of concerns:</strong> Removes authentication logic from application code, simplifying service development and reducing maintenance effort.</li>
+<li><strong>Consistent behavior:</strong> Identity verification and protocol handling in the proxy ensure uniform behavior across services.</li>
+<li><strong>Improved security posture:</strong> Consolidating authentication logic into a dedicated, hardened component reduces the risk of implementation flaws.</li>
+<li><strong>Authentication orchestration:</strong> Some proxies support multiple authentication configurations, including protocol chaining and subject-specific variations, which covers first- and third-party access or a mix of external clients and internal services.</li>
+<li><strong>Strong foundation for service-to-service trust:</strong> Enables <a href="https://csrc.nist.gov/pubs/sp/800/207/final">Zero Trust</a> networking with workload identity, typically realized with <a href="https://spiffe.io/">SPIFFE/SPIRE</a>, which issues workload identities as <a href="https://www.rfc-editor.org/rfc/rfc5280">X.509 certificates</a> used for mutual TLS (<a href="https://www.rfc-editor.org/rfc/rfc8446">mTLS</a>) between services.</li>
+</ul>
+<h3 id="cons_2">Cons<a class="headerlink" href="#cons_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Operational complexity:</strong> Requires deploying and maintaining an additional component per microservice, with higher resource usage and cost.</li>
+<li><strong>Header spoofing risk:</strong> The application trusts identity headers set by the sidecar, so any path that lets a caller set those headers yields a forged identity: a client reaching the application port directly, or the proxy forwarding identity headers it received from the caller. Countermeasures: the sidecar must strip or overwrite every inbound identity header before injecting its own (Envoy, for example, <a href="https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_conn_man/headers#x-forwarded-client-cert">sanitizes <code>x-forwarded-client-cert</code> by default</a>); the application must accept traffic only from its sidecar (bind to loopback, or enforce a network policy that only allows the sidecar to reach the application port); or, where that isolation cannot be guaranteed, the sidecar must sign the injected headers with <a href="https://www.rfc-editor.org/rfc/rfc9421">HTTP Message Signatures</a> so the application can verify their origin. Define a signature profile that binds the identity to the intended service and relevant request components. The application must verify the trusted signer's signature and enforce freshness and replay checks. <a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-204.pdf">NIST SP 800-204</a> (MS-SS-13) recommends layer 3 network segmentation for sensitive applications precisely to counter callers bypassing the sidecar proxy.</li>
+<li><strong>Configuration consistency:</strong> All proxies across the service landscape must be configured uniformly; inconsistencies lead to confusing user flows or security vulnerabilities.</li>
+<li><strong>Coupling of external authentication data with internal trust assumptions:</strong> Same risk as in the <a href="#service-level-embedded-authentication">embedded pattern</a>, because the external authentication data still travels to every service's sidecar for verification.</li>
+</ul>
+<h2 id="edge-level-authentication">Edge-Level Authentication<a class="headerlink" href="#edge-level-authentication" title="Permanent link">&para;</a></h2>
+<p>In this pattern, authentication is handled at the system boundary by a shared component such as an API gateway or ingress proxy. This component authenticates incoming requests from external clients before they reach internal services. It uses <a href="https://openid.net/specs/openid-connect-core-1_0.html">OIDC</a> or <a href="https://www.oasis-open.org/standard/saml/">SAML</a> with an identity provider for user authentication, validates <a href="https://www.rfc-editor.org/rfc/rfc6749">OAuth 2.0</a> access tokens for API access, or uses <a href="https://www.rfc-editor.org/rfc/rfc8446">mTLS</a> for certificate-based client authentication. It propagates verified identity information, typically via headers, to downstream services.</p>
+<p><img alt="Edge-Level Authentication" src="../assets/Edge_Level_Authentication.png" /></p>
+<p>This consolidates authentication into a single enforcement point and removes per-service authentication handling. It corresponds to the gateway or portal placement of the policy enforcement point described in <a href="https://csrc.nist.gov/pubs/sp/800/207/final">NIST SP 800-207 (Zero Trust Architecture)</a>.</p>
+<h3 id="pros_3">Pros<a class="headerlink" href="#pros_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Improved consistency:</strong> Authentication is performed uniformly at a single entry point, reducing fragmentation and configuration drift and improving auditability.</li>
+<li><strong>Simplified service logic:</strong> Internal services are relieved from implementing authentication and focus on authorization and business functionality.</li>
+<li><strong>Faster service onboarding:</strong> New services rely on the existing infrastructure for authentication and need minimal additional setup.</li>
+<li><strong>Protocol-agnostic identity propagation:</strong> The edge verifies the external authentication data once and propagates identity to internal services in a trusted, implementation-independent format: a newly issued <a href="https://www.rfc-editor.org/rfc/rfc7519">JSON Web Token (JWT)</a>, headers protected with <a href="https://www.rfc-editor.org/rfc/rfc9421">HTTP Message Signatures</a>, or a signed proprietary structure. Unlike the service-level patterns, where every service or its sidecar must receive and verify the external authentication data, internal services only ever see the internal representation.</li>
+</ul>
+<h3 id="cons_3">Cons<a class="headerlink" href="#cons_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Limited granularity:</strong> Fine-grained or per-endpoint authentication policies (for example, step-up authentication) are harder to implement and may require coordination with downstream services, depending on the capabilities of the edge proxy.</li>
+<li><strong>Identity propagation challenges:</strong> Secure and reliable propagation of identity context (for example, via headers) requires strict validation and an explicit trust model between the edge and internal services. Use one of the protected formats above, and make internal services verify the signature and reject requests whose identity context is missing or unsigned.</li>
+<li><strong>Single point of failure:</strong> The ingress proxy or gateway is already a central component in most architectures, but authenticating at the edge makes it a critical part of the security infrastructure. Misconfiguration or compromise affects the integrity of authentication decisions system-wide.</li>
+<li><strong>Not suitable for service-to-service authentication:</strong> Edge-level authentication only covers incoming external requests. Internal service-to-service calls need their own mechanism, and any component that can reach a service directly bypasses the gateway entirely; <a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-204.pdf">NIST SP 800-204</a> (MS-SS-2) recommends mutual authentication to prevent such direct, anonymous connections. Routing internal traffic through the edge is technically possible but introduces severe performance bottlenecks.</li>
+</ul>
+<h2 id="network-layer-node-level-authentication">Network-Layer (Node-Level) Authentication<a class="headerlink" href="#network-layer-node-level-authentication" title="Permanent link">&para;</a></h2>
+<p>This pattern authenticates peers at the <a href="https://en.wikipedia.org/wiki/Network_layer">network layer</a> (layer 3), inside the operating system kernel, using cryptographic identities attached to a node or host rather than to an application. Implementations are built on <a href="https://www.rfc-editor.org/rfc/rfc6071">IPsec</a> or <a href="https://www.wireguard.com/">WireGuard</a>: the identity of a peer is bound to keys configured on each node, and every packet is cryptographically authenticated. Enforcement is transparent to applications, which makes it a good complement for securing traffic between workloads, but not a replacement for application-layer authentication.</p>
+<p><img alt="Network-Layer (Node-Level) Authentication" src="../assets/Network_Layer_Authentication.png" /></p>
+<h3 id="pros_4">Pros<a class="headerlink" href="#pros_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Transparent to applications:</strong> Services need no authentication logic; the kernel enforces peer identity for all traffic.</li>
+<li><strong>Protocol-agnostic:</strong> Applies to all traffic types, not just HTTP.</li>
+<li><strong>Low overhead:</strong> Kernel implementation and lightweight handshakes keep latency low while providing strong isolation between nodes.</li>
+<li><strong>Provides node (host) identity:</strong> Each node holds its own key material and every packet is authenticated, which resists spoofing and replay at the network layer and supports <a href="https://csrc.nist.gov/pubs/sp/800/207/final">Zero Trust</a> segmentation between nodes.</li>
+</ul>
+<h3 id="cons_4">Cons<a class="headerlink" href="#cons_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Not suitable for application-level (layer 7) authentication:</strong> Identities belong to nodes or hosts, not to individual users, external clients, or, usually, individual workloads. Every workload on a node shares the node's identity, and user-specific attributes cannot be conveyed.</li>
+<li><strong>Limited observability:</strong> Monitoring is confined to connection-level data (source and destination nodes), with no insight into user-driven actions inside the application.</li>
+<li><strong>Infrastructure complexity:</strong> Requires robust automation for key and identity management and OS- or kernel-level policy enforcement (for example, via <a href="https://ebpf.io/">eBPF</a>).</li>
+</ul>
+<h2 id="operational-and-security-considerations">Operational and Security Considerations<a class="headerlink" href="#operational-and-security-considerations" title="Permanent link">&para;</a></h2>
+<p>The patterns differ primarily in <em>where</em> and <em>how</em> authentication is performed, but they also have significant implications for operations and authorization. Choosing a pattern comes down to balancing development flexibility, operational effort, and risk tolerance.</p>
+<h3 id="operational-considerations">Operational Considerations<a class="headerlink" href="#operational-considerations" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Configuration &amp; Implementation Burden</th>
+<th>Operational Overhead</th>
+<th>Observability Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Service-Level Embedded</strong></td>
+<td>High</td>
+<td>High</td>
+<td>Application-specific</td>
+</tr>
+<tr>
+<td><strong>Service-Level Code-Mediated</strong></td>
+<td>Medium</td>
+<td>Medium</td>
+<td>IdP + Application-specific</td>
+</tr>
+<tr>
+<td><strong>Service-Level Proxy-Mediated</strong></td>
+<td>Medium</td>
+<td>High (infra cost)</td>
+<td>Proxy + Application</td>
+</tr>
+<tr>
+<td><strong>Edge-Level</strong></td>
+<td>Low</td>
+<td>Low</td>
+<td>Centralized (Proxy)</td>
+</tr>
+<tr>
+<td><strong>Network-Layer (Node-Level)</strong></td>
+<td>Low-Medium</td>
+<td>High (infra complexity)</td>
+<td>Network-level only</td>
+</tr>
+</tbody>
+</table>
+<p>Patterns with decentralized authentication (like <a href="#service-level-embedded-authentication">Service-Level Embedded Authentication</a>) typically incur more operational overhead due to inconsistencies, duplicated configuration, and monitoring complexity. Centralized patterns reduce duplication but introduce infrastructure dependencies and require resilient design.</p>
+<h3 id="security-considerations">Security Considerations<a class="headerlink" href="#security-considerations" title="Permanent link">&para;</a></h3>
+<p>Security risks increase significantly when authentication logic and credentials are handled directly within application code. Centralized enforcement, whether at the IdP, at the edge, or in the kernel, limits exposure, enforces stronger boundaries, and reduces the risk of misconfiguration. However, trust leakage must be prevented, because it directly undermines the principle of least privilege. This depends not only on where authentication occurs, but also on how identity information is propagated and verified downstream. Without trustworthy, tamper-resistant propagation, even strong initial authentication can be undermined, weakening trust boundaries and the system's ability to make reliable authorization decisions. The <a href="Identity_Propagation_Patterns_Cheat_Sheet.html">Identity Propagation Patterns Cheat Sheet</a> compares forwarding, token exchange, and trusted internal assertions, including their validation requirements and limitations.</p>
+<p><strong>Note:</strong> Token theft, replay protection, session lifecycle, and reauthentication are critical when implementing any of these patterns. They are covered in the <a href="/en/OWASP/CheatSheetSeries/cheatsheets/Authentication_Cheat_Sheet.html">Authentication Cheat Sheet</a> and the <a href="/en/OWASP/CheatSheetSeries/cheatsheets/Session_Management_Cheat_Sheet.html">Session Management Cheat Sheet</a>.</p>
+<h2 id="recommendations">Recommendations<a class="headerlink" href="#recommendations" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Authenticate external actors at the edge.</strong> Centralize external authentication in a gateway or ingress proxy, as described in <a href="https://csrc.nist.gov/pubs/sp/800/207/final">NIST SP 800-207</a> and <a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-204.pdf">NIST SP 800-204</a> (MS-SS-2). Normalize different authentication mechanisms into a signed internal assertion when needed. Forward an external access token only to its <a href="https://www.rfc-editor.org/rfc/rfc9700.html#section-2.3">intended recipients</a>, with the required validation and proof at each receiving service; otherwise exchange it or issue a suitable internal assertion. See <a href="Identity_Propagation_Patterns_Cheat_Sheet.html">Identity Propagation Patterns</a> for these requirements.</li>
+<li><strong>Authenticate internal service calls with proxy-mediated mTLS and workload identity.</strong> Give every workload its own cryptographic identity, for example an X.509 SVID issued through <a href="https://spiffe.io/docs/latest/spiffe-about/overview/">SPIFFE</a>, and have the sidecar enforce mutual authentication with <a href="https://www.rfc-editor.org/rfc/rfc8446">TLS</a> client certificates on every service-to-service connection, as NIST SP 800-204 (MS-SS-4) recommends. See also <a href="Transport_Layer_Security_Cheat_Sheet.html#client-certificates-and-mutual-tls">Client Certificates and Mutual TLS</a>.</li>
+<li><strong>Do not embed authentication in new systems.</strong> Service-level embedded authentication fragments identity, duplicates credential stores, and rules out SSO. Reserve it for legacy code you cannot change, and even then follow the <a href="Authentication_Cheat_Sheet.html">Authentication Cheat Sheet</a>.</li>
+<li><strong>Treat network-layer (node-level) authentication as a transport complement, never as the sole control.</strong> It authenticates nodes, not users or workloads, and <a href="https://csrc.nist.gov/pubs/sp/800/207/final">NIST SP 800-207</a> is explicit that network location alone does not imply trust. Combine it with edge-level or proxy-mediated authentication; NIST SP 800-204 (MS-SS-13) likewise positions layer 3 segmentation as a complement to service mesh controls.</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-204.pdf">NIST SP 800-204: Security Strategies for Microservices-Based Application Systems</a></li>
+<li><a href="https://csrc.nist.gov/pubs/sp/800/207/final">NIST SP 800-207: Zero Trust Architecture</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

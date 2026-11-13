@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Java Security | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Java Security">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Java_Security_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="java-security-cheat-sheet">Java Security Cheat Sheet<a class="headerlink" href="#java-security-cheat-sheet" title="Permanent link">&para;</a></h1>
+<p>This cheat sheet highlights some specific topics for Java applications and references specific Cheat Sheets for more details.</p>
+<p>See as well:</p>
+<ul>
+<li><a href="JAAS_Cheat_Sheet.html">JAAS Cheat Sheet</a></li>
+<li><a href="Bean_Validation_Cheat_Sheet.html">Bean Validation Cheat Sheet</a></li>
+</ul>
+<h2 id="serialization">Serialization<a class="headerlink" href="#serialization" title="Permanent link">&para;</a></h2>
+<p>Java Serialization can potentially be used to trigger arbitrary code execution (<a href="https://www.oracle.com/java/technologies/javase/seccodeguide.html#8">Oracle Secure Coding Guidelines for Java SE, section 8</a>):</p>
+<ul>
+<li>Do not deserialize untrusted data.</li>
+<li>Even deserializing trusted data coming from a database could be a security risk. A compromised database could be exploited to execute arbitrary code in your application.</li>
+</ul>
+<p>See the <a href="Deserialization_Cheat_Sheet.html">Deserialization Cheat Sheet</a> for more information on this topic.</p>
+<h2 id="sql-and-jpa-injections">SQL and JPA injections<a class="headerlink" href="#sql-and-jpa-injections" title="Permanent link">&para;</a></h2>
+<p>See the following Cheat Sheets for protection against SQL injection protection:</p>
+<ul>
+<li><a href="SQL_Injection_Prevention_Cheat_Sheet.html">SQL Injection Prevention Cheat Sheet</a>;</li>
+<li><a href="Query_Parameterization_Cheat_Sheet.html">Query Parameterization Cheat Sheet</a>.</li>
+</ul>
+<p>Using an ORM such as JPA/Hibernate does not constitute a blanket protection against injection attacks. JPA/Hibernate applications may be vulnerable to <a href="https://wstg.owasp.org/latest/4-Web_Application_Security_Testing/07-Injection/05.7-ORM_Injection/">JPQL/HQL injection attacks</a>. Query parameterization is still necessary. See the <a href="Query_Parameterization_Cheat_Sheet.html">Query Parameterization Cheat Sheet</a> for example of JPA/Hibernate usage.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://www.oracle.com/java/technologies/javase/seccodeguide.html#8">Oracle: Secure Coding Guidelines for Java SE</a></li>
+<li><a href="https://wstg.owasp.org/latest/4-Web_Application_Security_Testing/07-Injection/05.7-ORM_Injection/">OWASP WSTG: ORM Injection</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

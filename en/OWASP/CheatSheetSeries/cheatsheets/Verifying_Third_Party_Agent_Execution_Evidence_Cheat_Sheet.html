@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verifying Third Party Agent Execution Evidence | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Verifying Third Party Agent Execution Evidence">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Verifying_Third_Party_Agent_Execution_Evidence_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="verifying-third-party-agent-execution-evidence-cheat-sheet">Verifying Third-Party Agent Execution Evidence Cheat Sheet<a class="headerlink" href="#verifying-third-party-agent-execution-evidence-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>This cheat sheet helps developers assess execution records supplied by an agent, a Model Context Protocol (MCP) server, or a service they do not control. A supplier can sign a record that omits actions or describes a run that never happened. Verify the specific claim you need, and identify who could fabricate the evidence supporting it.</p>
+<p><a href="https://slsa.dev/spec/v1.2/verifying-artifacts">Supply-chain Levels for Software Artifacts (SLSA) verification guidance</a> separates checking signatures and artifact identity from deciding which producers to trust. Apply the same distinction to execution records. Use these outcomes for each question below:</p>
+<table>
+<thead>
+<tr>
+<th>Outcome</th>
+<th>What the evidence supports</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Independently re-checkable</td>
+<td>Another reviewer can verify the stated property using authenticated evidence and trust material the supplier does not exclusively control. This does not establish other properties of the execution.</td>
+</tr>
+<tr>
+<td>Supplier assertion</td>
+<td>The supplier claims the property, but independent evidence is missing. The record can still help with debugging and routine operations.</td>
+</tr>
+<tr>
+<td>No information</td>
+<td>The evidence does not let you assess this property of the execution. Do not infer that the run was clean.</td>
+</tr>
+</tbody>
+</table>
+<p>A signature may establish who made an assertion without establishing that the assertion is true. Do not use supplier assertions alone to resolve an incident attribution or dispute involving that supplier.</p>
+<p>For producing and protecting your own logs, see the <a href="Logging_Cheat_Sheet.html">Logging Cheat Sheet</a>. For optional message integrity and replay protection between agent and server, see <a href="MCP_Security_Cheat_Sheet.html#7-optional-message-level-integrity">MCP Security Section 7</a>. These checks assess individual records; they do not establish end-to-end completeness across a chain of delegated actions.</p>
+<h2 id="six-questions-to-ask-about-an-execution-record">Six Questions to Ask About an Execution Record<a class="headerlink" href="#six-questions-to-ask-about-an-execution-record" title="Permanent link">&para;</a></h2>
+<h3 id="1-who-could-have-written-or-altered-it">1. Who could have written or altered it?<a class="headerlink" href="#1-who-could-have-written-or-altered-it" title="Permanent link">&para;</a></h3>
+<p>List the component, host, recorder, operator, and signing-key holder. Count independent parties, not processes: several services under one supplier's control remain one party. A recorder fed only by the component preserves that component's account of events. A signing service that accepts arbitrary content from the component does not independently confirm the content.</p>
+<ul>
+<li>Identify an observer that obtains event data independently of the component's own reports.</li>
+<li>Keep its records where the component and supplier cannot rewrite them.</li>
+<li>Corroborate the supplier's record against calls recorded at a gateway or other boundary you control.</li>
+</ul>
+<p>A boundary recorder covers only what crosses that boundary. It cannot establish local file writes or in-process actions, and it cannot inspect encrypted request bodies without access to their plaintext. Where independent observation is unavailable, classify the account of execution as a supplier assertion and limit the decisions you base on it.</p>
+<h3 id="2-what-does-the-timing-evidence-actually-establish">2. What does the timing evidence actually establish?<a class="headerlink" href="#2-what-does-the-timing-evidence-actually-establish" title="Permanent link">&para;</a></h3>
+<p>A timestamp written by the supplier is a supplier assertion. To check freshness, send a fresh, unpredictable challenge value (a nonce) and require it to be signed together with the execution claims. Verify the signature and compare the returned nonce with the one you sent.</p>
+<p><a href="https://datatracker.ietf.org/doc/html/rfc9334#section-10">RFC 9334 Section 10</a> explains the limit: a matching nonce bounds signing to after the challenge was generated; it does not show when the individual claims were captured. A trusted timestamp bound to the signed record can establish that it existed by a particular time, but does not establish that its contents describe real events.</p>
+<p>Record which timing property you checked. Do not label capture as contemporaneous merely because a signature is fresh or a record appears in a transparency log. That claim needs evidence from an observer positioned to witness the execution.</p>
+<h3 id="3-does-it-identify-the-intended-artifact-and-execution">3. Does it identify the intended artifact and execution?<a class="headerlink" href="#3-does-it-identify-the-intended-artifact-and-execution" title="Permanent link">&para;</a></h3>
+<p>A valid signature on a record about another artifact or run does not answer your question.</p>
+<ul>
+<li>Recompute a collision-resistant digest of the expected artifact and compare it with the signed subject. Obtain the expected artifact or digest independently of the report being assessed.</li>
+<li>Separately match the signed execution identifier or challenge to the run you intended to review.</li>
+<li>Check which relevant inputs are covered, such as tool definitions, configuration, prompts, model version, and policy. A binary digest alone does not identify these inputs.</li>
+</ul>
+<p>An artifact digest can legitimately stay the same across many runs. The problem is using that digest as the only binding to an execution. A matched digest establishes artifact identity; a matched run identifier establishes which execution the supplier is claiming to describe. Neither establishes that the reported actions occurred.</p>
+<h3 id="4-would-an-omitted-event-be-detectable">4. Would an omitted event be detectable?<a class="headerlink" href="#4-would-an-omitted-event-be-detectable" title="Permanent link">&para;</a></h3>
+<p>Define the execution or time window and the events an independent observer was positioned to see. Reconcile the record against an expected-event list or per-execution sequence that the supplier cannot silently redefine. A supplier-maintained sequence counts only what the supplier chose to include.</p>
+<p>A transparency log can make changes after entry detectable; it cannot reveal an event that was never submitted. <a href="https://datatracker.ietf.org/doc/html/rfc9162">RFC 9162</a> describes inclusion and consistency checks and warns that a log can present inconsistent views to different clients. Verify those proofs and check how the deployment detects inconsistent views, such as by comparing signed log states across independent observers. The log operator remains a trust dependency.</p>
+<p>A log's total entry count is not an execution's event count. Unrelated entries can increase it while events from the run are missing. Likewise, injecting one expected event and finding it in the returned record is a useful spot-check, not a completeness test. Any coverage claim must remain limited to the events the independent observer could see and reconcile.</p>
+<h3 id="5-what-happens-when-recording-or-delivery-fails">5. What happens when recording or delivery fails?<a class="headerlink" href="#5-what-happens-when-recording-or-delivery-fails" title="Permanent link">&para;</a></h3>
+<p>Determine whether the component continues and drops events, buffers and retries, or stops execution. Check buffer overflow behavior as well as normal operation.</p>
+<ul>
+<li>In an environment you control, interrupt the recording path and observe whether execution continues and gaps become visible.</li>
+<li>Where you cannot test, request evidence from an outage or an exercised failure scenario. Treat documentation alone as a supplier assertion.</li>
+<li>Preserve independently observed delivery failures outside the component's control. A gap marker written solely by the component is still its assertion, even when stored elsewhere.</li>
+</ul>
+<p>A test establishes the behavior observed under its conditions; it does not prove that another execution had no gaps. An empty report from a recorder that may have dropped events provides no basis for declaring that run clean. Stopping execution on every logging failure is not automatically appropriate: it turns a recording outage into an availability failure. Choose the behavior according to the action's risk and make any loss of evidence visible.</p>
+<h3 id="6-can-the-reviewer-verify-it-without-being-able-to-forge-it">6. Can the reviewer verify it without being able to forge it?<a class="headerlink" href="#6-can-the-reviewer-verify-it-without-being-able-to-forge-it" title="Permanent link">&para;</a></h3>
+<p>Use a maintained verifier with trusted signer identities, keys or certificate roots, and permitted algorithms configured independently of the record. A key packaged with the record is not a trust anchor merely because it verifies that record; it must connect to trust you already established. The <a href="https://slsa.dev/spec/v1.2/verifying-artifacts">SLSA verification steps</a> illustrate checking the signature, subject digest, and expected producer before relying on provenance.</p>
+<p>Validate applicable certificate paths and revocation information, as described in <a href="https://datatracker.ietf.org/doc/html/rfc9334#section-12.4">RFC 9334 Section 12.4</a>. Do not accept a signature solely because the cryptographic calculation succeeds.</p>
+<p>Public-key verification does not require the signing secret. By contrast, everyone holding the shared secret needed to verify a message authentication code can also create one. Such a record cannot independently attribute authorship between those key holders. Asking the supplier's service whether its own record is valid also leaves the supplier as the source of the assertion.</p>
+<h3 id="worked-examples">Worked Examples<a class="headerlink" href="#worked-examples" title="Permanent link">&para;</a></h3>
+<p>These examples describe evidence after the stated checks, rather than assigning guarantees to a file format.</p>
+<table>
+<thead>
+<tr>
+<th>Evidence and checks performed</th>
+<th>What you may conclude</th>
+<th>What remains unestablished</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vendor-exported traces, with no independent corroboration</td>
+<td>The vendor supplied these claims.</td>
+<td>Whether the actions occurred and whether the record is complete.</td>
+</tr>
+<tr>
+<td>A signed record verified against your trusted signer, with artifact digest and run identifier matched to your expectations</td>
+<td>That signer asserted these bytes about the expected artifact and run.</td>
+<td>Whether the assertions are true or complete.</td>
+</tr>
+<tr>
+<td>The same record, with verified log inclusion and consistency evidence plus an independently trusted timestamp over the signed record</td>
+<td>The signed record existed by the supported time and is included in the checked log state.</td>
+<td>When events were captured, whether they occurred, or whether any were omitted before submission.</td>
+</tr>
+<tr>
+<td>The record reconciled against events captured by an independent boundary observer</td>
+<td>Whether the record includes the events that observer saw in the stated window.</td>
+<td>Internal actions, other boundaries, or events outside the observer's coverage.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="dos-and-donts">Do's and Don'ts<a class="headerlink" href="#dos-and-donts" title="Permanent link">&para;</a></h2>
+<p>Keep the verification policy and expected values outside the evidence under review, following the separation in <a href="https://slsa.dev/spec/v1.2/verifying-artifacts">SLSA verification guidance</a>.</p>
+<h3 id="do">Do<a class="headerlink" href="#do" title="Permanent link">&para;</a></h3>
+<ul>
+<li>State the exact property being checked: signer, artifact, execution binding, timing, or coverage.</li>
+<li>Record the trust assumptions and limits alongside each result.</li>
+<li>Reconcile supplier reports with observations you control when possible.</li>
+<li>Exercise recording failures in an environment you control and preserve the results.</li>
+</ul>
+<h3 id="dont">Don't<a class="headerlink" href="#dont" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Treat a valid signature or log inclusion proof as proof that an action occurred.</li>
+<li>Confuse a stable artifact digest with a unique execution identifier.</li>
+<li>Treat a fresh signature as proof of live capture, or a successful spot-check as proof of completeness.</li>
+<li>Treat missing entries as evidence that nothing happened when recording could have failed.</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://slsa.dev/spec/v1.2/verifying-artifacts">SLSA: Verifying Artifacts</a></li>
+<li><a href="https://datatracker.ietf.org/doc/html/rfc9334#section-10">RFC 9334: Remote ATtestation procedureS (RATS) Architecture</a></li>
+<li><a href="https://datatracker.ietf.org/doc/html/rfc9162">RFC 9162: Certificate Transparency Version 2.0</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

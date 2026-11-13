@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Deserialization | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Deserialization">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Deserialization_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="deserialization-cheat-sheet">Deserialization Cheat Sheet<a class="headerlink" href="#deserialization-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>This article is focused on providing clear, actionable guidance for safely deserializing untrusted data in your applications.</p>
+<h2 id="what-is-deserialization">What is Deserialization<a class="headerlink" href="#what-is-deserialization" title="Permanent link">&para;</a></h2>
+<p><strong>Serialization</strong> is the process of turning some object into a data format that can be restored later. People often serialize objects in order to save them for storage, or to send as part of communications.</p>
+<p><strong>Deserialization</strong> is the reverse of that process, taking data structured in some format, and rebuilding it into an object. Today, the most popular data format for serializing data is JSON. Before that, it was XML.</p>
+<p>However, many programming languages have native ways to serialize objects. These native formats usually offer more features than JSON or XML, including customization of the serialization process.</p>
+<p>Unfortunately, the features of these native deserialization mechanisms can sometimes be repurposed for malicious effect when operating on untrusted data. Attacks against deserializers have been found to allow denial-of-service, access control, or remote code execution (RCE) attacks.</p>
+<h2 id="guidance-on-deserializing-objects-safely">Guidance on Deserializing Objects Safely<a class="headerlink" href="#guidance-on-deserializing-objects-safely" title="Permanent link">&para;</a></h2>
+<p>The following language-specific guidance attempts to enumerate safe methodologies for deserializing data that can't be trusted.</p>
+<h3 id="php">PHP<a class="headerlink" href="#php" title="Permanent link">&para;</a></h3>
+<h4 id="clear-box-review">Clear-box Review<a class="headerlink" href="#clear-box-review" title="Permanent link">&para;</a></h4>
+<p>Check the use of <a href="https://www.php.net/manual/en/function.unserialize.php"><code>unserialize()</code></a> function and review how the external parameters are accepted. Use a safe, standard data interchange format such as JSON (via <code>json_decode()</code> and <code>json_encode()</code>) if you need to pass serialized data to the user.</p>
+<h3 id="python">Python<a class="headerlink" href="#python" title="Permanent link">&para;</a></h3>
+<h4 id="opaque-box-review">Opaque-box Review<a class="headerlink" href="#opaque-box-review" title="Permanent link">&para;</a></h4>
+<p>If the traffic data contains the symbol dot <code>.</code> at the end, it's very likely that the data was sent in serialization. It will be only true if the data is not being encoded using Base64 or Hexadecimal schemas. If the data is being encoded, then it's best to check if the serialization is likely happening or not by looking at the starting characters of the parameter value. For example if data is Base64 encoded, then it will most likely start with <code>gASV</code>.</p>
+<h4 id="clear-box-review_1">Clear-box Review<a class="headerlink" href="#clear-box-review_1" title="Permanent link">&para;</a></h4>
+<p>Review the following APIs for untrusted input:</p>
+<ol>
+<li>
+<p>Uses of <a href="https://docs.python.org/3/library/pickle.html#pickle.loads"><code>pickle.load()</code> or <code>pickle.loads()</code></a>. Unpickling can execute arbitrary code; never unpickle untrusted data. <code>pickle.loads()</code> expects bytes-like input, not a Python 3 string.</p>
+</li>
+<li>
+<p>Uses of <a href="https://github.com/yaml/pyyaml/blob/6.0.3/lib/yaml/__init__.py#L74-L156">PyYAML's unsafe loaders</a>, such as <code>yaml.unsafe_load()</code> or <code>yaml.load()</code> with <code>Loader=yaml.Loader</code> or <code>Loader=yaml.UnsafeLoader</code>. For untrusted YAML, use <a href="https://pyyaml.org/wiki/PyYAMLDocumentation#the-yaml-package"><code>yaml.safe_load()</code></a>, and do not register custom constructors that allow arbitrary object creation. Current PyYAML requires an explicit <code>Loader</code> argument for <code>yaml.load()</code>.</p>
+</li>
+<li>
+<p>Uses of <a href="https://jsonpickle.readthedocs.io/en/latest/api.html#jsonpickle.decode"><code>jsonpickle.decode()</code></a> with untrusted input.</p>
+</li>
+</ol>
+<h3 id="java">Java<a class="headerlink" href="#java" title="Permanent link">&para;</a></h3>
+<p>For historical research on Java deserialization and defensive allowlisting, see <a href="../assets/Deserialization_Cheat_Sheet_GOD16Deserialization.pdf">Java Deserialization Attacks — German OWASP Day 2016</a>.</p>
+<p>The following techniques can reduce risks when using <a href="https://docs.oracle.com/javase/7/docs/api/java/io/Serializable.html">Java's Serializable format</a>.</p>
+<p>Implementation advice:</p>
+<ul>
+<li>Configure <a href="https://docs.oracle.com/en/java/javase/17/core/serialization-filtering1.html">serialization filters</a> with an application-specific class allowlist and resource limits before reading objects.</li>
+<li>If maintaining a <code>resolveClass()</code> override, account for its <a href="#harden-your-own-javaioobjectinputstream">limitations below</a>; class checks alone do not bound resource consumption.</li>
+</ul>
+<h4 id="clear-box-review_2">Clear-box Review<a class="headerlink" href="#clear-box-review_2" title="Permanent link">&para;</a></h4>
+<p>Be aware of the following Java API uses for potential serialization vulnerability.</p>
+<p>1. <code>XMLdecoder</code> with external user defined parameters</p>
+<p>2. <code>XStream</code> with <code>fromXML</code> method (xstream version &lt;= v1.4.6 is vulnerable to the serialization issue)</p>
+<p>3. <code>ObjectInputStream</code> with <code>readObject</code></p>
+<p>4. Uses of <code>readObject</code>, <code>readObjectNoData</code>, <code>readResolve</code> or <code>readExternal</code></p>
+<p>5. <code>ObjectInputStream.readUnshared</code></p>
+<p>6. <code>Serializable</code></p>
+<h4 id="opaque-box-review_1">Opaque-box Review<a class="headerlink" href="#opaque-box-review_1" title="Permanent link">&para;</a></h4>
+<p>If the captured traffic data includes the following patterns, it may suggest that the data was sent in Java serialization streams:</p>
+<ul>
+<li><code>AC ED 00 05</code> in Hex</li>
+<li><code>rO0</code> in Base64</li>
+<li><code>Content-type</code> header of an HTTP response set to <code>application/x-java-serialized-object</code></li>
+</ul>
+<h4 id="prevent-data-leakage-and-trusted-field-clobbering">Prevent Data Leakage and Trusted Field Clobbering<a class="headerlink" href="#prevent-data-leakage-and-trusted-field-clobbering" title="Permanent link">&para;</a></h4>
+<p>If there are data members of an object that should never be controlled by end users during deserialization or exposed to users during serialization, they should be declared as <a href="https://docs.oracle.com/javase/7/docs/platform/serialization/spec/serial-arch.html#7231">the <code>transient</code> keyword</a> (section <em>Protecting Sensitive Information</em>).</p>
+<p>For a class that defined as Serializable, the sensitive information variable should be declared as <code>private transient</code>.</p>
+<p>For example, the class <code>myAccount</code>, the variables 'profit' and 'margin' were declared as transient to prevent them from being serialized.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">myAccount</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Serializable</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">transient</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">profit</span><span class="p">;</span><span class="w"> </span><span class="c1">// declared transient</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">transient</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">margin</span><span class="p">;</span><span class="w"> </span><span class="c1">// declared transient</span>
+<span class="w">    </span><span class="p">....</span>
+</code></pre></div>
+<h4 id="prevent-deserialization-of-domain-objects">Prevent Deserialization of Domain Objects<a class="headerlink" href="#prevent-deserialization-of-domain-objects" title="Permanent link">&para;</a></h4>
+<p>Some of your application objects may be forced to implement <code>Serializable</code> due to their hierarchy. To guarantee that your application objects can't be deserialized, a <code>readObject()</code> method should be declared (with a <code>final</code> modifier) which always throws an exception:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">readObject</span><span class="p">(</span><span class="n">ObjectInputStream</span><span class="w"> </span><span class="n">in</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">java</span><span class="p">.</span><span class="na">io</span><span class="p">.</span><span class="na">IOException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">java</span><span class="p">.</span><span class="na">io</span><span class="p">.</span><span class="na">IOException</span><span class="p">(</span><span class="s">"Cannot be deserialized"</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4 id="harden-your-own-javaioobjectinputstream">Harden Your Own java.io.ObjectInputStream<a class="headerlink" href="#harden-your-own-javaioobjectinputstream" title="Permanent link">&para;</a></h4>
+<p>The <code>java.io.ObjectInputStream</code> class is used to deserialize objects. A custom class-resolution allowlist may be useful if:</p>
+<ul>
+<li>you can change the code that does the deserialization;</li>
+<li>you know what classes you expect to deserialize.</li>
+</ul>
+<p>The general idea is to override <code>ObjectInputStream.resolveClass()</code> to restrict ordinary class resolution during deserialization.</p>
+<p>This does not check every object: the <a href="https://docs.oracle.com/en/java/javase/17/docs/specs/serialization/input.html#the-objectinputstream-class">serialization specification</a> handles strings separately and resolves dynamic proxy class descriptors through <code>resolveProxyClass()</code>.</p>
+<p>The following example allows only <code>Bicycle</code> through <code>resolveClass()</code>. It is an illustrative class check, not a complete deserialization defense:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">LookAheadObjectInputStream</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">ObjectInputStream</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">LookAheadObjectInputStream</span><span class="p">(</span><span class="n">InputStream</span><span class="w"> </span><span class="n">inputStream</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">IOException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">super</span><span class="p">(</span><span class="n">inputStream</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">    * Restrict ordinary class resolution to our expected Bicycle class</span>
+<span class="cm">    */</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">protected</span><span class="w"> </span><span class="n">Class</span><span class="o">&lt;?&gt;</span><span class="w"> </span><span class="nf">resolveClass</span><span class="p">(</span><span class="n">ObjectStreamClass</span><span class="w"> </span><span class="n">desc</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">IOException</span><span class="p">,</span><span class="w"> </span><span class="n">ClassNotFoundException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">desc</span><span class="p">.</span><span class="na">getName</span><span class="p">().</span><span class="na">equals</span><span class="p">(</span><span class="n">Bicycle</span><span class="p">.</span><span class="na">class</span><span class="p">.</span><span class="na">getName</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">InvalidClassException</span><span class="p">(</span><span class="s">"Unauthorized deserialization attempt"</span><span class="p">,</span><span class="w"> </span><span class="n">desc</span><span class="p">.</span><span class="na">getName</span><span class="p">());</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kd">super</span><span class="p">.</span><span class="na">resolveClass</span><span class="p">(</span><span class="n">desc</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Use <a href="https://docs.oracle.com/en/java/javase/17/core/serialization-filtering1.html">serialization filtering</a> to combine a class allowlist with limits on graph depth, references, array lengths, and stream bytes. Also bound the serialized input size separately: filters are not called for concretely encoded strings or primitives. Filtering does not make arbitrary untrusted deserialization safe.</p>
+<p>More complete implementations of this approach have been proposed by various community members:</p>
+<ul>
+<li><a href="https://github.com/ikkisoft/SerialKiller">NibbleSec</a> - a library that allows creating lists of classes that are allowed to be deserialized</li>
+<li><a href="https://www.ibm.com/developerworks/library/se-lookahead/">IBM</a> - the seminal protection, written years before the most devastating exploitation scenarios were envisioned.</li>
+<li><a href="https://commons.apache.org/proper/commons-io/javadocs/api-2.5/org/apache/commons/io/serialization/ValidatingObjectInputStream.html">Apache Commons IO classes</a></li>
+</ul>
+<h4 id="harden-all-javaioobjectinputstream-usage-with-an-agent">Harden All java.io.ObjectInputStream Usage with an Agent<a class="headerlink" href="#harden-all-javaioobjectinputstream-usage-with-an-agent" title="Permanent link">&para;</a></h4>
+<p>As mentioned above, the <code>java.io.ObjectInputStream</code> class is used to deserialize objects. It's possible to harden its behavior by subclassing it. However, if you don't own the code or can't wait for a patch, using an agent to weave in hardening to <code>java.io.ObjectInputStream</code> is the best solution.</p>
+<p>Globally changing <code>ObjectInputStream</code> is only safe for block-listing known malicious types, because it's not possible to know for all applications what the expected classes to be deserialized are. Fortunately, there are very few classes needed in the denylist to be safe from all the known attack vectors, today.</p>
+<p>It's inevitable that more "gadget" classes will be discovered that can be abused. However, there is an incredible amount of vulnerable software exposed today, in need of a fix. In some cases, "fixing" the vulnerability may involve re-architecting messaging systems and breaking backwards compatibility as developers move towards not accepting serialized objects.</p>
+<p>To enable these agents, simply add a new JVM parameter:</p>
+<div class="highlight"><pre><span></span><code>-javaagent:name-of-agent.jar
+</code></pre></div>
+<p>Agents taking this approach have been released by various community members:</p>
+<ul>
+<li><a href="https://github.com/Contrast-Security-OSS/contrast-rO0">rO0 by Contrast Security</a></li>
+</ul>
+<p>A similar, but less scalable approach would be to manually patch and bootstrap your JVM's ObjectInputStream. Guidance on this approach is available <a href="https://github.com/wsargent/paranoid-java-serialization">here</a>.</p>
+<h4 id="other-deserialization-libraries-and-formats">Other Deserialization Libraries and Formats<a class="headerlink" href="#other-deserialization-libraries-and-formats" title="Permanent link">&para;</a></h4>
+<p>While the advice above is focused on <a href="https://docs.oracle.com/javase/7/docs/api/java/io/Serializable.html">Java's Serializable format</a>, there are a number of other libraries
+that use other formats for deserialization. Many of these libraries may have similar security
+issues if not configured correctly. This section lists some of these libraries and
+recommended configuration options to avoid security issues when deserializing untrusted data:</p>
+<p><strong>Can be used safely with default configuration:</strong></p>
+<p>The following libraries can be used safely with default configuration:</p>
+<ul>
+<li><strong><a href="https://github.com/alibaba/fastjson2">fastjson2</a></strong> (JSON) - can be used safely as long as
+the <a href="https://github.com/alibaba/fastjson2/wiki/fastjson2_autotype_cn"><strong>autotype</strong></a> option is not turned on</li>
+<li><strong><a href="https://github.com/FasterXML/jackson-databind">jackson-databind</a></strong> (JSON) - can be used safely as long
+as polymorphism is not used (<a href="https://cowtowncoder.medium.com/on-jackson-cves-dont-panic-here-is-what-you-need-to-know-54cd0d6e8062">see blog post</a>)</li>
+<li><strong><a href="https://github.com/EsotericSoftware/kryo">Kryo v5.0.0+</a></strong> (custom format) - can be used safely
+as long as class registration is not turned <strong>off</strong> (<a href="https://github.com/EsotericSoftware/kryo#optional-registration">see documentation</a>
+and <a href="https://github.com/EsotericSoftware/kryo/issues/929">this issue</a>)</li>
+<li><strong><a href="https://github.com/EsotericSoftware/yamlbeans">YamlBeans v1.16+</a></strong> (YAML) - can be used safely
+as long as the <strong>UnsafeYamlConfig</strong> class isn't used (see <a href="https://github.com/EsotericSoftware/yamlbeans/commit/b1122588e7610ae4e0d516c50d08c94ee87946e6">this commit</a>)<ul>
+<li><em>NOTE: because these versions are not available in Maven Central,
+<a href="https://github.com/Contrast-Security-OSS/yamlbeans">a fork exists</a> that can be used instead.</em></li>
+</ul>
+</li>
+<li><strong><a href="https://x-stream.github.io/">XStream v1.4.17+</a></strong> (JSON and XML) - can be used safely
+as long as the allowlist and other security controls are not relaxed (<a href="https://x-stream.github.io/security.html">see documentation</a>)</li>
+</ul>
+<p><strong>Requires configuration before can be used safely:</strong></p>
+<p>The following libraries require configuration options to be set before they can be used safely:</p>
+<ul>
+<li><strong><a href="https://github.com/alibaba/fastjson">fastjson v1.2.68+</a></strong> (JSON) - cannot be used safely unless
+the <a href="https://github.com/alibaba/fastjson/wiki/fastjson_safemode_en"><strong>safemode</strong></a> option is turned on, which disables
+deserialization of any class (<a href="https://github.com/alibaba/fastjson/wiki/enable_autotype">see documentation</a>).
+Previous versions are not safe.</li>
+<li><strong><a href="https://github.com/jdereg/json-io">json-io</a></strong> (JSON) - cannot be used safely since the use of <strong>@type</strong> property in
+JSON allows deserialization of any class. Can only be used safely in following situations:<ul>
+<li>In <a href="https://github.com/jdereg/json-io/blob/master/user-guide.md#non-typed-usage">non-typed mode</a> using the <strong>JsonReader.USE_MAPS</strong> setting which turns off generic object deserialization</li>
+<li><a href="https://github.com/jdereg/json-io/blob/master/user-guide.md#customization-technique-4-custom-serializer">With a custom deserializer</a> controlling which classes get deserialized</li>
+</ul>
+</li>
+<li><strong><a href="https://github.com/EsotericSoftware/kryo">Kryo &lt; v5.0.0</a></strong> (custom format) - cannot be used safely unless class registration is turned <strong>on</strong>,
+which disables deserialization of any class (<a href="https://github.com/EsotericSoftware/kryo#optional-registration">see documentation</a>
+and <a href="https://github.com/EsotericSoftware/kryo/issues/929">this issue</a>)<ul>
+<li><em>NOTE: other wrappers exist around Kryo such as <a href="https://github.com/twitter/chill">Chill</a>, which may also have class registration
+not required by default regardless of the underlying version of Kryo being used</em></li>
+</ul>
+</li>
+<li><strong><a href="https://bitbucket.org/snakeyaml/snakeyaml/src">SnakeYAML</a></strong> (YAML) - cannot be used safely unless
+the <strong>org.yaml.snakeyaml.constructor.SafeConstructor</strong> class is used, which disables
+deserialization of any class (<a href="https://bitbucket.org/snakeyaml/snakeyaml/wiki/CVE-2022-1471">see docs</a>)</li>
+</ul>
+<p><strong>Cannot be used safely:</strong></p>
+<p>The following libraries are either no longer maintained or cannot be used safely with untrusted input:</p>
+<ul>
+<li><strong><a href="https://github.com/castor-data-binding/castor">Castor</a></strong> (XML) - appears to be abandoned with no commits since 2016</li>
+<li><strong><a href="https://github.com/alibaba/fastjson">fastjson &lt; v1.2.68</a></strong> (JSON) - these versions allows deserialization of any class
+(<a href="https://github.com/alibaba/fastjson/wiki/enable_autotype">see documentation</a>)</li>
+<li><strong><a href="https://docs.oracle.com/javase/8/docs/api/java/beans/XMLDecoder.html">XMLDecoder in the JDK</a></strong> (XML) - <em>"close to impossible to securely deserialize Java objects in this format from untrusted inputs"</em>
+("Red Hat Defensive Coding Guide", <a href="https://redhat-crypto.gitlab.io/defensive-coding-guide/#sect-Defensive_Coding-Tasks-Serialization-XML">end of section 2.6.5</a>)</li>
+<li><strong><a href="https://x-stream.github.io/">XStream &lt; v1.4.17</a></strong> (JSON and XML) - these versions allows deserialization of any class (see <a href="https://x-stream.github.io/security.html#explicit">documentation</a>)</li>
+<li><strong><a href="https://github.com/EsotericSoftware/yamlbeans">YamlBeans &lt; v1.16</a></strong> (YAML) - these versions allows deserialization of any class
+(see <a href="https://github.com/Contrast-Security-OSS/yamlbeans/blob/main/SECURITY.md">this document</a>)</li>
+</ul>
+<h3 id="net-csharp">.Net CSharp<a class="headerlink" href="#net-csharp" title="Permanent link">&para;</a></h3>
+<h4 id="clear-box-review_3">Clear-box Review<a class="headerlink" href="#clear-box-review_3" title="Permanent link">&para;</a></h4>
+<p>Search the source code for the following terms:</p>
+<ol>
+<li><code>TypeNameHandling</code></li>
+<li><code>JavaScriptTypeResolver</code></li>
+</ol>
+<p>Look for any serializers where the type is set by a user controlled variable.</p>
+<h4 id="opaque-box-review_2">Opaque-box Review<a class="headerlink" href="#opaque-box-review_2" title="Permanent link">&para;</a></h4>
+<p>Search for the following base64 encoded content that starts with:</p>
+<div class="highlight"><pre><span></span><code>AAEAAAD/////
+</code></pre></div>
+<p>Search for content with the following text:</p>
+<ol>
+<li><code>TypeObject</code></li>
+<li><code>$type:</code></li>
+</ol>
+<h4 id="general-precautions">General Precautions<a class="headerlink" href="#general-precautions" title="Permanent link">&para;</a></h4>
+<p>Microsoft has stated that the <code>BinaryFormatter</code> type is dangerous and cannot be secured. As such, it should not be used. Full details are in the <a href="https://docs.microsoft.com/en-us/dotnet/standard/serialization/binaryformatter-security-guide">BinaryFormatter security guide</a>.</p>
+<p>Don't allow the datastream to define the type of object that the stream will be deserialized to. You can prevent this by for example using the <code>DataContractSerializer</code> or <code>XmlSerializer</code> if at all possible.</p>
+<p>Where <code>JSON.Net</code> is being used make sure the <code>TypeNameHandling</code> is only set to <code>None</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">TypeNameHandling</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TypeNameHandling</span><span class="p">.</span><span class="n">None</span>
+</code></pre></div>
+<p>If <code>JavaScriptSerializer</code> is to be used then do not use it with a <code>JavaScriptTypeResolver</code>.</p>
+<p>If you must deserialize data streams that define their own type, then restrict the types that are allowed to be deserialized. One should be aware that this is still risky as many native .Net types potentially dangerous in themselves. e.g.</p>
+<div class="highlight"><pre><span></span><code><span class="n">System</span><span class="p">.</span><span class="n">IO</span><span class="p">.</span><span class="n">FileInfo</span>
+</code></pre></div>
+<p><code>FileInfo</code> objects that reference files actually on the server can when deserialized, change the properties of those files e.g. to read-only, creating a potential denial of service attack.</p>
+<p>Even if you have limited the types that can be deserialized remember that some types have properties that are risky. <code>System.ComponentModel.DataAnnotations.ValidationException</code>, for example has a property <code>Value</code> of type <code>Object</code>. if this type is the type allowed for deserialization then an attacker can set the <code>Value</code> property to any object type they choose.</p>
+<p>Attackers should be prevented from steering the type that will be instantiated. If this is possible then even <code>DataContractSerializer</code> or <code>XmlSerializer</code> can be subverted e.g.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Action below is dangerous if the attacker can change the data in the database</span>
+<span class="kt">var</span><span class="w"> </span><span class="n">typename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetTransactionTypeFromDatabase</span><span class="p">();</span>
+
+<span class="kt">var</span><span class="w"> </span><span class="n">serializer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">DataContractJsonSerializer</span><span class="p">(</span><span class="n">Type</span><span class="p">.</span><span class="n">GetType</span><span class="p">(</span><span class="n">typename</span><span class="p">));</span>
+
+<span class="kt">var</span><span class="w"> </span><span class="n">obj</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">serializer</span><span class="p">.</span><span class="n">ReadObject</span><span class="p">(</span><span class="n">ms</span><span class="p">);</span>
+</code></pre></div>
+<p>Execution can occur within certain .Net types during deserialization. Creating a control such as the one shown below is ineffective.</p>
+<div class="highlight"><pre><span></span><code><span class="kt">var</span><span class="w"> </span><span class="n">suspectObject</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">myBinaryFormatter</span><span class="p">.</span><span class="n">Deserialize</span><span class="p">(</span><span class="n">untrustedData</span><span class="p">);</span>
+
+<span class="c1">//Check below is too late! Execution may have already occurred.</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">suspectObject</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="n">SomeDangerousObjectType</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="c1">//generate warnings and dispose of suspectObject</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>For <code>JSON.Net</code> it is possible to create a safer form of allow-list control using a custom <code>SerializationBinder</code>.</p>
+<p>Try to keep up-to-date on known .Net insecure deserialization gadgets and pay special attention where such types can be created by your deserialization processes. <strong>A deserializer can only instantiate types that it knows about</strong>.</p>
+<p>Try to keep any code that might create potential gadgets separate from any code that has internet connectivity. As an example <code>System.Windows.Data.ObjectDataProvider</code> used in WPF applications is a known gadget that allows arbitrary method invocation. It would be risky to have this a reference to this assembly in a REST service project that deserializes untrusted data.</p>
+<h4 id="known-net-rce-gadgets">Known .NET RCE Gadgets<a class="headerlink" href="#known-net-rce-gadgets" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>System.Configuration.Install.AssemblyInstaller</code></li>
+<li><code>System.Activities.Presentation.WorkflowDesigner</code></li>
+<li><code>System.Windows.ResourceDictionary</code></li>
+<li><code>System.Windows.Data.ObjectDataProvider</code></li>
+<li><code>System.Windows.Forms.BindingSource</code></li>
+<li><code>Microsoft.Exchange.Management.SystemManager.WinForms.ExchangeSettingsProvider</code></li>
+<li><code>System.Data.DataViewManager, System.Xml.XmlDocument/XmlDataDocument</code></li>
+<li><code>System.Management.Automation.PSObject</code></li>
+</ul>
+<h2 id="language-agnostic-methods-for-deserializing-safely">Language-Agnostic Methods for Deserializing Safely<a class="headerlink" href="#language-agnostic-methods-for-deserializing-safely" title="Permanent link">&para;</a></h2>
+<h3 id="using-alternative-data-formats">Using Alternative Data Formats<a class="headerlink" href="#using-alternative-data-formats" title="Permanent link">&para;</a></h3>
+<p>A great reduction of risk is achieved by avoiding native (de)serialization formats. By switching to a pure data format like JSON or XML, you lessen the chance of custom deserialization logic being repurposed towards malicious ends.</p>
+<p>Many applications rely on a <a href="https://en.wikipedia.org/wiki/Data_transfer_object">data-transfer object pattern</a> that involves creating a separate domain of objects for the explicit purpose data transfer. Of course, it's still possible that the application will make security mistakes after a pure data object is parsed.</p>
+<h3 id="only-deserialize-signed-data">Only Deserialize Signed Data<a class="headerlink" href="#only-deserialize-signed-data" title="Permanent link">&para;</a></h3>
+<p>If the application knows before deserialization which messages will need to be processed, they could sign them as part of the serialization process. The application could then to choose not to deserialize any message which didn't have an authenticated signature.</p>
+<h2 id="mitigation-toolslibraries">Mitigation Tools/Libraries<a class="headerlink" href="#mitigation-toolslibraries" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://github.com/ikkisoft/SerialKiller">Java secure deserialization library</a></li>
+<li><a href="https://github.com/cschneider4711/SWAT">SWAT - tool for creating allowlists</a></li>
+<li><a href="https://github.com/kantega/notsoserial">NotSoSerial</a></li>
+</ul>
+<h2 id="detection-tools">Detection Tools<a class="headerlink" href="#detection-tools" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://github.com/GrrrDog/Java-Deserialization-Cheat-Sheet">Java deserialization cheat sheet aimed at pen testers</a></li>
+<li><a href="https://github.com/frohoff/ysoserial">A proof-of-concept tool for generating payloads that exploit unsafe Java object deserialization.</a></li>
+<li><a href="https://github.com/brianwrf/hackUtils">Java De-serialization toolkits</a></li>
+<li><a href="https://github.com/frohoff/ysoserial">Java de-serialization tool</a></li>
+<li><a href="https://github.com/pwntester/ysoserial.net">.Net payload generator</a></li>
+<li><a href="https://github.com/federicodotta/Java-Deserialization-Scanner/releases">Burp Suite extension</a></li>
+<li><a href="https://github.com/ikkisoft/SerialKiller">Java secure deserialization library</a></li>
+<li><a href="https://github.com/mbechler/serianalyzer">Serianalyzer is a static bytecode analyzer for deserialization</a></li>
+<li><a href="https://github.com/mbechler/marshalsec">Payload generator</a></li>
+<li><a href="https://github.com/modzero/modjoda">Android Java Deserialization Vulnerability Tester</a></li>
+<li>Burp Suite Extension<ul>
+<li><a href="https://github.com/NetSPI/JavaSerialKiller">JavaSerialKiller</a></li>
+<li><a href="https://github.com/federicodotta/Java-Deserialization-Scanner">Java Deserialization Scanner</a></li>
+<li><a href="https://github.com/summitt/burp-ysoserial">Burp-ysoserial</a></li>
+<li><a href="https://github.com/DirectDefense/SuperSerial">SuperSerial</a></li>
+<li><a href="https://github.com/DirectDefense/SuperSerial-Active">SuperSerial-Active</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://docs.oracle.com/en/java/javase/17/core/serialization-filtering1.html">Oracle Java 17: Serialization Filtering</a></li>
+<li><a href="https://learn.microsoft.com/en-us/dotnet/standard/serialization/binaryformatter-security-guide">Microsoft: Deserialization Risks in Use of BinaryFormatter and Related Types</a></li>
+<li><a href="https://docs.python.org/3/library/pickle.html">Python: pickle Security Warning</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

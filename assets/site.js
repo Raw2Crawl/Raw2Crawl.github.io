@@ -33,8 +33,24 @@
     if (document.body.classList.contains('contents-open') && !event.target.closest('#doc-sidebar, #contents-toggle')) closeContents();
   });
 
+  const seriesFilter = document.querySelector('#sheet-filter');
+  if (seriesFilter) {
+    const cards = [...document.querySelectorAll('[data-sheet-title]')];
+    const count = document.querySelector('#sheet-count');
+    seriesFilter.addEventListener('input', () => {
+      const query = seriesFilter.value.trim().toLowerCase();
+      let visible = 0;
+      for (const card of cards) {
+        const match = !query || (card.dataset.sheetTitle + ' ' + card.textContent).toLowerCase().includes(query);
+        card.hidden = !match;
+        if (match) visible++;
+      }
+      if (count) count.textContent = `${visible} of ${cards.length} cheat sheets`;
+    });
+  }
+
   const nav = document.querySelector('.wstg-nav');
-  if (!nav) return;
+  if (nav) {
   const normalize = value => new URL(value, location.href).pathname.replace(/\/index\.html$|\/$/g, '');
   const navLinks = [...nav.querySelectorAll('a[data-nav-url]')];
   const current = normalize(location.href);
@@ -81,6 +97,7 @@
     }
   });
 
+  }
   const toc = document.querySelector('#page-toc');
   const headings = [...document.querySelectorAll('.doc-content h2[id], .doc-content h3[id]')];
   for (const heading of headings) {
@@ -99,7 +116,10 @@
     }, { rootMargin: '-80px 0px -65% 0px' });
     headings.forEach(h => observer.observe(h));
   }
-  const pages = navLinks.filter(a => !new URL(a.href).hash);
+  if (!nav) return;
+  const normalize = value => new URL(value, location.href).pathname.replace(/\/index\.html$|\/$/g, '');
+  const current = normalize(location.href);
+  const pages = [...nav.querySelectorAll('a[data-nav-url]')].filter(a => !new URL(a.href).hash);
   const index = pages.findIndex(a => normalize(a.href) === current);
   const pager = document.querySelector('.page-navigation');
   if (pager && index >= 0) {

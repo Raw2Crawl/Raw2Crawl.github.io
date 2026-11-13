@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Security Terminology | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Security Terminology">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Security_Terminology_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="security-terminology-cheat-sheet">Security Terminology Cheat Sheet<a class="headerlink" href="#security-terminology-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>This cheat sheet provides clear definitions and distinctions for security terminology that is often confused, even by experienced developers. Understanding these terms is critical for correctly implementing security controls and following standards like the <a href="https://owasp.org/www-project-application-security-verification-standard/">OWASP ASVS</a>.</p>
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="#data-handling-encoding-escaping-sanitization-and-serialization">Data Handling: Encoding, Escaping, Sanitization, and Serialization</a></li>
+<li><a href="#cryptography-encryption-hashing-and-signatures">Cryptography: Encryption, Hashing, and Signatures</a></li>
+<li><a href="#identity-authentication-and-authorization">Identity: Authentication and Authorization</a></li>
+<li><a href="#federated-identity-terms">Federated Identity Terms</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+<h2 id="data-handling-encoding-escaping-sanitization-and-serialization">Data Handling: Encoding, Escaping, Sanitization, and Serialization<a class="headerlink" href="#data-handling-encoding-escaping-sanitization-and-serialization" title="Permanent link">&para;</a></h2>
+<p>These terms relate to how data is transformed for transport, storage, or display. See the <a href="Input_Validation_Cheat_Sheet.html">Input Validation Cheat Sheet</a> for validation guidance.</p>
+<h3 id="encoding">Encoding<a class="headerlink" href="#encoding" title="Permanent link">&para;</a></h3>
+<p><strong>Definition:</strong> Transforming data into a different format using a publicly available scheme, so that it can be safely consumed by a different system.</p>
+<ul>
+<li><strong>Purpose:</strong> Represent data for a particular transport, storage, or output context.</li>
+<li><strong>Reversibility:</strong> Always reversible.</li>
+<li><strong>Examples:</strong> Base64, URL Encoding, HTML Entity Encoding.</li>
+<li><strong>Security Context:</strong> Base64 does not provide confidentiality. Context-appropriate <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Attacks/XSS#output_encoding">output encoding is an XSS defense</a>; using the wrong encoding for the destination context can leave an injection vulnerability.</li>
+</ul>
+<h3 id="escaping">Escaping<a class="headerlink" href="#escaping" title="Permanent link">&para;</a></h3>
+<p><strong>Definition:</strong> Representing characters with parser-specific escape sequences so they are interpreted literally in a particular context.</p>
+<ul>
+<li><strong>Purpose:</strong> To ensure the interpreter treats the data as text rather than code/commands.</li>
+<li><strong>Examples:</strong> <code>\"</code> inside a JSON string, <code>&amp;lt;</code> in HTML text.</li>
+<li><strong>Security Context:</strong> Escaping rules depend on the parser and context. For SQL values, use <a href="SQL_Injection_Prevention_Cheat_Sheet.html#primary-defenses">parameterized queries</a> instead of constructing SQL with escaped strings.</li>
+</ul>
+<h3 id="sanitization">Sanitization<a class="headerlink" href="#sanitization" title="Permanent link">&para;</a></h3>
+<p><strong>Definition:</strong> The process of cleaning or filtering input by removing, replacing, or modifying potentially dangerous characters or content.</p>
+<ul>
+<li><strong>Purpose:</strong> To make "dirty" input "clean" according to a security policy.</li>
+<li><strong>Examples:</strong> Using a maintained HTML sanitizer to allow approved elements and attributes in user-authored HTML.</li>
+<li><strong>Security Context:</strong> Use <a href="Cross_Site_Scripting_Prevention_Cheat_Sheet.html#html-sanitization">HTML sanitization</a> when untrusted input must be rendered as HTML. Removing <code>&lt;script&gt;</code> tags alone is insufficient; other elements and attributes can execute scripts. Use output encoding when the value should be displayed as text.</li>
+</ul>
+<h3 id="serialization">Serialization<a class="headerlink" href="#serialization" title="Permanent link">&para;</a></h3>
+<p><strong>Definition:</strong> Converting an object or data structure into a format that can be stored or transmitted (e.g., a byte stream) and later reconstructed.</p>
+<ul>
+<li><strong>Purpose:</strong> Data persistence and communication.</li>
+<li><strong>Security Context:</strong> <strong>Insecure Deserialization</strong> occurs when untrusted data is used to reconstruct an object, potentially leading to Remote Code Execution (RCE).</li>
+</ul>
+<hr />
+<h2 id="cryptography-encryption-hashing-and-signatures">Cryptography: Encryption, Hashing, and Signatures<a class="headerlink" href="#cryptography-encryption-hashing-and-signatures" title="Permanent link">&para;</a></h2>
+<p>These terms relate to protecting the confidentiality, integrity, and authenticity of data. See the <a href="Key_Management_Cheat_Sheet.html">Key Management Cheat Sheet</a> and <a href="Password_Storage_Cheat_Sheet.html">Password Storage Cheat Sheet</a> for implementation guidance.</p>
+<h3 id="encryption">Encryption<a class="headerlink" href="#encryption" title="Permanent link">&para;</a></h3>
+<p><strong>Definition:</strong> Transforming data (plaintext) into an unreadable format (ciphertext) using a secret key.</p>
+<ul>
+<li><strong>Purpose:</strong> <strong>Confidentiality</strong>. Only authorized parties with the key can read the data.</li>
+<li><strong>Reversibility:</strong> Reversible (Decryption) with the correct key.</li>
+<li><strong>Types:</strong> Symmetric (same key) and Asymmetric (public/private keys).</li>
+</ul>
+<h3 id="hashing">Hashing<a class="headerlink" href="#hashing" title="Permanent link">&para;</a></h3>
+<p><strong>Definition:</strong> Transforming data into a fixed-size string (a "hash" or "digest") using a mathematical function.</p>
+<ul>
+<li><strong>Purpose:</strong> <strong>Integrity</strong>. A small change in the input results in a completely different hash.</li>
+<li><strong>Reversibility:</strong> One-way (non-reversible).</li>
+<li><strong>Security Context:</strong> Used for password storage (with salt) and verifying file integrity.</li>
+<li><strong>Examples:</strong> SHA-256, Argon2, bcrypt.</li>
+</ul>
+<h3 id="signatures-digital-signatures">Signatures (Digital Signatures)<a class="headerlink" href="#signatures-digital-signatures" title="Permanent link">&para;</a></h3>
+<p><strong>Definition:</strong> Using asymmetric cryptography to provide proof of the origin and integrity of a message.</p>
+<ul>
+<li><strong>Purpose:</strong> <strong>Authenticity</strong> and <strong>Non-repudiation</strong>. Proves who sent the message and that it wasn't altered.</li>
+<li><strong>Mechanism:</strong> The signing algorithm uses the signer's private key; verification uses a trusted public key bound to that signer. Follow the algorithm's <a href="https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-5.pdf#page=18">message-processing rules</a>; do not add a separate prehash unless the chosen algorithm and API require it.</li>
+<li><strong>Examples:</strong> Asymmetrically signed JWTs and GPG signatures. <a href="https://www.rfc-editor.org/info/rfc7519/">JWTs can also use shared-key message authentication codes or encryption</a>; the JWT format does not imply a digital signature.</li>
+</ul>
+<hr />
+<h2 id="identity-authentication-and-authorization">Identity: Authentication and Authorization<a class="headerlink" href="#identity-authentication-and-authorization" title="Permanent link">&para;</a></h2>
+<h3 id="authentication-authn">Authentication (AuthN)<a class="headerlink" href="#authentication-authn" title="Permanent link">&para;</a></h3>
+<p><strong>Definition:</strong> The process of verifying who a user is.</p>
+<ul>
+<li><strong>Question:</strong> "Who are you?"</li>
+<li><strong>Factors:</strong> Something you know (password), something you have (token), something you are (biometrics).</li>
+</ul>
+<h3 id="authorization-authz">Authorization (AuthZ)<a class="headerlink" href="#authorization-authz" title="Permanent link">&para;</a></h3>
+<p><strong>Definition:</strong> The process of verifying what a user has permission to do.</p>
+<ul>
+<li><strong>Question:</strong> "Are you allowed to do this?"</li>
+<li><strong>Security Context:</strong> Occurs <em>after</em> successful authentication.</li>
+<li><strong>Examples:</strong> Role-Based Access Control (RBAC), Attribute-Based Access Control (ABAC).</li>
+</ul>
+<hr />
+<h2 id="federated-identity-terms">Federated Identity Terms<a class="headerlink" href="#federated-identity-terms" title="Permanent link">&para;</a></h2>
+<p>When working with OAuth2, SAML, or OIDC, these terms are frequently used:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Term</th>
+<th style="text-align: left;">Definition</th>
+<th style="text-align: left;">Context</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Identity Provider (IdP)</strong></td>
+<td style="text-align: left;">The system that creates, maintains, and manages identity information and provides authentication services.</td>
+<td style="text-align: left;">Google, Okta, Azure AD</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Relying Party (RP)</strong></td>
+<td style="text-align: left;">An application or service that relies on an IdP to authenticate users.</td>
+<td style="text-align: left;">Your web app using "Login with Google"</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Service Provider (SP)</strong></td>
+<td style="text-align: left;">In SAML, the equivalent of a Relying Party.</td>
+<td style="text-align: left;">Your enterprise app using SAML</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Principal</strong></td>
+<td style="text-align: left;">The entity (user, service, or device) being authenticated.</td>
+<td style="text-align: left;">The user logging in</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://www.rfc-editor.org/info/rfc4949/">RFC 4949: Internet Security Glossary, Version 2</a></li>
+<li><a href="https://openid.net/specs/openid-connect-core-1_0.html#Terminology">OpenID Connect Core 1.0: Terminology</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GitHub Actions Security | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · GitHub Actions Security">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/GitHub_Actions_Security_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="github-actions-security-cheat-sheet">GitHub Actions Security Cheat Sheet<a class="headerlink" href="#github-actions-security-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>This cheat sheet provides guidance on securing GitHub Actions workflows, primarily for public GitHub repositories. The main goal is to prevent attacker-controlled code execution, which may lead to the following outcomes.</p>
+<ul>
+<li><strong>Secrets exfiltration.</strong> CI/CD pipelines often use long-lived credentials to access external services (e.g., cloud provider credentials or package registry tokens). Such secrets can be exfiltrated (printing to logs, sending to external endpoints or embedding them in artifacts) via remote code execution.</li>
+<li><strong>Compromise of <code>GITHUB_TOKEN</code> with <code>write</code> permissions.</strong> GitHub automatically provides each workflow run with a short-lived <code>GITHUB_TOKEN</code> that is scoped to the repository and has specific permissions. If this token is granted with <code>write</code> permissions and an attacker is able to exfiltrate or misuse the token, they could potentially modify repository contents, create or alter releases or interact with other GitHub resources.</li>
+<li><strong>GitHub Actions cache poisoning.</strong> Workflows may reuse cached data across different workflow runs. If an attacker can inject malicious content into the cache and subsequent workflows (such as release pipelines) restore and use this cache, the poisoned data can be executed in a privileged context and potentially compromise the integrity of published release artifacts, obtain code execution in the privileged workflow and steal the production secrets.</li>
+<li><strong>Denial-of-wallet attacks.</strong> CI/CD pipelines often integrate with paid external services, such as LLMs, for code review. If an attacker can repeatedly trigger pipelines or manipulate inputs to maximize resource consumption, this can lead to uncontrolled spending and financial impact.</li>
+</ul>
+<h2 id="treat-your-cicd-pipeline-as-a-critical-production-code">Treat your CI/CD pipeline as a critical production code<a class="headerlink" href="#treat-your-cicd-pipeline-as-a-critical-production-code" title="Permanent link">&para;</a></h2>
+<p>Because a CI/CD pipeline usually has access to sensitive credentials and functions/endpoints, it must be treated as a critical asset, potentially even more critical than the source code it processes.
+Therefore, secure software development best practices must be applied, including (but not limited to): threat modeling, secure code reviews, security validation and penetration testing.</p>
+<p>For deeper guidance and recommended practices, see:</p>
+<ul>
+<li><a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-204D.pdf">NIST "Strategies for the Integration of Software Supply Chain Security in DevSecOps CI/CD Pipeline"</a>;</li>
+<li><a href="/en/OWASP/CheatSheetSeries/cheatsheets/CI_CD_Security_Cheat_Sheet.html">OWASP CI/CD Security Cheat Sheet</a>;</li>
+<li><a href="https://owasp.org/www-project-spvs">OWASP Secure Pipeline Verification Standard</a>.</li>
+</ul>
+<h2 id="assume-failure-and-have-an-incident-response-plan-in-place">Assume failure and have an incident response plan in place<a class="headerlink" href="#assume-failure-and-have-an-incident-response-plan-in-place" title="Permanent link">&para;</a></h2>
+<p>Assume breaches will happen and design for rapid response. Define clear incident response procedures with roles, communication and escalation paths.
+Continuously improve by actively learning from other incidents through publicly available post-mortems (e.g., <a href="https://github.com/aquasecurity/trivy/discussions/10462">Trivy post-mortem</a>, <a href="https://cline.bot/blog/post-mortem-unauthorized-cline-cli-npm">Cline post-mortem</a>).</p>
+<h2 id="enable-static-analysis-for-github-actions-workflows">Enable static analysis for GitHub Actions workflows<a class="headerlink" href="#enable-static-analysis-for-github-actions-workflows" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>[!IMPORTANT]
+CodeQL is freely available for open-source repositories on GitHub.
+Verify that CodeQL is enabled for your repositories and configured to scan GitHub Actions workflow files.
+CodeQL can be enabled via GitHub UI or by including a workflow file under <code>.github/workflows</code> folder:</p>
+<ul>
+<li>If enabling via workflow, ensure that <code>language: actions</code> is included in the workflow.</li>
+<li>If enabling via <code>Settings</code> → <code>Advanced Security</code> → <code>Code scanning</code> → <code>CodeQL analysis</code>, ensure that <code>GitHub Actions</code> appears under the Languages section.</li>
+</ul>
+</blockquote>
+<ul>
+<li>If available, enable <a href="https://docs.github.com/en/code-security/reference/code-scanning/codeql/codeql-queries/actions-built-in-queries">CodeQL</a> <code>actions</code> scanning in your repositories to detect vulnerabilities in GitHub Actions workflows. In addition, use <a href="https://docs.zizmor.sh/">Zizmor</a> for defense in depth. Periodically upgrade these tools, as new releases may contain updated detection rules.</li>
+<li>Configure these tools to run on every relevant pull request and mark them as required status checks before merging. At a minimum, block merges when high or critical severity issues are detected.</li>
+<li>Run comprehensive workflow scans on a scheduled basis (e.g., daily) and ensure that findings are tracked and remediated over time.</li>
+<li>If you need to enable scanning across several repositories, try to utilize a centralized reusable workflow or shared actions to standardize security practices (see this <a href="https://github.com/grafana/shared-workflows/blob/main/.github/workflows/reusable-zizmor.yml">Grafana example</a>).</li>
+</ul>
+<h2 id="harden-repository-settings">Harden repository settings<a class="headerlink" href="#harden-repository-settings" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>[!IMPORTANT]
+Please note that the <code>Require approval for first-time contributors</code> setting presents a security risk because an attacker can submit an initially legitimate-looking pull request
+(e.g., a typo fix) to gain trust and later submit subsequent PRs that introduce malicious changes which are executed in CI without requiring further approval.</p>
+</blockquote>
+<ul>
+<li>Enable the setting <code>Require approval for all external contributors</code> in the repository settings. This ensures that workflows triggered by pull requests from forks (i.e., users who are not members of the repository or organization) do not run automatically and therefore prevents untrusted code execution.</li>
+<li>Restrict default <code>GITHUB_TOKEN</code> permissions to <code>Read repository contents and packages permissions</code> in the repository settings. Explicitly grant additional permissions in the workflow file if required.</li>
+<li>Enforce strong branch protection rules. Configure branch protection to require pull request reviews, status checks, signed commits and <code>CODEOWNERS</code> approval before merging into protected branches. Tools such as the <a href="https://github.com/ossf/scorecard-action">OpenSSF Scorecard</a> can help audit these settings.</li>
+<li>Require workflows to pass before merging via <a href="https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets#require-workflows-to-pass-before-merging">repository rulesets</a> to enforce organizational or enterprise-level requirements — such as checking for required labels or validating commit messages — before code is merged.</li>
+</ul>
+<h2 id="restrict-egress-traffic-from-github-hosted-runners">Restrict egress traffic from GitHub-hosted runners<a class="headerlink" href="#restrict-egress-traffic-from-github-hosted-runners" title="Permanent link">&para;</a></h2>
+<p>Use solutions (e.g., <a href="https://github.com/step-security/harden-runner">Harden-Runner</a>) to monitor and restrict egress traffic from GitHub-hosted runners to prevent secret exfiltration.</p>
+<h2 id="use-self-hosted-runners-with-extra-caution">Use self-hosted runners with extra caution<a class="headerlink" href="#use-self-hosted-runners-with-extra-caution" title="Permanent link">&para;</a></h2>
+<p>Self-hosted runners usually have access to internal networks and may cache credentials, secrets or store internal data.
+Because they execute arbitrary code by design, they can be used by an attacker to establish persistent remote access and exfiltrate secrets.
+In general, never use self-hosted runners with public repositories, as anyone who can fork the repository and open a pull request can potentially execute code on your runner.</p>
+<p>If you use self-hosted runners for a public repository:</p>
+<ul>
+<li>Use standard secure software development best practices when enabling self-hosted runners (threat modeling, secure code reviews, security validation, penetration testing, patching and hardening).</li>
+<li>Use the <code>Require approval for all external contributors</code> option, review proposed changes and manually approve each workflow execution for all external contributors.</li>
+<li>Use ephemeral runners (e.g., container-based runners) and destroy the runner environment after each job execution to prevent persistence.</li>
+<li>Do not store sensitive data on runner machines, as any user who can invoke workflows has access to the runner environment.</li>
+<li>Restrict runner network access and avoid giving self-hosted runners access to sensitive infrastructure.</li>
+</ul>
+<h2 id="segregate-runners-using-runner-groups-and-labels">Segregate runners using runner groups and labels<a class="headerlink" href="#segregate-runners-using-runner-groups-and-labels" title="Permanent link">&para;</a></h2>
+<p>Use <a href="https://docs.github.com/en/actions/concepts/runners/runner-groups">runner groups</a> and <a href="https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/apply-labels">labels</a> to separate high-privilege runners from low-privilege runners. High-privilege runners may have access to sensitive resources, while low-privilege runners should not.</p>
+<p>This separation gives more granular control over <a href="https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/manage-access#changing-which-repositories-can-access-a-runner-group">which repositories can access a runner group</a> and which workflows can target specific runners, reducing the risk that a compromised or misconfigured workflow gains access to sensitive resources.</p>
+<p>For example, consider creating:</p>
+<ul>
+<li>A runner group for container image build runners, limited to only the repositories that require those privileges.</li>
+<li>A runner group for runners with access to restricted networks.</li>
+<li>A separate runner group for low-privilege tasks such as linting and static analysis, used by repositories where secrets are absent or isolated in separate environments.</li>
+</ul>
+<h2 id="maintain-curated-shared-workflows-and-actions">Maintain curated shared workflows and actions<a class="headerlink" href="#maintain-curated-shared-workflows-and-actions" title="Permanent link">&para;</a></h2>
+<p>If you need to support several repositories, establish a centralized repository of curated, security-reviewed workflows/actions and reuse it across other repositories.</p>
+<p>For a practical example, see <a href="https://github.com/grafana/shared-workflows">grafana/shared-workflows</a>.</p>
+<h2 id="prevent-artifact-poisoning">Prevent artifact poisoning<a class="headerlink" href="#prevent-artifact-poisoning" title="Permanent link">&para;</a></h2>
+<p>Artifact poisoning occurs when malicious or untrusted content is introduced into build artifacts, often via shared caches or previously stored dependencies
+(<a href="https://adnanthekhan.com/2024/05/06/the-monsters-in-your-build-cache-github-actions-cache-poisoning">GitHub Actions Cache Poisoning</a>).
+This can compromise the integrity of released software or lead to production secret exfiltration.
+To reduce this risk, disable all forms of caching in release or publishing workflows to avoid reusing potentially compromised artifacts or exfiltrating production secrets.</p>
+<h2 id="be-careful-with-ai-assistant-running-in-cicd-pipeline">Be careful with AI assistant running in CI/CD pipeline<a class="headerlink" href="#be-careful-with-ai-assistant-running-in-cicd-pipeline" title="Permanent link">&para;</a></h2>
+<p>Sometimes, an AI assistant is used directly in workflows, e.g., to review pull requests or triage submitted issues.
+This creates a risk of prompt injection attacks, where malicious input manipulates the AI assistant's behavior. If the workflow running the AI assistant has access to secrets or a <code>GITHUB_TOKEN</code> with <code>write</code> permissions and can be triggered by untrusted users (e.g., any GitHub account), this may lead to secret exfiltration or unauthorized actions.
+A real-world example is the <a href="https://adnanthekhan.com/posts/clinejection/">"clinejection" attack</a>.</p>
+<p>To mitigate potential attacks, limit AI assistant capabilities — only enable the minimum tools and actions required for task execution.</p>
+<h2 id="write-secure-github-workflows">Write Secure GitHub Workflows<a class="headerlink" href="#write-secure-github-workflows" title="Permanent link">&para;</a></h2>
+<p>This section contains some recommendations. In general, a static code analyzer (CodeQL, Zizmor) should report such issues.</p>
+<h3 id="avoid-dangerous-triggers">Avoid dangerous triggers<a class="headerlink" href="#avoid-dangerous-triggers" title="Permanent link">&para;</a></h3>
+<h4 id="avoid-using-the-pull_request_target-trigger">Avoid using the <code>pull_request_target</code> trigger<a class="headerlink" href="#avoid-using-the-pull_request_target-trigger" title="Permanent link">&para;</a></h4>
+<p>Workflows triggered by <code>pull_request_target</code> run in the context of the base (target) repository and have access to the <code>GITHUB_TOKEN</code> with <code>write</code> permissions and GitHub secrets available to the workflow.
+If untrusted code from a PR is checked out and used, this may lead to code execution.
+There are some common patterns, like labeling workflows where untrusted code is not checked out, but in general, try to avoid the <code>pull_request_target</code> trigger.</p>
+<blockquote>
+<p>[!IMPORTANT]
+Never check out (via <code>actions/checkout</code> or GitHub CLI) and run untrusted code in this context.</p>
+</blockquote>
+<h4 id="avoid-using-the-workflow_run-trigger">Avoid using the <code>workflow_run</code> trigger<a class="headerlink" href="#avoid-using-the-workflow_run-trigger" title="Permanent link">&para;</a></h4>
+<p>The <code>workflow_run</code> trigger automates tasks based on the execution of other workflows and can grant access to the <code>GITHUB_TOKEN</code> with <code>write</code> permissions and GitHub secrets.
+An attacker can modify triggering workflows via pull requests and cause privileged workflows to run.
+Even if the initial workflow is unprivileged, the triggered one may execute with higher permissions, enabling privilege escalation.
+Additionally, attackers can exploit artifact poisoning by injecting malicious files that downstream workflows use without verification, leading to potential code execution.
+If you need to implement workflow chains, use <code>workflow_call</code> with reusable workflows instead.</p>
+<h4 id="use-issue_comment-trigger-with-extra-care">Use <code>issue_comment</code> trigger with extra care<a class="headerlink" href="#use-issue_comment-trigger-with-extra-care" title="Permanent link">&para;</a></h4>
+<p>This trigger can automate workflows (e.g., end-to-end tests) in response to comments on issues or pull requests and can grant access to the <code>GITHUB_TOKEN</code> with <code>write</code> permissions and GitHub secrets.
+Implementation may introduce a Time-of-Check to Time-of-Use (TOCTOU) issue, where an attacker can modify a pull request between comment approval and workflow execution to run malicious code.
+Additionally, this trigger can bypass pull request approval mechanisms, allowing attackers to execute workflows without proper review.</p>
+<p>To secure the implementation with the <code>issue_comment</code> trigger:</p>
+<ol>
+<li>Check if the triggering actor meets authorization criteria, e.g., allow workflow execution only if it was triggered by a trusted member of the specific GitHub org.</li>
+<li>Use the commit SHA in a comment that triggers the workflow: instead of using a <code>/ok-to-test</code> comment, design the workflow to accept <code>/ok-to-test(&lt;trusted_sha_commit&gt;)</code> and check out code only from <code>&lt;trusted_sha_commit&gt;</code> submitted by an authorized actor. This will help mitigate the checkout and execution of untrusted code.</li>
+</ol>
+<p>Alternatively, consider replacing the <code>issue_comment</code> trigger with label-based triggers.
+When using the <code>pull_request</code> trigger with the labeled event, <code>github.event.pull_request.head.sha</code> contains the latest commit SHA for the pull request.
+Users with <a href="https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/managing-labels#applying-a-label">triage access can apply labels</a>. Verify that the actor applying a workflow-triggering label is authorized for that operation; permission to label does not establish that the commit has been reviewed.
+Applying a label does not elevate workflow permissions. For pull requests from forks of public repositories, <code>pull_request</code> workflows still receive a read-only <code>GITHUB_TOKEN</code> and no other secrets, as described in <a href="https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflows-in-forked-repositories">GitHub's fork workflow restrictions</a>.
+After reviewing the proposed code, check out the exact commit SHA available via <code>github.event.pull_request.head.sha</code>, which reflects the state of the pull request at the time the label was applied. Do not treat the label as approval for later commits.</p>
+<blockquote>
+<p>[!IMPORTANT]
+In general, never check out code using mutable references (e.g., pull request numbers or branch names) - always use immutable references such as a full commit SHA.</p>
+</blockquote>
+<h3 id="use-third-party-github-actions-and-reusable-workflows-securely">Use third-party GitHub Actions and reusable workflows securely<a class="headerlink" href="#use-third-party-github-actions-and-reusable-workflows-securely" title="Permanent link">&para;</a></h3>
+<h4 id="use-third-party-actions-with-caution">Use third-party actions with caution<a class="headerlink" href="#use-third-party-actions-with-caution" title="Permanent link">&para;</a></h4>
+<p>In general, try to minimize third-party actions usage, e.g., use the GitHub API in your workflows when possible to implement required logic.</p>
+<p>While using third-party actions, verify the origin, check that the author is trusted and active, ensure that there are multiple active contributors.
+Check that the code is stable and safe to use, and that the action does not require unnecessary permissions.</p>
+<h4 id="always-pin-all-action-and-reusable-workflow-versions-with-a-commit-hash-and-check-for-impostor-commits">Always pin all action and reusable workflow versions with a commit hash and check for impostor commits<a class="headerlink" href="#always-pin-all-action-and-reusable-workflow-versions-with-a-commit-hash-and-check-for-impostor-commits" title="Permanent link">&para;</a></h4>
+<p>Check that the used commit belongs to the specified organization/repository. This will prevent dependency confusion attacks, as currently GitHub resolves the commit SHA,
+finds a matching object and executes it regardless of which fork it originated from. This check can be automated with the Zizmor <code>impostor-commit</code> <a href="https://docs.zizmor.sh/audits/#impostor-commit">rule</a>.</p>
+<h4 id="use-automated-dependency-update-tools">Use automated dependency update tools<a class="headerlink" href="#use-automated-dependency-update-tools" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Use tools such as Dependabot or Renovate to keep third-party GitHub Actions up to date.</li>
+<li>Configure a delay between a dependency release and its adoption (e.g., a few days). This helps avoid immediately pulling in newly published malicious or compromised versions, allowing time for the community to detect and report issues. To configure this, Dependabot has a <code>cooldown</code> <a href="https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#cooldown">flag</a>, Renovate has a <code>minimumReleaseAge</code> <a href="https://docs.renovatebot.com/key-concepts/minimum-release-age/">flag</a>.</li>
+</ul>
+<h3 id="minimize-github_token-permissions">Minimize <code>GITHUB_TOKEN</code> permissions<a class="headerlink" href="#minimize-github_token-permissions" title="Permanent link">&para;</a></h3>
+<p>Always set <code>permissions: {}</code> at the workflow level to disable all permissions by default. Then, grant only the specific permissions needed at the job level.</p>
+<h3 id="require-approval-for-deployments-or-publications-to-critical-environments">Require approval for deployments or publications to critical environments<a class="headerlink" href="#require-approval-for-deployments-or-publications-to-critical-environments" title="Permanent link">&para;</a></h3>
+<p>Use <a href="https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments">GitHub environments</a> with required approval rules. Define a list of authorized accounts who must manually approve deployments to production or other critical environments before workflow execution.</p>
+<h3 id="sanitize-user-input">Sanitize user input<a class="headerlink" href="#sanitize-user-input" title="Permanent link">&para;</a></h3>
+<p>An attacker may submit a malicious payload via context (e.g., via PR title) that could cause remote execution.
+To prevent injection, always use <a href="https://docs.github.com/en/actions/reference/security/secure-use#good-practices-for-mitigating-script-injection-attacks">intermediate environment variables</a> to pass any context into <code>run:</code> and similar code execution blocks.
+Although some input contexts may appear relatively safe, it is better to always follow this approach for consistency and security.</p>
+<h3 id="protect-secrets-used-in-workflows">Protect secrets used in workflows<a class="headerlink" href="#protect-secrets-used-in-workflows" title="Permanent link">&para;</a></h3>
+<h4 id="try-to-eliminate-all-static-credentials-from-your-workflows">Try to eliminate all static credentials from your workflows<a class="headerlink" href="#try-to-eliminate-all-static-credentials-from-your-workflows" title="Permanent link">&para;</a></h4>
+<p>Try to eliminate all static credentials (e.g., personal access tokens, static cloud keys) used in workflows. Migrate to OIDC-based short-lived authentication tokens ("Trusted publishing").
+Currently, many major registries and cloud providers <a href="https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments">support</a> this feature.
+For cloud deployment trust restrictions and credential handling, see the <a href="Workload_Identity_Federation_Cheat_Sheet.html">Workload Identity Federation Cheat Sheet</a>.</p>
+<h4 id="secure-handling-of-static-credentials-if-elimination-is-unavoidable">Secure handling of static credentials (if elimination is unavoidable)<a class="headerlink" href="#secure-handling-of-static-credentials-if-elimination-is-unavoidable" title="Permanent link">&para;</a></h4>
+<p>If complete elimination cannot be achieved:</p>
+<ul>
+<li>Never hardcode secrets in workflow files.</li>
+<li>Pass secrets at the step level, not the job level.</li>
+<li>Prefer <a href="https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments">environment-level secrets</a> that are only accessible when a job targets a specific environment.</li>
+<li>Rotate secrets regularly.</li>
+</ul>
+<h4 id="eliminate-secrets-inherit-while-reusing-workflows">Eliminate <code>secrets: inherit</code> while reusing workflows<a class="headerlink" href="#eliminate-secrets-inherit-while-reusing-workflows" title="Permanent link">&para;</a></h4>
+<p>When invoking a reusable workflow, <code>secrets: inherit</code> passes all secrets available to the calling workflow, including secrets the called workflow may not need. <a href="https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows#using-inputs-and-secrets-in-a-reusable-workflow">Explicitly pass only the required secrets</a>.
+Also review any <code>environment</code> selected by a job inside the reusable workflow: GitHub documents that the environment's secrets are used there and can override secrets passed by the caller. An explicit caller secret map does not remove that separate source of access.</p>
+<h4 id="mask-sensitive-data">Mask sensitive data<a class="headerlink" href="#mask-sensitive-data" title="Permanent link">&para;</a></h4>
+<p>Mask all sensitive information that is not a GitHub secret by using <code>::add-mask::{value}</code>.
+Masking a value prevents a string or variable from being printed in the log</p>
+<h4 id="use-secret-scanning-tools">Use secret scanning tools<a class="headerlink" href="#use-secret-scanning-tools" title="Permanent link">&para;</a></h4>
+<p>Implement secret scanning in both pre-commit and pull request stages to prevent accidental exposure of sensitive data in the repository:</p>
+<ul>
+<li>Run secret scanning locally (e.g., via pre-commit hooks) to catch issues before code is committed.</li>
+<li>Enforce scanning in pull requests to detect and block any leaked secrets before merging.</li>
+<li>Automatically fail checks when potential secrets are detected to ensure remediation before proceeding.</li>
+</ul>
+<h4 id="actionscheckout-should-be-used-with-persist-credentials-false"><code>actions/checkout</code> should be used with <code>persist-credentials: false</code><a class="headerlink" href="#actionscheckout-should-be-used-with-persist-credentials-false" title="Permanent link">&para;</a></h4>
+<p>Unless needed for git operations, <code>actions/checkout</code> should be used with <code>persist-credentials: false</code>.
+This prevents Git credentials from being persisted to the workflow's environment, reducing the risk of credential exposure if the workflow is compromised.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://docs.github.com/en/actions/reference/security/secure-use">GitHub Actions: Secure Use Reference</a></li>
+<li><a href="https://docs.github.com/en/actions/concepts/security/openid-connect">GitHub Actions: OpenID Connect</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

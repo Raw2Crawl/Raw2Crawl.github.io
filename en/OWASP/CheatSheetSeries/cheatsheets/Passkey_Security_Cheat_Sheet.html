@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Passkey Security | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Passkey Security">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Passkey_Security_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="passkey-security-cheat-sheet">Passkey Security Cheat Sheet<a class="headerlink" href="#passkey-security-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>Passkeys are <a href="https://www.w3.org/TR/webauthn-3/#client-side-discoverable-public-key-credential-source">discoverable WebAuthn public key credentials</a> used for passwordless authentication without sending a shared secret to the application. Web applications exercise passkeys through WebAuthn. The authenticator keeps the private key and the relying party stores a public key. A passkey is scoped to a relying party identifier (RP ID), which provides phishing resistance when the ceremony and server-side verification are implemented correctly.</p>
+<p>This cheat sheet is for developers who build the WebAuthn relying-party side of passkey registration, authentication, credential management, and account recovery. Its scope includes passkeys used with <a href="https://www.w3.org/TR/webauthn-3/#sctn-authenticator-taxonomy">platform and roaming authenticators</a>, including security keys that support discoverable credentials, and both synced and device-bound passkeys. <a href="https://www.w3.org/TR/webauthn-3/#sctn-backwards-compatibility-with-fido-u2f">Legacy FIDO U2F/CTAP1 second-factor credentials</a> are outside this passkey scope. The main recommendations are:</p>
+<ul>
+<li>Use a maintained WebAuthn server library and validate every required ceremony field on the server.</li>
+<li>Bind registration to the intended account and require recent authentication before changing passkeys.</li>
+<li>Treat user presence (UP) and user verification (UV) as different security properties.</li>
+<li>Design credential management and recovery with the same care as authentication.</li>
+<li>Support more than one authenticator so that the loss of one device does not force a weak recovery path.</li>
+</ul>
+<h2 id="understand-the-security-model">Understand the Security Model<a class="headerlink" href="#understand-the-security-model" title="Permanent link">&para;</a></h2>
+<h3 id="components-and-terms">Components and Terms<a class="headerlink" href="#components-and-terms" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The <strong>relying party (RP)</strong> is the application that registers and authenticates users.</li>
+<li>The <strong>client</strong> is the browser or other software that calls the WebAuthn API.</li>
+<li>The <strong>authenticator</strong> creates credentials and signs authentication assertions. It can be built into a device or be a separate roaming authenticator.</li>
+<li>The <a href="https://www.w3.org/TR/webauthn-3/#sctn-intro"><strong>WebAuthn/FIDO2 protocol</strong></a> spans the RP, client, and authenticator. WebAuthn is the web-facing API used by RPs, while CTAP handles communication between clients and roaming authenticators.</li>
+<li>A <strong>passkey</strong> is a discoverable WebAuthn credential used for passwordless authentication. It may be held by a platform or roaming authenticator, and it may be device-bound or synced between devices by a credential provider.</li>
+<li>The <strong>credential ID</strong> identifies a credential to the RP. The corresponding private key remains under authenticator control.</li>
+<li>The <strong>user handle</strong> is an opaque RP-generated identifier for an account. It is not a username or email address.</li>
+<li><strong>User presence (UP)</strong> shows that a person interacted with the authenticator.</li>
+<li><strong>User verification (UV)</strong> shows that the authenticator locally verified the user, for example with a PIN or biometric.</li>
+</ul>
+<p>Do not treat UP and UV as equivalent. Require UV when the passkey is expected to satisfy a multi-factor or other high-assurance authentication policy. A passkey is not automatically multi-factor merely because an authenticator supports UV; the RP must <a href="https://www.w3.org/TR/webauthn-3/#user-verification">request UV and verify the returned UV flag</a>.</p>
+<h3 id="security-properties-and-limits">Security Properties and Limits<a class="headerlink" href="#security-properties-and-limits" title="Permanent link">&para;</a></h3>
+<p><a href="https://www.w3.org/TR/webauthn-3/#sctn-rp-benefits">WebAuthn credentials are scoped to an RP</a>, and the signed response includes a hash of that RP ID. The client data also binds the response to the web origin and ceremony challenge. Correct verification therefore gives the RP phishing resistance, verifier-name binding, and replay resistance.</p>
+<p>These properties do not protect every part of the account lifecycle. Passkeys do not by themselves prevent:</p>
+<ul>
+<li>A compromised authenticated session from adding an attacker-controlled passkey.</li>
+<li>An insecure recovery process from bypassing passkey authentication.</li>
+<li>Server-side credential records from being associated with the wrong account.</li>
+<li>Application code, authorization, or session-management vulnerabilities.</li>
+<li>Compromise of a device, authenticator, or account used to synchronize passkeys.</li>
+</ul>
+<p>Apply the controls in the <a href="Authentication_Cheat_Sheet.html">Authentication Cheat Sheet</a>, <a href="Session_Management_Cheat_Sheet.html">Session Management Cheat Sheet</a>, and <a href="Transaction_Authorization_Cheat_Sheet.html">Transaction Authorization Cheat Sheet</a> to the surrounding application.</p>
+<h3 id="choose-the-rp-id-carefully">Choose the RP ID Carefully<a class="headerlink" href="#choose-the-rp-id-carefully" title="Permanent link">&para;</a></h3>
+<p>An RP ID determines where a credential can be used. Use the narrowest stable domain that covers the intended application. Do not use a registrable parent domain merely to share credentials with unrelated subdomains. The WebAuthn specification discusses the <a href="https://www.w3.org/TR/webauthn-3/#sctn-validating-origin">security implications of the RP ID and origin relationship</a>; compromise of an origin within the RP ID scope may affect the security of that RP deployment.</p>
+<p>The server must use the same expected RP ID during registration and authentication. Maintain an explicit allowlist of permitted origins, including scheme, host, and port where applicable. Do not construct an expected origin from an untrusted request header.</p>
+<p>Native app origins differ by platform. <a href="https://developer.apple.com/forums/thread/719003">Apple's native passkey API reports an HTTPS origin</a> formed from <code>https://</code> and the RP ID, validated against the app's Associated Domains. The origin an Android app reports is a string such as <code>android:apk-key-hash:&lt;hash&gt;</code>, derived from the app signing certificate, and both platforms decide whether an app may use your RP ID from an association file that you host: <a href="https://developer.android.com/identity/credential-manager/prerequisites"><code>/.well-known/assetlinks.json</code></a> on Android and the <code>webcredentials</code> entries in <a href="https://developer.apple.com/documentation/xcode/supporting-associated-domains"><code>/.well-known/apple-app-site-association</code></a> on Apple platforms (see the <a href="https://web.dev/articles/webauthn-rp-id">RP ID and app origins overview</a>). The server must <a href="https://developer.android.com/identity/passkeys/create-passkeys">match each expected origin against its allowlist</a> as an explicit entry, never a pattern. Treat both association files as part of the RP attack surface with the same change control as the origin allowlist. An overly broad association can authorize unintended apps to use RP-scoped credentials. A permissive server origin allowlist weakens response verification; it does not by itself bypass the platform's app-association checks or give an app access to a user's passkey.</p>
+<p><a href="https://www.w3.org/TR/webauthn-3/#sctn-api">WebAuthn is restricted to secure contexts</a>. Serve registration, authentication, and credential-management pages over HTTPS and protect them against script injection. Avoid cross-origin WebAuthn in embedded frames unless it is an intentional, reviewed design using the <a href="https://www.w3.org/TR/webauthn-3/#sctn-iframe-guidance">required Permissions Policy and origin validation</a>.</p>
+<h3 id="use-a-maintained-library">Use a Maintained Library<a class="headerlink" href="#use-a-maintained-library" title="Permanent link">&para;</a></h3>
+<p>Do not implement CBOR parsing, COSE key handling, attestation validation, or assertion verification yourself. Use a maintained server-side WebAuthn library that implements the W3C relying-party verification steps. Keep it updated and include successful and failing registration and authentication ceremonies in automated tests.</p>
+<p>The library does not make account workflows safe automatically. The application remains responsible for issuing and consuming challenges, choosing the expected RP ID and origins, binding ceremonies to the correct session and account, enforcing UV policy, and managing credential lifecycle events.</p>
+<h2 id="secure-passkey-registration">Secure Passkey Registration<a class="headerlink" href="#secure-passkey-registration" title="Permanent link">&para;</a></h2>
+<h3 id="establish-an-authorized-account-context">Establish an Authorized Account Context<a class="headerlink" href="#establish-an-authorized-account-context" title="Permanent link">&para;</a></h3>
+<p>Registration attaches a new authenticator to an account and must be treated as a sensitive account change.</p>
+<ul>
+<li>For an existing account, require a recently authenticated session and reauthenticate the user before adding a passkey. Do not rely only on possession of a long-lived session cookie.</li>
+<li>For a new account, bind the ceremony to the verified account-creation transaction. Do not allow a client-supplied account identifier to select a different account.</li>
+<li>Protect the registration initiation and completion endpoints against cross-site request forgery as described in the <a href="Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html">Cross-Site Request Forgery Prevention Cheat Sheet</a>.</li>
+<li>Apply rate limits and log failed and successful enrollment attempts.</li>
+</ul>
+<h3 id="generate-and-bind-registration-options">Generate and Bind Registration Options<a class="headerlink" href="#generate-and-bind-registration-options" title="Permanent link">&para;</a></h3>
+<p>Generate the registration challenge with a cryptographically secure random number generator. The WebAuthn security considerations require <a href="https://www.w3.org/TR/webauthn-3/#sctn-cryptographic-challenges">at least 16 random bytes</a>; expire it promptly and accept it only once. Store server-side state that binds the challenge to:</p>
+<ul>
+<li>The registration ceremony type.</li>
+<li>The authenticated session and intended account.</li>
+<li>The expected RP ID and origin policy.</li>
+<li>The intended user-verification and attestation policy.</li>
+<li>An expiration time.</li>
+</ul>
+<p>Do not accept a challenge issued for authentication as a registration challenge, or a challenge issued for one account in a ceremony for another account. Invalidate the challenge whether the ceremony succeeds or fails in a terminal way.</p>
+<p>Generate a stable, opaque user handle that contains no username, email address, or other personally identifying information, following the WebAuthn <a href="https://www.w3.org/TR/webauthn-3/#sctn-user-handle-privacy">user-handle privacy guidance</a>. A user handle must identify one account within the RP and must not be reassigned to another account.</p>
+<p>Include the account's existing credential IDs in <code>excludeCredentials</code> when possible. This improves the user experience by discouraging duplicate registration, but the server must still enforce credential uniqueness.</p>
+<h3 id="verify-the-registration-response">Verify the Registration Response<a class="headerlink" href="#verify-the-registration-response" title="Permanent link">&para;</a></h3>
+<p>The following diagram summarizes the key checks and which party performs them.</p>
+<p><img alt="Registration ceremony sequence diagram" src="../assets/Passkey_Security_Cheat_Sheet_Registration_Ceremony.png" /></p>
+<p>Follow the WebAuthn <a href="https://www.w3.org/TR/webauthn-3/#sctn-registering-a-new-credential">registration verification procedure</a> through the selected library. At minimum, ensure that the server verifies:</p>
+<ul>
+<li>The client data type is <code>webauthn.create</code>.</li>
+<li>The returned challenge exactly matches the issued challenge.</li>
+<li>The origin is an exact member of the RP's allowlist.</li>
+<li>The RP ID hash matches the expected RP ID.</li>
+<li>The UP flag is set and the UV flag is set when UV was required.</li>
+<li>The public-key algorithm is one the RP offered and permits.</li>
+<li>The credential public key and credential ID are structurally valid.</li>
+<li>Any requested extensions are processed according to RP policy.</li>
+<li>Attestation is verified when the RP's policy requires it.</li>
+</ul>
+<p>Store the credential only after all checks succeed. Associate it with the account from the server-side ceremony state, never an account identifier returned by the client. Enforce credential ID uniqueness across the RP and make the account association change auditable.</p>
+<p>Store the credential ID, public key, user handle association, algorithm, relevant transports, creation time, a user-visible name, and the authenticator data needed by the library. Store backup eligibility and backup state when returned, but do not expose those values as proof that a particular provider or device is trustworthy.</p>
+<h3 id="minimize-attestation">Minimize Attestation<a class="headerlink" href="#minimize-attestation" title="Permanent link">&para;</a></h3>
+<p>Most public-facing applications should use no attestation and should not restrict users to a list of authenticator models. WebAuthn documents both <a href="https://www.w3.org/TR/webauthn-3/#sctn-attestation-limitations">attestation limitations</a> and <a href="https://www.w3.org/TR/webauthn-3/#sctn-attestation-privacy">attestation privacy considerations</a>; attestation does not prove that an authenticator will remain uncompromised.</p>
+<p>Use attestation only when a documented enterprise or regulatory requirement justifies enforcing authenticator provenance or properties. If attestation is required:</p>
+<ul>
+<li>Define acceptable formats, trust anchors, metadata, and failure behavior.</li>
+<li>Validate the complete attestation chain and relevant status information.</li>
+<li>Plan for metadata and trust-anchor updates.</li>
+<li>Provide a reviewed exception or recovery process that does not silently remove the policy.</li>
+</ul>
+<h2 id="secure-passkey-authentication">Secure Passkey Authentication<a class="headerlink" href="#secure-passkey-authentication" title="Permanent link">&para;</a></h2>
+<h3 id="generate-and-bind-authentication-options">Generate and Bind Authentication Options<a class="headerlink" href="#generate-and-bind-authentication-options" title="Permanent link">&para;</a></h3>
+<p>Generate a fresh, unpredictable challenge for every authentication ceremony. Bind it to the ceremony type, expected RP ID, origin policy, UV requirement, session or transaction context, and expiration time. Consume it once.</p>
+<p>For account-first authentication, send only the credential IDs registered to the selected account in <code>allowCredentials</code>. Use generic responses and consistent behavior so that the account selection step does not disclose whether an account exists.</p>
+<p>For username-less authentication, omit <code>allowCredentials</code> and use discoverable credentials. After verification, use the returned user handle and credential ID to locate the server-side credential record. Require both values to resolve to the same account; do not trust a display name or other client-provided identity claim.</p>
+<p>Conditional mediation can improve passkey discovery and coexist with password fields. Treat it as another way to start the same authentication ceremony, not as a different verification policy.</p>
+<h3 id="verify-the-authentication-response">Verify the Authentication Response<a class="headerlink" href="#verify-the-authentication-response" title="Permanent link">&para;</a></h3>
+<p>The following diagram summarizes the key checks and which party performs them.</p>
+<p><img alt="Authentication ceremony sequence diagram" src="../assets/Passkey_Security_Cheat_Sheet_Authentication_Ceremony.png" /></p>
+<p>Follow the WebAuthn <a href="https://www.w3.org/TR/webauthn-3/#sctn-verifying-assertion">assertion verification procedure</a> through the selected library. At minimum, ensure that the server verifies:</p>
+<ul>
+<li>The client data type is <code>webauthn.get</code>.</li>
+<li>The challenge exactly matches an unexpired, unused authentication challenge.</li>
+<li>The origin is an exact member of the RP's allowlist.</li>
+<li>The RP ID hash matches the expected RP ID.</li>
+<li>The credential ID exists and belongs to the account selected by the verified ceremony context.</li>
+<li>The assertion signature is valid under the stored public key.</li>
+<li>The UP flag is set and the UV flag is set when required by policy.</li>
+<li>The returned user handle, when present, matches the credential's account.</li>
+<li>Extension outputs and cross-origin indicators comply with RP policy.</li>
+</ul>
+<p>Create an authenticated application session only after every required check succeeds. Rotate the session identifier at authentication and apply the controls in the <a href="Session_Management_Cheat_Sheet.html">Session Management Cheat Sheet</a>.</p>
+<h3 id="handle-signature-counters-conservatively">Handle Signature Counters Conservatively<a class="headerlink" href="#handle-signature-counters-conservatively" title="Permanent link">&para;</a></h3>
+<p>A non-increasing signature counter can signal that an authenticator may be cloned, malfunctioning, or affected by out-of-order assertion processing. The WebAuthn <a href="https://www.w3.org/TR/webauthn-3/#sctn-sign-counter">signature counter considerations</a> explain why it is not a universal clone-detection mechanism. Some authenticators do not implement a counter, and a synced credential may be used from multiple authenticator instances whose counter behavior is not strictly monotonic.</p>
+<p>When a nonzero counter does not increase as expected, record the event and evaluate it with other account-risk signals. Do not automatically lock out every user solely because of a counter anomaly. Follow the selected library's guidance and document the RP's response policy.</p>
+<h3 id="use-safe-failure-behavior">Use Safe Failure Behavior<a class="headerlink" href="#use-safe-failure-behavior" title="Permanent link">&para;</a></h3>
+<p>Return generic authentication errors that do not distinguish an unknown account, unknown credential, failed signature, or policy rejection. Keep externally visible response timing as consistent as practical. Rate-limit attempts by account and relevant network or device signals without creating a trivial account-lockout denial of service.</p>
+<p>A failed passkey ceremony must not silently fall back to a weaker method. Adversary-in-the-middle phishing does not defeat a correctly verified passkey ceremony; it steers the user to whatever fallback is still enabled, and <a href="https://pages.nist.gov/800-63-4/sp800-63b.html">NIST SP 800-63B-4 Section 3.2.5</a> states that authenticators involving manual entry of an authenticator output, such as OTP and out-of-band codes, are not phishing-resistant. If a fallback exists, make it a deliberate, logged, policy-documented path rather than the default error handling, and follow the <a href="Multifactor_Authentication_Cheat_Sheet.html#mfa-downgrade-attacks">MFA Downgrade Attacks</a> guidance.</p>
+<p>Log enough structured information to investigate failures, but never log challenges, full credential responses, session identifiers, or unnecessary user-identifying data. The <a href="Logging_Cheat_Sheet.html">Logging Cheat Sheet</a> provides general logging guidance.</p>
+<h2 id="protect-the-credential-lifecycle-and-recovery">Protect the Credential Lifecycle and Recovery<a class="headerlink" href="#protect-the-credential-lifecycle-and-recovery" title="Permanent link">&para;</a></h2>
+<h3 id="credential-management">Credential Management<a class="headerlink" href="#credential-management" title="Permanent link">&para;</a></h3>
+<p>Provide an authenticated credential-management page where users can view and manage their passkeys. Show a user-chosen name, creation date, and last-used date rather than exposing raw credential IDs.</p>
+<ul>
+<li>Require recent reauthentication before adding or removing a passkey, changing recovery methods, or disabling the last strong authenticator.</li>
+<li>Allow users to register more than one authenticator.</li>
+<li>Notify the user through an existing trusted channel when a passkey is added or removed.</li>
+<li>Record enrollment, use, renaming, and revocation as security events.</li>
+<li>Revoke a credential immediately on the server when the user removes it or reports compromise.</li>
+<li>Confirm that at least one usable authentication or recovery method remains before removing the final passkey.</li>
+</ul>
+<p>Do not silently reassign a credential record to a different account. Database migrations and administrative changes to credential-to-account mappings require integrity controls, authorization checks, and audit logs. Treat an unexpected duplicate credential ID as an error requiring investigation.</p>
+<p>Where supported, WebAuthn signal methods can help a credential provider reconcile its local state after an RP deletes credentials or updates user details. These signals improve consistency but do not replace server-side revocation.</p>
+<h3 id="account-recovery-and-bootstrap">Account Recovery and Bootstrap<a class="headerlink" href="#account-recovery-and-bootstrap" title="Permanent link">&para;</a></h3>
+<p>The effective security of a passkey account is limited by its weakest recovery route. Prefer recovery based on another already-registered passkey, a separately secured recovery code, or a high-assurance identity process appropriate to the application's risk.</p>
+<ul>
+<li>Encourage users to register multiple authenticators before one is lost.</li>
+<li>Protect recovery codes as authentication secrets, store them securely, make them single-use, and let users regenerate them.</li>
+<li>Apply rate limits, risk checks, notifications, and additional review to recovery attempts.</li>
+<li>Do not let email or SMS recovery silently bypass a stronger authentication policy for high-risk accounts.</li>
+<li>After recovery, rotate sessions, review or revoke existing credentials as appropriate, and notify the user.</li>
+<li>Apply a delay or additional verification before high-impact actions when recovery indicates elevated takeover risk.</li>
+</ul>
+<p>For more detail, see the <a href="Forgot_Password_Cheat_Sheet.html">Forgot Password Cheat Sheet</a> and the recovery guidance in the <a href="Multifactor_Authentication_Cheat_Sheet.html">Multifactor Authentication Cheat Sheet</a>.</p>
+<h3 id="synced-and-device-bound-credentials">Synced and Device-Bound Credentials<a class="headerlink" href="#synced-and-device-bound-credentials" title="Permanent link">&para;</a></h3>
+<p><a href="https://pages.nist.gov/800-63-4/sp800-63b/syncable/">Synced passkeys</a> improve availability by making a credential usable on more than one device. Their security also depends on the credential provider's account protection, device enrollment, synchronization, and recovery controls. Device-bound credentials can support policies that require the key to remain on a particular authenticator, but require an availability and replacement plan.</p>
+<p>Choose policy according to the application's threat model:</p>
+<ul>
+<li>Public-facing applications should generally support synced passkeys and provide users with secure options for additional authenticators and recovery.</li>
+<li>Enterprise or high-assurance applications may require managed, device-bound authenticators and attestation when the operational controls justify the reduced interoperability.</li>
+<li>Use backup eligibility and backup state as risk and policy inputs where appropriate. Do not treat them as user-verification results or as proof of a specific sync provider.</li>
+<li>Do not assume a synced passkey can meet every assurance level. For example, NIST does not allow syncable authenticators at Authentication Assurance Level 3 (AAL3).</li>
+</ul>
+<h2 id="deployment-and-review-checklist">Deployment and Review Checklist<a class="headerlink" href="#deployment-and-review-checklist" title="Permanent link">&para;</a></h2>
+<p>Use this checklist together with the W3C <a href="https://www.w3.org/TR/webauthn-3/#sctn-registering-a-new-credential">registration</a> and <a href="https://www.w3.org/TR/webauthn-3/#sctn-verifying-assertion">authentication</a> verification procedures.</p>
+<h3 id="server-and-protocol">Server and Protocol<a class="headerlink" href="#server-and-protocol" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use a maintained WebAuthn server library and keep it updated.</li>
+<li>Generate cryptographically random, single-use, expiring challenges of at least 16 bytes.</li>
+<li>Bind each challenge to its ceremony, account or session context, RP ID, origin, and policy.</li>
+<li>Maintain an exact origin allowlist and a documented RP ID.</li>
+<li>List native app origins explicitly and change-control the <code>assetlinks.json</code> and <code>apple-app-site-association</code> files together with the allowlist.</li>
+<li>Verify type, challenge, origin, RP ID hash, UP, required UV, credential ownership, and signature.</li>
+<li>Store public keys and credential metadata safely and enforce credential ID uniqueness.</li>
+<li>Treat counters as risk signals rather than universal clone detection.</li>
+<li>Test registration and authentication with supported browsers and authenticators.</li>
+</ul>
+<h3 id="account-workflows">Account Workflows<a class="headerlink" href="#account-workflows" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Require recent authentication for passkey enrollment, removal, and recovery changes.</li>
+<li>Bind new credentials to the server-selected account.</li>
+<li>Support multiple authenticators and immediate server-side revocation.</li>
+<li>Notify users of credential lifecycle changes and retain useful audit events.</li>
+<li>Make recovery commensurate with the security of passkey authentication.</li>
+<li>Use generic error messages and protect account-first flows from enumeration.</li>
+<li>Never let a failed passkey ceremony silently fall back to a non-phishing-resistant method.</li>
+</ul>
+<h3 id="privacy-and-operations">Privacy and Operations<a class="headerlink" href="#privacy-and-operations" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Keep user handles opaque and free of personally identifying information.</li>
+<li>Avoid attestation unless a documented requirement justifies it.</li>
+<li>Do not expose raw credential IDs in user interfaces, URLs, or logs.</li>
+<li>Minimize stored authenticator metadata and restrict access to it.</li>
+<li>Monitor registration, authentication, recovery, and administrative mapping changes.</li>
+<li>Document incident procedures for a compromised authenticator, sync account, RP origin, or WebAuthn library.</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://www.w3.org/TR/webauthn-3/">W3C Web Authentication Level 3</a></li>
+<li><a href="https://pages.nist.gov/800-63-4/sp800-63b.html">NIST SP 800-63B-4</a></li>
+<li><a href="https://pages.nist.gov/800-63-4/sp800-63b/syncable/">NIST SP 800-63B-4: Syncable Authenticators</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

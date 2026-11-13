@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Django Security | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Django Security">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Django_Security_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="django-security-cheat-sheet">Django Security Cheat Sheet<a class="headerlink" href="#django-security-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>The Django framework is a powerful Python web framework, and it comes with built-in security features that can be used out-of-the-box to prevent common web vulnerabilities. This cheat sheet lists actions and security tips developers can take to develop secure Django applications. It aims to cover common vulnerabilities to increase the security posture of your Django application. Each item has a brief explanation and relevant code samples that are specific to the Django environment.</p>
+<p>The Django framework provides some built-in security features that aim to be secure-by-default. These features are also flexible to empower a developer to re-use components for complex use-cases. This opens up scenarios where developers unfamiliar with the inner workings of the components can configure them in an insecure way. This cheat sheet aims to enumerate some such use cases.</p>
+<h2 id="general-recommendations">General Recommendations<a class="headerlink" href="#general-recommendations" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Always keep Django and your application's dependencies up-to-date to keep up with security vulnerabilities.</li>
+<li>Ensure that the application is never in <code>DEBUG</code> mode in a production environment. Never run <code>DEBUG = True</code> in production.</li>
+<li>Use packages like <a href="https://django-ratelimit.readthedocs.io/en/stable/"><code>django_ratelimit</code></a> or <a href="https://django-axes.readthedocs.io/en/latest/index.html"><code>django-axes</code></a> to prevent brute-force attacks.</li>
+</ul>
+<h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Use <code>django.contrib.auth</code> app for views and forms for user authentication operations such as login, logout, password change, etc. Include the module and its dependencies <code>django.contrib.contenttypes</code> and <code>django.contrib.sessions</code> in the <code>INSTALLED_APPS</code> setting in the <code>settings.py</code> file.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">INSTALLED_APPS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># ...</span>
+    <span class="s1">'django.contrib.auth'</span><span class="p">,</span>
+    <span class="s1">'django.contrib.contenttypes'</span><span class="p">,</span>
+    <span class="s1">'django.contrib.sessions'</span><span class="p">,</span>
+    <span class="c1"># ...</span>
+<span class="p">]</span>
+</code></pre></div>
+<ul>
+<li>Use the <code>@login_required</code> decorator to ensure that only authenticated users can access a view. The sample code below illustrates usage of <code>@login_required</code>.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">login_required</span>
+
+<span class="c1"># User is redirected to default login page if not authenticated.</span>
+<span class="nd">@login_required</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+  <span class="c1"># Your view logic</span>
+
+<span class="c1"># User is redirected to custom '/login-page/' if not authenticated.</span>
+<span class="nd">@login_required</span><span class="p">(</span><span class="n">login_url</span><span class="o">=</span><span class="s1">'/login-page/'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+  <span class="c1"># Your view logic</span>
+</code></pre></div>
+<ul>
+<li>Use password validators for enforcing password policies. Add or update the <code>AUTH_PASSWORD_VALIDATORS</code> setting in the <code>settings.py</code> file to include specific validators required by your application.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">AUTH_PASSWORD_VALIDATORS</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="p">{</span>
+    <span class="c1"># Checks the similarity between the password and a set of attributes of the user.</span>
+    <span class="s1">'NAME'</span><span class="p">:</span> <span class="s1">'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'</span><span class="p">,</span>
+    <span class="s1">'OPTIONS'</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s1">'user_attributes'</span><span class="p">:</span> <span class="p">(</span><span class="s1">'username'</span><span class="p">,</span> <span class="s1">'email'</span><span class="p">,</span> <span class="s1">'first_name'</span><span class="p">,</span> <span class="s1">'last_name'</span><span class="p">),</span>
+      <span class="s1">'max_similarity'</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="c1"># Checks whether the password meets a minimum length.</span>
+    <span class="s1">'NAME'</span><span class="p">:</span> <span class="s1">'django.contrib.auth.password_validation.MinimumLengthValidator'</span><span class="p">,</span>
+    <span class="s1">'OPTIONS'</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s1">'min_length'</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="c1"># Checks whether the password occurs in a list of common passwords</span>
+    <span class="s1">'NAME'</span><span class="p">:</span> <span class="s1">'django.contrib.auth.password_validation.CommonPasswordValidator'</span><span class="p">,</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="c1"># Checks whether the password isn’t entirely numeric</span>
+    <span class="s1">'NAME'</span><span class="p">:</span> <span class="s1">'django.contrib.auth.password_validation.NumericPasswordValidator'</span><span class="p">,</span>
+  <span class="p">}</span>
+<span class="p">]</span>
+</code></pre></div>
+<ul>
+<li>Store passwords using <code>make-password</code> utility function to hash a plain-text password.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.hashers</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_password</span>
+<span class="c1">#...</span>
+<span class="n">hashed_pwd</span> <span class="o">=</span> <span class="n">make_password</span><span class="p">(</span><span class="s1">'plaintext_password'</span><span class="p">)</span>
+</code></pre></div>
+<ul>
+<li>Check a plaintext password against a hashed password by using the  <code>check-password</code> utility function.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.hashers</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_password</span>
+<span class="c1">#...</span>
+<span class="n">plain_pwd</span> <span class="o">=</span> <span class="s1">'plaintext_password'</span>
+<span class="n">hashed_pwd</span> <span class="o">=</span> <span class="s1">'hashed_password_from_database'</span>
+
+<span class="k">if</span> <span class="n">check_password</span><span class="p">(</span><span class="n">plain_pwd</span><span class="p">,</span> <span class="n">hashed_pwd</span><span class="p">):</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s2">"The password is correct."</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s2">"The password is incorrect."</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="key-management">Key Management<a class="headerlink" href="#key-management" title="Permanent link">&para;</a></h2>
+<p>The <code>SECRET_KEY</code> parameter in settings.py is used for cryptographic signing and should be kept confidential. Consider the following recommendations:</p>
+<ul>
+<li>Generate a key at least 50 characters or more, containing a mix of letters, digits, and symbols.</li>
+<li>Ensure that the <code>SECRET_KEY</code> is generated using a strong random generator, such as <code>get_random_secret_key()</code> function in Django.</li>
+<li>Avoid hard coding the <code>SECRET_KEY</code> value in settings.py or any other location. Consider storing the key-value in environment variables or secrets managers.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">SECRET_KEY</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'DJANGO_SECRET_KEY'</span><span class="p">)</span>
+</code></pre></div>
+<ul>
+<li>Regularly rotate the key, keeping in mind that this action can invalidate sessions, password reset tokens, etc. Rotate the key immediately it if it ever gets exposed.</li>
+</ul>
+<h2 id="headers">Headers<a class="headerlink" href="#headers" title="Permanent link">&para;</a></h2>
+<p>Include the <code>django.middleware.security.SecurityMiddleware</code> module in the <code>MIDDLEWARE</code> setting in your project's <code>settings.py</code> to add security-related headers to your responses. This module is used to set the following parameters:</p>
+<ul>
+<li><code>SECURE_CONTENT_TYPE_NOSNIFF</code>: Set this key to <code>True</code>. Protects against MIME type sniffing attacks by enabling the header <code>X-Content-Type-Options: nosniff</code>.</li>
+<li><code>SECURE_HSTS_SECONDS</code>: A positive value adds <a href="https://docs.djangoproject.com/en/5.2/ref/middleware/#http-strict-transport-security">HTTP Strict Transport Security (HSTS)</a> to HTTPS responses, instructing supporting browsers to use HTTPS for the specified period. It does not reject HTTP requests on the server or protect a browser's first connection before it knows the policy; <a href="https://www.rfc-editor.org/rfc/rfc6797.html#section-12.3">preloading addresses that initial-connection gap</a>.</li>
+</ul>
+<p>Include the <code>django.middleware.clickjacking.XFrameOptionsMiddleware</code> module in the <code>MIDDLEWARE</code> setting in your project's <code>settings.py</code> (This module should be listed after the <code>django.middleware.security.SecurityMiddleware</code> module as ordering is important). This module is used to set the following parameters:</p>
+<ul>
+<li><code>X_FRAME_OPTIONS</code>: Set this key to 'DENY' or 'SAMEORIGIN'. This setting adds the <code>X-Frame-Options</code> header to all HTTP responses. This protects against clickjacking attacks.</li>
+</ul>
+<h2 id="content-security-policy">Content Security Policy<a class="headerlink" href="#content-security-policy" title="Permanent link">&para;</a></h2>
+<p>Django 6.0 and later provide built-in Content Security Policy (CSP) support. Enable <code>django.middleware.csp.ContentSecurityPolicyMiddleware</code> and configure <code>SECURE_CSP</code> to enforce a policy, or <code>SECURE_CSP_REPORT_ONLY</code> to monitor violations without blocking content. Follow <a href="https://docs.djangoproject.com/en/6.0/howto/csp/">Django's CSP configuration guide</a>. Earlier versions require a third-party library such as <code>django-csp</code> or configuration of HTTP response headers.</p>
+<p>For more details:</p>
+<ul>
+<li><a href="/en/OWASP/CheatSheetSeries/cheatsheets/Content_Security_Policy_Cheat_Sheet.html">OWASP Content Security Policy Cheat Sheet</a></li>
+<li><a href="https://docs.djangoproject.com/en/stable/topics/security/">Django Security Documentation</a></li>
+</ul>
+<h2 id="cookies">Cookies<a class="headerlink" href="#cookies" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>SESSION_COOKIE_SECURE</code>: Set this key to <code>True</code> in the <code>settings.py</code> file. This will send the session cookie over secure (HTTPS) connections only.</li>
+<li><code>CSRF_COOKIE_SECURE</code>: Set this key to <code>True</code> in the <code>settings.py</code> file. This will ensure that the CSRF cookie is sent over secure connections only.</li>
+<li>Whenever you set a custom cookie in a view using the <code>HttpResponse.set_cookie()</code> method, make sure to set its secure parameter to <code>True</code>.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s2">"Some response"</span><span class="p">)</span>
+<span class="n">response</span><span class="o">.</span><span class="n">set_cookie</span><span class="p">(</span><span class="s1">'my_cookie'</span><span class="p">,</span> <span class="s1">'cookie_value'</span><span class="p">,</span> <span class="n">secure</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="cross-site-request-forgery-csrf">Cross Site Request Forgery (CSRF)<a class="headerlink" href="#cross-site-request-forgery-csrf" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Include the <code>django.middleware.csrf.CsrfViewMiddleware</code> module in the <code>MIDDLEWARE</code> setting in your project's <code>settings.py</code> to add CSRF related headers to your responses.</li>
+<li>In forms use the <code>{% csrf_token %}</code> template tag to include the CSRF token. A sample is shown below.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">form</span> <span class="na">method</span><span class="o">=</span><span class="s">"post"</span><span class="p">&gt;</span>
+    {% csrf_token %}
+    <span class="cm">&lt;!-- Your form fields here --&gt;</span>
+<span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+</code></pre></div>
+<ul>
+<li>For AJAX calls, the CSRF token for the request has to be extracted prior to being used in the AJAX call.  </li>
+<li>Additional recommendations and controls can be found at Django's <a href="https://docs.djangoproject.com/en/5.2/ref/csrf/">Cross Site Request Forgery protection</a> documentation.</li>
+</ul>
+<h2 id="cross-site-scripting-xss">Cross Site Scripting (XSS)<a class="headerlink" href="#cross-site-scripting-xss" title="Permanent link">&para;</a></h2>
+<p>The recommendations in this section are in addition to XSS recommendations already mentioned previously.</p>
+<ul>
+<li>Use the built-in template system to render templates in Django. Refer to Django's <a href="https://docs.djangoproject.com/en/5.2/ref/templates/language/#automatic-html-escaping">Automatic HTML escaping</a> documentation to learn more.</li>
+<li>Try to avoid using the <code>safe</code> filter (or <code>mark_safe</code> function) to disable Django's automatic template escaping. If you do need to use it, make sure the input is from a trusted source. Extra caution is required when handling user-controlled inputs.</li>
+<li>Use the <a href="https://docs.djangoproject.com/en/5.2/ref/templates/builtins/#json-script"><code>json_script</code></a> template filter for passing data to JavaScript in Django templates.</li>
+<li>Refer to Django's <a href="https://docs.djangoproject.com/en/5.2/topics/security/#cross-site-scripting-xss-protection">Cross Site Scripting (XSS) protection</a> documentation to learn more.</li>
+</ul>
+<h2 id="https">HTTPS<a class="headerlink" href="#https" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Include the <code>django.middleware.security.SecurityMiddleware</code> module in the <code>MIDDLEWARE</code> setting in your project's <code>settings.py</code> if not already added.</li>
+<li>Set the <code>SECURE_SSL_REDIRECT = True</code> in the <code>settings.py</code> file to ensure that all communication is over HTTPS. This will redirect any HTTP requests automatically to HTTPS. This is also a 301 (permanent) redirect, so your browser will remember the redirect for subsequent requests.</li>
+<li>Configure <code>SECURE_PROXY_SSL_HEADER</code> only behind a trusted proxy that strips client-supplied copies of the chosen header and sets its HTTPS-indicating value only for requests originally received over HTTPS. Prevent clients from bypassing that proxy to supply the trusted header directly. If these conditions cannot be guaranteed, leave the setting at <code>None</code>; see <a href="https://docs.djangoproject.com/en/5.2/ref/settings/#secure-proxy-ssl-header">Django's proxy-header security warning</a>.</li>
+</ul>
+<h2 id="admin-panel-url">Admin panel URL<a class="headerlink" href="#admin-panel-url" title="Permanent link">&para;</a></h2>
+<p>It is advisable to modify the default URL leading to the admin panel (example.com/admin/), in order to slightly increase the difficulty for automated attacks. Here’s how to do it:</p>
+<p>In the default app folder within your project, locate the <code>urls.py</code> file managing the top-level URLs. Within the file, modify the <code>urlpatterns</code> variable, a list, so that the URL leading to <code>admin.site.urls</code> is different from "admin/". This approach adds an extra layer of security by obscuring the common endpoint used for administrative access.</p>
+<h2 id="djangos-built-in-command-check-deploy">Django's built-in command <code>check --deploy</code><a class="headerlink" href="#djangos-built-in-command-check-deploy" title="Permanent link">&para;</a></h2>
+<p>Django has built-in command <a href="https://docs.djangoproject.com/en/stable/ref/django-admin/#cmdoption-check-deploy"><code>check --deploy</code></a> for security checks. Example:</p>
+<div class="highlight"><pre><span></span><code>$ ./manage.py check --deploy
+System check identified some issues:
+
+WARNINGS:
+?: (security.W004) You have not set a value for the SECURE_HSTS_SECONDS setting. If your entire site is served only over SSL, you may want to consider setting a value and enabling HTTP Strict Transport Security. Be sure to read the documentation first; enabling HSTS carelessly can cause serious, irreversible problems.
+?: (security.W008) Your SECURE_SSL_REDIRECT setting is not set to True. Unless your site should be available over both SSL and non-SSL connections, you may want to either set this setting True or configure a load balancer or reverse-proxy server to redirect all connections to HTTPS.
+?: (security.W009) Your SECRET_KEY has less than 50 characters, less than 5 unique characters, or it's prefixed with 'django-insecure-' indicating that it was generated automatically by Django. Please generate a long and random value, otherwise many of Django's security-critical features will be vulnerable to attack.
+?: (security.W012) SESSION_COOKIE_SECURE is not set to True. Using a secure-only session cookie makes it more difficult for network traffic sniffers to hijack user sessions.
+?: (security.W016) You have 'django.middleware.csrf.CsrfViewMiddleware' in your MIDDLEWARE, but you have not set CSRF_COOKIE_SECURE to True. Using a secure-only CSRF cookie makes it more difficult for network traffic sniffers to steal the CSRF token.
+?: (security.W018) You should not have DEBUG set to True in deployment.
+?: (security.W020) ALLOWED_HOSTS must not be empty in deployment.
+
+System check identified 7 issues (0 silenced).
+</code></pre></div>
+<p>You can harden your Django project by addressing the warnings generated by this command.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://docs.djangoproject.com/en/5.2/topics/security/#clickjacking-protection">Django 5.2: Clickjacking Protection</a></li>
+<li><a href="https://docs.djangoproject.com/en/5.2/ref/middleware/#module-django.middleware.security">Django 5.2: Security Middleware</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

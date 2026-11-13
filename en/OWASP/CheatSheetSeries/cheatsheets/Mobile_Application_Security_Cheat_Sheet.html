@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mobile Application Security | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Mobile Application Security">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Mobile_Application_Security_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="mobile-application-security-cheat-sheet">Mobile Application Security Cheat Sheet<a class="headerlink" href="#mobile-application-security-cheat-sheet" title="Permanent link">&para;</a></h1>
+<p>Mobile application development presents certain security challenges that are
+unique compared to web applications and other forms of software. This cheat
+sheet provides guidance on security considerations for mobile app development.
+It is not a comprehensive guide by any means, but rather a starting point for
+developers to consider security in their mobile app development.</p>
+<h2 id="architecture-design">Architecture &amp; Design<a class="headerlink" href="#architecture-design" title="Permanent link">&para;</a></h2>
+<h3 id="1-secure-by-design">1. Secure by Design<a class="headerlink" href="#1-secure-by-design" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Opt for a secure design at the beginning of development, not as an
+  afterthought.</li>
+<li>Keep in mind security principles like least privilege, defense in depth, and
+  separation of concerns.</li>
+<li>Follow industry standards and best practices, such as:<ul>
+<li>National Institute of Standards and Technology (NIST)</li>
+<li>Internet Engineering Task Force (IETF)</li>
+</ul>
+</li>
+</ul>
+<p>For more information, see the
+<a href="Secure_Product_Design_Cheat_Sheet.html">Secure Product Design Cheat Sheet</a>.</p>
+<h3 id="2-secure-apis">2. Secure APIs<a class="headerlink" href="#2-secure-apis" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Ensure that your mobile app communicates securely with backend services.</li>
+<li>Use OAuth2, JWT, or similar for secure authentication.</li>
+<li>Regularly update and rotate any used API keys or tokens.</li>
+</ul>
+<h3 id="3-principle-of-least-privilege">3. Principle of Least Privilege<a class="headerlink" href="#3-principle-of-least-privilege" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Request only the permissions your app needs.</li>
+<li>This applies not only to device permissions granted by the user, but also to
+  permissions granted to the app by backend services.</li>
+<li>Avoid storing application files with overly permissive permissions.</li>
+<li>Secure by default: applications should have the most secure settings by default.</li>
+</ul>
+<h3 id="4-supply-chain">4. Supply Chain<a class="headerlink" href="#4-supply-chain" title="Permanent link">&para;</a></h3>
+<p>Developing with third-party libraries and components introduces the possibility
+of security unknowns.</p>
+<ul>
+<li>Ensure app signing.</li>
+<li>Use only trusted and validated third-party libraries and components.</li>
+<li>Establish security controls for app updates, patches, and releases.</li>
+<li>Monitor and detect security incidents of used third-party products.</li>
+</ul>
+<p>See the <a href="Vulnerable_Dependency_Management_Cheat_Sheet.html">Vulnerable Dependency Management Cheat Sheet</a> for recommendations on managing third-party dependencies when vulnerabilities are discovered.</p>
+<h2 id="authentication-authorization">Authentication &amp; Authorization<a class="headerlink" href="#authentication-authorization" title="Permanent link">&para;</a></h2>
+<p>Authentication is a complex topic and there are many pitfalls. Authentication
+logic must be written and tested with extreme care. The tips here are only a
+starting point and barely scratch the surface. For more information, see the
+<a href="Authentication_Cheat_Sheet.html">Authentication Cheat Sheet</a> and
+<a href="https://owasp.org/www-project-mobile-top-10/2023-risks/m3-insecure-authentication-authorization">M3: Insecure Authentication/Authorization</a>
+from the OWASP Mobile Top 10.</p>
+<h3 id="1-dont-trust-the-client">1. Don't Trust the Client<a class="headerlink" href="#1-dont-trust-the-client" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Perform authentication/authorization server-side and only load data on
+the device after successful authentication.</li>
+<li>For sensitive local data, encrypt it and protect encryption keys using
+<a href="https://mas.owasp.org/MASWE/MASVS-STORAGE/MASWE-0003/">platform key storage</a>.
+If the design requires password-derived keys, use a
+<a href="https://mas.owasp.org/MASWE/MASVS-CRYPTO/MASWE-0014/">dedicated password-based key derivation function</a>
+with a unique random salt and an appropriate work factor; a password or a fast
+hash of it is not a suitable encryption key.</li>
+<li>Do not store user passwords on the device; use device-specific tokens
+that can be revoked.</li>
+<li>Avoid using spoofable values like device identifiers for authentication.</li>
+<li>Assume all client-side controls can be bypassed and perform them
+server-side as well.</li>
+<li>Include client side code to detect code/binary tampering.</li>
+</ul>
+<h3 id="2-credential-handling">2. Credential Handling<a class="headerlink" href="#2-credential-handling" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Do not hardcode credentials in the mobile app.</li>
+<li>Encrypt credentials in transmission.</li>
+<li>Do not store user credentials on the device. Consider using
+secure, revocable access tokens.</li>
+</ul>
+<h3 id="3-passwords-and-pin-policy">3. Passwords and PIN Policy<a class="headerlink" href="#3-passwords-and-pin-policy" title="Permanent link">&para;</a></h3>
+<ul>
+<li>For account passwords, allow long passphrases without character-composition
+requirements and block common or compromised passwords, following
+<a href="https://pages.nist.gov/800-63-4/sp800-63b/authenticators/">NIST's password guidance</a>.
+See <a href="Authentication_Cheat_Sheet.html#implement-proper-password-strength-controls">password strength controls</a>
+for length and other policy requirements.</li>
+<li>Do not allow short PINs such as 4 digits.</li>
+<li>Use platform specific secure storage mechanisms, such as
+Keychain (iOS) or Keystore (Android).</li>
+</ul>
+<h3 id="4-biometric-authentication">4. Biometric Authentication<a class="headerlink" href="#4-biometric-authentication" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use platform-supported methods for biometric authentication.</li>
+<li>Always provide a fallback, such as a PIN.</li>
+</ul>
+<h3 id="5-session-management">5. Session Management<a class="headerlink" href="#5-session-management" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Sessions should timeout after inactivity.</li>
+<li>Offer a remote logout feature.</li>
+<li>Use randomly generated session tokens.</li>
+<li>Secure session data, both client and server side.</li>
+</ul>
+<h3 id="6-token-storage">6. Token Storage<a class="headerlink" href="#6-token-storage" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Store authentication tokens securely.</li>
+<li>Handle token expiration gracefully.</li>
+</ul>
+<h3 id="7-sensitive-operations">7. Sensitive Operations<a class="headerlink" href="#7-sensitive-operations" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Require users to re-authenticate for sensitive operations like changing
+  passwords or updating payment information.</li>
+<li>Consider requiring re-authentication before displaying highly sensitive
+  information as well.</li>
+<li>Require authorization checks on any backend functionality.</li>
+</ul>
+<h2 id="data-storage-privacy">Data Storage &amp; Privacy<a class="headerlink" href="#data-storage-privacy" title="Permanent link">&para;</a></h2>
+<h3 id="1-data-encryption">1. Data Encryption<a class="headerlink" href="#1-data-encryption" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Encrypt sensitive data both at rest and in transit.</li>
+<li>Store private data on the device's internal storage.</li>
+<li>Use platform APIs for encryption. Do not attempt to implement your own
+  encryption algorithms.</li>
+<li>Leverage hardware-based security features when available (e.g., Secure Enclave on iOS,
+  Strongbox on Android) for key storage and cryptographic operations
+  whenever available.</li>
+</ul>
+<h3 id="2-data-leakage">2. Data Leakage<a class="headerlink" href="#2-data-leakage" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Beware of caching, logging, and background snapshots. Ensure that sensitive
+  data is not leaked through these mechanisms.</li>
+</ul>
+<p>See the <a href="Logging_Cheat_Sheet.html#data-to-exclude">Logging Cheat Sheet</a> for
+examples of data that should not be logged.</p>
+<h3 id="3-use-https">3. Use HTTPS<a class="headerlink" href="#3-use-https" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Always use HTTPS for network communications.</li>
+</ul>
+<h3 id="4-third-party-libraries">4. Third-Party Libraries<a class="headerlink" href="#4-third-party-libraries" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Ensure all third-party libraries are secure and up to date.</li>
+</ul>
+<h3 id="5-personally-identifiable-information-pii">5. Personally Identifiable Information (PII)<a class="headerlink" href="#5-personally-identifiable-information-pii" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Minimize any PII to necessity.</li>
+<li>Attempt to replace PII with less critical information if possible.</li>
+<li>Reduce PII, e.g. less frequent location updates.</li>
+<li>Implement automatic expiration and deletion of PII to minimize retention.</li>
+<li>Ask for user consent before collecting or using PII.</li>
+</ul>
+<h2 id="network-communication">Network Communication<a class="headerlink" href="#network-communication" title="Permanent link">&para;</a></h2>
+<h3 id="1-dont-trust-the-network">1. Don't Trust the Network<a class="headerlink" href="#1-dont-trust-the-network" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Assume that all network communication is insecure and can be intercepted.</li>
+</ul>
+<h3 id="2-use-secure-protocols">2. Use Secure Protocols<a class="headerlink" href="#2-use-secure-protocols" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use HTTPS for all network communication.</li>
+<li>Do not override SSL certificate validation to allow self-signed or invalid
+  certificates.</li>
+<li>Avoid mixed version SSL sessions.</li>
+<li>Encrypt data even if sent over SSL, in case of future SSL vulnerabilities.</li>
+<li>Use strong, industry standard cipher suites, with appropriate key lengths.</li>
+<li>Use certificates signed by a trusted CA provider</li>
+<li>Avoid sending sensitive data via SMS.</li>
+</ul>
+<h3 id="3-certificate-pinning">3. Certificate Pinning<a class="headerlink" href="#3-certificate-pinning" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Consider certificate pinning. See the <a href="Pinning_Cheat_Sheet.html">Pinning Cheat Sheet</a>
+  for pros and cons of this approach.</li>
+</ul>
+<h2 id="user-interface">User Interface<a class="headerlink" href="#user-interface" title="Permanent link">&para;</a></h2>
+<h3 id="1-ui-data-masking">1. UI Data Masking<a class="headerlink" href="#1-ui-data-masking" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Mask sensitive information on UI fields to prevent shoulder surfing.</li>
+</ul>
+<h3 id="2-user-notifications">2. User Notifications<a class="headerlink" href="#2-user-notifications" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Inform the user about security-related activities, such as logins from new
+  devices.</li>
+</ul>
+<h3 id="3-input-validation">3. Input Validation<a class="headerlink" href="#3-input-validation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Validate and sanitize user input. See the
+  <a href="Input_Validation_Cheat_Sheet.html">Input Validation Cheat Sheet</a> for more
+  information.</li>
+</ul>
+<h3 id="4-output-validation">4. Output Validation<a class="headerlink" href="#4-output-validation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Validate and sanitize output to prevent injection and execution attacks.</li>
+</ul>
+<h2 id="code-quality">Code Quality<a class="headerlink" href="#code-quality" title="Permanent link">&para;</a></h2>
+<h3 id="1-static-analysis">1. Static Analysis<a class="headerlink" href="#1-static-analysis" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use static analysis tools to identify vulnerabilities.</li>
+</ul>
+<h3 id="2-code-reviews">2. Code Reviews<a class="headerlink" href="#2-code-reviews" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Make security a focal point during code reviews.</li>
+</ul>
+<h3 id="3-update-libraries">3. Update Libraries<a class="headerlink" href="#3-update-libraries" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Keep all your libraries up to date to patch known vulnerabilities.</li>
+</ul>
+<h2 id="application-integrity">Application Integrity<a class="headerlink" href="#application-integrity" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Disable debugging.</li>
+<li>Include code to validate integrity of application code.</li>
+<li>Obfuscate the app binary.</li>
+<li>Implement runtime anti-tampering controls:<ul>
+<li>Check for signs of debugging, hooking, or code injection.</li>
+<li>Detect if the app is running in an emulator or rooted/jailbroken device.</li>
+<li>Verify app signatures at runtime.</li>
+<li>Apply appropriate responses to detected tampering (e.g., limiting functionality).</li>
+</ul>
+</li>
+</ul>
+<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
+<h3 id="1-penetration-testing">1. Penetration Testing<a class="headerlink" href="#1-penetration-testing" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Perform ethical hacking to identify vulnerabilities.</li>
+<li>Example tests:<ul>
+<li>Cryptographic vulnerability assessment.</li>
+<li>Attempt to execute backend server functionality anonymously by removing any
+  session tokens from POST/GET requests.</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-automated-tests">2. Automated Tests<a class="headerlink" href="#2-automated-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Leverage automated tests to ensure that security features are working as
+  expected and that access controls are enforced.</li>
+</ul>
+<h3 id="3-usability-testing">3. Usability Testing<a class="headerlink" href="#3-usability-testing" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Ensure that security features do not harm usability, which could cause users
+  to bypass security features.</li>
+</ul>
+<h2 id="post-deployment">Post-Deployment<a class="headerlink" href="#post-deployment" title="Permanent link">&para;</a></h2>
+<h3 id="1-incident-response">1. Incident Response<a class="headerlink" href="#1-incident-response" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Have a clear incident response plan in place.</li>
+</ul>
+<h3 id="2-updates">2. Updates<a class="headerlink" href="#2-updates" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p>Plan for regular updates and patches. In the case of mobile apps, this is
+  especially important due to the delay between when a patch is released and
+  when users actually receive the updated version due to app store review
+  processes and the time it takes for users to update their apps.</p>
+</li>
+<li>
+<p>Use a mechanism to force users to update their app version when necessary.</p>
+</li>
+</ul>
+<h3 id="3-monitoring-and-analytics">3. Monitoring and Analytics<a class="headerlink" href="#3-monitoring-and-analytics" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use real-time monitoring to detect and respond to threats.</li>
+</ul>
+<h2 id="platform-specific-guidance">Platform-Specific Guidance<a class="headerlink" href="#platform-specific-guidance" title="Permanent link">&para;</a></h2>
+<h3 id="android">Android<a class="headerlink" href="#android" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use Android's ProGuard for code obfuscation.</li>
+<li>Avoid storing sensitive data in SharedPreferences. See the
+  <a href="https://developer.android.com/topic/security/data">Android docs</a>
+  on working with data securely for more details.</li>
+<li>
+<p>Disable backup mode to prevent sensitive data being stored in backups.</p>
+</li>
+<li>
+<p>Use Android Keystore with hardware backing (TEE or StrongBox) to securely store
+  cryptographic keys.</p>
+<ul>
+<li><strong>How</strong>: Generate keys with hardware backing by specifying
+  <code>.setIsStrongBoxBacked(true)</code> in <code>KeyGenParameterSpec.Builder</code> when available (Android 9+).</li>
+<li>Verify hardware-backed storage via <code>KeyInfo.isInsideSecureHardware()</code>.</li>
+<li>Fall back to regular hardware-backed keystore if Strongbox isn't available.</li>
+<li>Configure key usage restrictions with <code>.setUserAuthenticationRequired(true)</code>
+  for sensitive operations.</li>
+<li>See <a href="https://developer.android.com/training/articles/keystore">Hardware-backed Keystore documentation</a>.</li>
+</ul>
+</li>
+<li>
+<p>Implement Google's <a href="https://developer.android.com/google/play/integrity">Play Integrity API</a> for device and app integrity checks.</p>
+<ul>
+<li><strong>How</strong>: Obtain an integrity verdict from the device, validate server-side,
+  and take action if integrity checks fail.</li>
+<li>The SafetyNet Attestation API was fully turned down in January 2025. All
+  developers must migrate to Play Integrity API.</li>
+<li>See <a href="https://developer.android.com/google/play/integrity/overview">Play Integrity API documentation</a>.</li>
+</ul>
+</li>
+</ul>
+<h3 id="ios-and-ipados">iOS and iPadOS<a class="headerlink" href="#ios-and-ipados" title="Permanent link">&para;</a></h3>
+<h4 id="shortcuts-permissions">Shortcuts Permissions<a class="headerlink" href="#shortcuts-permissions" title="Permanent link">&para;</a></h4>
+<ul>
+<li>
+<p>iOS/iPadOS Shortcuts allow for automation of app functions, which may
+enable sensitive actions even when the device is locked.</p>
+</li>
+<li>
+<p>There are several scenarios in which a user can execute a Shortcut
+while the device is locked:</p>
+</li>
+</ul>
+<ol>
+<li>If a Shortcut is added as a widget to Today View, it can be accessed
+and executed while the device is locked.</li>
+<li>If a Shortcut is assigned to the Action Button (on iPhone 15 Pro and
+iPhone 16 Pro models), it can be executed by pressing the Action Button
+while the device is locked.</li>
+<li>If a Shortcut is assigned to the Control Center (on iOS/iPadOS 18+),
+it can be executed by pulling up the Control Center and pressing the
+Shortcut button while the device is locked.</li>
+<li>A Shortcut can be invoked via Siri while the device is locked.</li>
+<li>If a Shortcut is added to the user's Home Screen (on iOS/iPadOS 18+),
+it can be directly executed by tapping the Shortcut button on the user's
+lock screen while the device is locked.</li>
+<li>If a Shortcut is set to run at a specific interval or a specific time,
+it can execute even if the device is locked.</li>
+</ol>
+<ul>
+<li>
+<p>Sensitive app functionalities triggered via Shortcuts should always
+require device unlock before execution.</p>
+</li>
+<li>
+<p><strong>How</strong>: For sensitive App Intents (iOS/iPadOS 16+), set
+<a href="https://developer.apple.com/documentation/appintents/appintent/authenticationpolicy"><code>authenticationPolicy</code></a>
+to <a href="https://developer.apple.com/documentation/appintents/intentauthenticationpolicy/requireslocaldeviceauthentication"><code>.requiresLocalDeviceAuthentication</code></a>.
+This requires unlocking the device running the intent if it is locked; it does
+not require fresh authentication when that device is already unlocked. Continue
+to enforce the app's session and authorization checks.
+<a href="https://developer.apple.com/documentation/uikit/uiapplication/isprotecteddataavailable"><code>isProtectedDataAvailable</code></a>
+reports protected-file availability and can be true when content protection is
+disabled; do not use it as an authentication check.</p>
+</li>
+</ul>
+<h4 id="siri-permissions">Siri Permissions<a class="headerlink" href="#siri-permissions" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Siri can access app functionalities through voice or <a href="https://support.apple.com/guide/iphone/change-siri-accessibility-settings-iphaff1d606/ios">Type to Siri</a>
+  commands, which is by default accessible even when the device is locked
+  potentially enabling unauthorized actions.</li>
+<li><strong>How</strong>: Apply the App Intent authentication policy above to sensitive Siri
+actions. For explicit approval before destructive work, call
+<a href="https://developer.apple.com/documentation/appintents/appintent/requestconfirmation()"><code>requestConfirmation()</code></a>
+and stop if the user cancels; confirmation does not replace authentication or
+authorization. For legacy SiriKit intents handled by the app, set the supported
+intent's Authentication level to <strong>Restricted While Locked</strong> in Xcode, which
+configures <a href="https://developer.apple.com/documentation/bundleresources/information-property-list/inintentsrestrictedwhilelocked"><code>INIntentsRestrictedWhileLocked</code></a>.</li>
+</ul>
+<h4 id="deep-link-security">Deep Link Security<a class="headerlink" href="#deep-link-security" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Deep links offer direct access to specific app screens, which could
+potentially bypass authentication if not secured, allowing unauthorized
+users access to secure sections of the app.</li>
+<li>An example of this on Microsoft Authenticator for iOS (which was
+remediated in July 2024) allowed users to bypass App Lock by simply
+navigating to <code>msauth://microsoft.aad.brokerplugin/?</code>, which would
+open Authenticator and dismiss the Face ID/Touch ID/passcode prompt.</li>
+<li><strong>How</strong>: Implement authentication checks on any view controllers
+or endpoints accessed via deep links. Configure and validate Universal
+Links using apple-app-site-association files for secure deep linking.
+Sanitize and validate all parameters received through deep links to
+prevent injection attacks. Ensure unauthorized users are redirected
+to the login screen, preventing direct access to sensitive parts of
+the app without proper authentication. (See Apple Developer's
+<a href="https://developer.apple.com/documentation/xcode/supporting-universal-links-in-your-app">Supporting universal links in your app</a>
+documentation for more information.)</li>
+</ul>
+<h4 id="widgetkit-security">WidgetKit Security<a class="headerlink" href="#widgetkit-security" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Widgets on the lock screen may display sensitive data, potentially
+exposing it without the device being unlocked.</li>
+<li><strong>How</strong>: Mark sensitive views with <code>privacySensitive(_:)</code> and provide redacted
+placeholders so WidgetKit can honor the user's privacy settings. If the widget
+must hide its content while the device is locked, enable the Data Protection
+capability for the widget extension and select <code>NSFileProtectionComplete</code>.
+Follow Apple's <a href="https://developer.apple.com/documentation/widgetkit/creating-a-widget-extension">widget privacy guidance</a>.</li>
+</ul>
+<h4 id="additional-security-considerations">Additional Security Considerations<a class="headerlink" href="#additional-security-considerations" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Configure appropriate background refresh policies to prevent sensitive data
+updates while the device is locked.</li>
+<li>Implement proper privacy-related configurations in <code>Info.plist</code> for
+features requiring user permissions.</li>
+<li>Use App Groups with appropriate security configurations when sharing data
+between app and widgets.</li>
+<li>Use ATS (App Transport Security) to enforce strong security policies for
+network communication.</li>
+<li>
+<p>Do not store sensitive data in <code>plist</code> files.</p>
+</li>
+<li>
+<p>Use Apple's Secure Enclave for secure cryptographic key storage and
+  sensitive operations.</p>
+<ul>
+<li><strong>How</strong>: Create keys using <code>SecKeyCreateRandomKey</code> with <code>kSecAttrTokenID</code>
+  set to <code>kSecAttrTokenIDSecureEnclave</code>.</li>
+<li>Keys created in the Secure Enclave never leave the secure hardware -
+  only the operations using those keys are performed there.</li>
+<li>For biometric operations, use <code>LAContext</code> with <code>evaluatePolicy</code> to
+  perform authentication directly through the Secure Enclave without
+  exposing biometric data to your application.</li>
+<li>Consider access control options like <code>kSecAccessControlBiometryAny</code> or
+  <code>kSecAccessControlUserPresence</code> to require user authentication before
+  key usage.</li>
+<li>See <a href="https://support.apple.com/guide/security/secure-enclave-sec59b0b31ff/web">Secure Enclave documentation</a>.</li>
+</ul>
+</li>
+<li>
+<p>Use Apple's <a href="https://developer.apple.com/documentation/devicecheck/establishing_your_app_s_integrity">App Attest API</a> (iOS 14+) to validate app integrity.</p>
+<ul>
+<li><strong>How</strong>: Generate attestation keys and assertions with <code>DCAppAttestService</code>
+  and verify assertions server-side.</li>
+<li>Complement with Apple's <a href="https://developer.apple.com/documentation/devicecheck">DeviceCheck API</a> for persistent device state tracking.</li>
+<li>See <a href="https://developer.apple.com/documentation/devicecheck/dcappattestservice">App Attest documentation</a>.</li>
+</ul>
+</li>
+</ul>
+<h2 id="advanced-hardware-security-monitoring">Advanced Hardware Security &amp; Monitoring<a class="headerlink" href="#advanced-hardware-security-monitoring" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Modern devices typically provide Trusted Execution Environments (TEE) or
+  secure hardware modules. Leverage these through standard OS APIs.</li>
+<li>Consider additional runtime security measures (behavioral anomaly
+  detection, runtime monitoring) to complement built-in OS protections
+  in higher-risk scenarios.</li>
+</ul>
+<p>For further reading, visit the
+<a href="https://owasp.org/www-project-mobile-top-10/">OWASP Mobile Top 10 Project</a>.
+For a more detailed framework for mobile security, see the
+<a href="https://mas.owasp.org/">OWASP Mobile Application Security Project</a>.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://mas.owasp.org/MASVS/controls/MASVS-STORAGE-1/">OWASP MASVS-STORAGE-1: Secure Storage of Sensitive Data</a></li>
+<li><a href="https://developer.android.com/privacy-and-security/keystore">Android Keystore System</a></li>
+<li><a href="https://support.apple.com/guide/security/the-secure-enclave-sec59b0b31ff/web">Apple Platform Security: The Secure Enclave</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

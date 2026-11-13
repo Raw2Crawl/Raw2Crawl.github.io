@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Drone Security | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Drone Security">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Drone_Security_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="drone-security-cheat-sheet">Drone Security Cheat Sheet<a class="headerlink" href="#drone-security-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>Drone security is crucial due to their widespread adoption in industries such as military, construction, and community services. With the increasing use of drone swarms, even minor security lapses can lead to significant risks.</p>
+<p>This cheat sheet provides an overview of vulnerable endpoints in drone systems and strategies to mitigate security threats.</p>
+<hr />
+<h2 id="drone-system-components">Drone System Components<a class="headerlink" href="#drone-system-components" title="Permanent link">&para;</a></h2>
+<p>A typical drone architecture consists of three main components:</p>
+<ol>
+<li><strong>Unmanned Aircraft (UmA)</strong> – The physical drone itself, including its sensors and onboard systems.</li>
+<li><strong>Ground Control Station (GCS)</strong> – The interface used to control and monitor drone operations.</li>
+<li><strong>Communication Data-Link (CDL)</strong> – The network connection between the drone and the GCS.</li>
+</ol>
+<p><img alt="Drone" src="https://raw.githubusercontent.com/OWASP/CheatSheetSeries/master/assets/Drone_Security_Cheat_Sheet.png" /></p>
+<p>The communication between the drone and the GCS is vulnerable to interception and attacks. This will be made evident in the future sections as well. It is important to understand that peripherals attached to drone may be vulnerable too! To explain this, we have made a list of <strong>vulnerable endpoints</strong> below.</p>
+<hr />
+<h2 id="vulnerable-endpoints-security-risks">Vulnerable Endpoints &amp; Security Risks<a class="headerlink" href="#vulnerable-endpoints-security-risks" title="Permanent link">&para;</a></h2>
+<h3 id="1-communication-security">1. Communication Security<a class="headerlink" href="#1-communication-security" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong>Insecure Communication Links</strong> – Data transmitted between the drone and GCS can be intercepted if not properly encrypted. Use standard protocols for encryption of any data being sent over.</p>
+</li>
+<li>
+<p><strong>Command Spoofing and Replay Attacks</strong> – Authenticate command messages and reject replayed messages using the protocol's freshness checks. For MAVLink, use <a href="https://mavlink.io/en/guide/message_signing.html#accept_signed_packets">message signing and timestamp validation</a>; encryption alone does not provide these controls.</p>
+</li>
+<li>
+<p><strong>Wi-Fi Weaknesses</strong> – Weak authentication or unprotected channels can allow unauthorized access. This is even possible through simple <a href="https://github.com/SpacehuhnTech/esp8266_deauther">microcontrollers like ESP8266</a>!</p>
+<ul>
+<li>Use <strong>802.11w MFP (Management Frame Protection)</strong> to prevent Wi-Fi deauthentication attacks. Don't worry, if your Wi-Fi systems are up-to-date, then this is a default protocol now.</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-authentication-access-control">2. Authentication &amp; Access Control<a class="headerlink" href="#2-authentication-access-control" title="Permanent link">&para;</a></h3>
+<p>Most drone controllers use 2 sets of computers,</p>
+<ol>
+<li>
+<p>The main chip that performs the PID control and handles motors</p>
+</li>
+<li>
+<p>An additional SoC (called the <strong>companion computer</strong>) to manage peripherals (like the cameras, LiDARs etc.) and send telemetry data.</p>
+</li>
+</ol>
+<p>Thus, it becomes very important to maintain their security as well. The possible risks in this case are:</p>
+<ul>
+<li>
+<p><strong>Companion Computers</strong> – Open ports (e.g., SSH, FTP) can be exploited if not securely configured.</p>
+</li>
+<li>
+<p><strong>User Error and Misconfiguration</strong> – Misconfigured security settings can expose the drone to risks.</p>
+</li>
+</ul>
+<h3 id="3-data-protection">3. Data Protection<a class="headerlink" href="#3-data-protection" title="Permanent link">&para;</a></h3>
+<p>Drones often handle sensitive information (e.g., mission details, sensor logs, or edge AI models) and face a high risk of being lost or captured. Therefore, it's important to protect the onboard data:</p>
+<ul>
+<li><strong>Storage Encryption</strong> - Ensures data is secure at rest, even if someone gains physical access to the drone while it's powered off. Examples: <a href="https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/security_hardening/encrypting-block-devices-using-luks_security-hardening">LUKS</a> for block-level encryption, <a href="https://nuetzlich.net/gocryptfs/">gocryptfs</a> for filesystem in userspace, <a href="https://github.com/FiloSottile/age">age</a> for file encryption.</li>
+<li><strong>Sensitive Data in RAM</strong> - Store highly sensitive information (e.g, encryption keys, credentials, intellectual property) in RAM and clear after use. Provide this data before mission start using secure channels.</li>
+</ul>
+<h3 id="4-physical-security">4. Physical Security<a class="headerlink" href="#4-physical-security" title="Permanent link">&para;</a></h3>
+<p>If your drone is ever captured or lost, you should ensure that it's not physically possible to steal data from it. This may happen under the following conditions:</p>
+<ul>
+<li>
+<p><strong>Insufficient Physical Security</strong> – Unsecured USB ports or exposed hardware can lead to data theft or tampering.</p>
+</li>
+<li>
+<p><strong>Insecure Supply Chain</strong> – Compromised components from suppliers can introduce hidden vulnerabilities.</p>
+</li>
+<li>
+<p><strong>End-of-Life Decommissioning Risks</strong> – Improperly decommissioned drones may retain sensitive data or be repurposed maliciously.</p>
+</li>
+</ul>
+<h3 id="5-system-integrity">5. System Integrity<a class="headerlink" href="#5-system-integrity" title="Permanent link">&para;</a></h3>
+<p>A drone shares many properties with a classical IoT device when it comes to protecting integrity against unauthorized modifications of firmware, software, or configuration. Without these protections, attackers could inject malicious firmware or modify the control stack, gaining persistent and often invisible access - especially if the device is physically accessible to them (e.g., while it is in storage).</p>
+<p>Fortunately, IoT also has a number of security controls for such cases:</p>
+<ul>
+<li>
+<p><strong>Secure Boot</strong> – Secure Boot ensures that the drone starts only with trusted software:</p>
+<ul>
+<li>Every piece of firmware is signed with a cryptographic key. Only signed software is allowed to run.</li>
+<li>A first-stage bootloader is immutable (in ROM or eFuse-locked code). It verifies signature on the second bootloader.</li>
+<li>Each component verifies the next component (e.g., second stage bootloader -&gt; kernel -&gt; application).</li>
+</ul>
+</li>
+<li>
+<p><strong>Measured Boot</strong> – Measured Boot takes Secure Boot further by recording what software was loaded at each stage. This allows remote systems (like a fleet manager or ground station) to verify that the drone is running only trusted code. It also allows to authorize actions locally, such as releasing decryption keys only when the device boots properly.</p>
+</li>
+<li>
+<p><strong>Firmware Signing</strong> – Ensures that firmware and configuration updates are signed with cryptographic signatures. Implement rollback protection to prevent attackers from loading older, vulnerable firmware versions. It's also a good idea to encrypt firmware packages, especially if they contain sensitive IP.</p>
+</li>
+</ul>
+<h3 id="6-sensor-security">6. Sensor Security<a class="headerlink" href="#6-sensor-security" title="Permanent link">&para;</a></h3>
+<p>With drones implementing control logic depending on how close they are to other drones or aerial vehicles, manipulating sensor data can be disastrous!</p>
+<p>Attackers can manipulate drone sensors (GPS, cameras, altimeters) to feed incorrect data. Think of this more like how <a href="https://en.wikipedia.org/wiki/Stuxnet">stuxnet</a> changed the speed of the Uranium centrifuges in Iran while still reporting the speed as normal.</p>
+<p>To prevent this, there is new research being developed involving <strong>watermarked signals</strong> whose <strong>entropy</strong> can be used to determine if the sensor values are correct of not. Read more about this method <a href="https://ieeexplore.ieee.org/abstract/document/9994719">here</a>.</p>
+<h3 id="7-logging-monitoring">7. Logging &amp; Monitoring<a class="headerlink" href="#7-logging-monitoring" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong>Inadequate Logging and Monitoring</strong> – Without sufficient monitoring, security breaches or operational anomalies may go undetected.</p>
+</li>
+<li>
+<p><strong>Integration Issues</strong> – Some cameras require webserver configurations, and if poorly integrated, these web servers on cameras or telemetry systems may expose vulnerabilities that can be used to gather sensitive information.</p>
+</li>
+</ul>
+<p>To prevent this, ensure that your credentials are strong!</p>
+<hr />
+<h2 id="secure-communication-protocols">Secure Communication Protocols<a class="headerlink" href="#secure-communication-protocols" title="Permanent link">&para;</a></h2>
+<p>Below are some protocols used by drone systems to communicate. This can be either between each other (if in a horde) or with the ground stations. We have mentioned what can go wrong with each protocol and also provided recommendations.</p>
+<ol>
+<li><strong>MAVLink 2.0</strong> – A widely used protocol for communication between drones and ground control stations (GCS).</li>
+</ol>
+<ul>
+<li>
+<p>Require valid <a href="https://mavlink.io/en/guide/message_signing.html#accepting_unsigned_packets">MAVLink 2 message signatures</a> for commands received over untrusted links. Reject unsigned or incorrectly signed commands. Protect the shared signing key and <a href="https://mavlink.io/en/mavgen_c/message_signing_c.html#handling-timestamps">persist signing timestamps across restarts</a> so replay checks remain effective.</p>
+</li>
+<li>
+<p><a href="https://mavlink.io/en/services/heartbeat.html">Heartbeat messages</a> advertise a component's presence, type, and state. Treat heartbeat receipt as a liveness signal, not authorization to execute commands.</p>
+</li>
+<li>
+<p>Tools like <strong>ArduPilot</strong> and <strong>PX4</strong> support MAVLink 2.0 security enhancements. They have been thoroughly tested and are therefore recommended.</p>
+</li>
+<li>
+<p>Utilize <strong>end-to-end encryption</strong>! Either through TLS or DTLS is fine and good.</p>
+</li>
+</ul>
+<p>Recent CVEs underscore the risk of unauthenticated MAVLink. The absence of default authentication is not theoretical — it has produced critical, remotely-reachable vulnerabilities across both dominant open-source autopilots:</p>
+<ul>
+<li>
+<p><a href="https://www.cisa.gov/news-events/ics-advisories/icsa-26-090-02">CVE-2026-1579</a> (PX4, CVSS 9.8, CISA ICSA-26-090-02, CWE-306): with MAVLink 2 message signing disabled, an unauthenticated party can send SERIAL_CONTROL to obtain interactive shell access.</p>
+</li>
+<li>
+<p><a href="https://www.cve.org/CVERecord?id=CVE-2026-38971">CVE-2026-38971</a> (ArduPilot ArduPlane ≤ 4.6.3, CVSS 9.1, CWE-125): an out-of-bounds read in the SERIAL_CONTROL handler (GCS_serial_control.cpp), reachable over MAVLink by an unauthenticated attacker — flight-controller memory disclosure and denial of service.</p>
+</li>
+<li>
+<p>CVE-2026-32743 and related PX4 issues (CWE-121): MAVLink-reachable stack buffer overflows in the log handler cause denial of service.</p>
+</li>
+<li>
+<p><a href="https://www.cve.org/CVERecord?id=CVE-2020-10283">CVE-2020-10283</a> (MAVLink): an earlier authentication downgrade issue — the weakness is long-standing, not new.</p>
+</li>
+</ul>
+<p>Defense-in-depth beyond message signing. Because signing is frequently disabled in the field and any software mitigation runs in the same trust domain an attacker may have compromised, consider enforcing protocol integrity out-of-band:</p>
+<ul>
+<li>
+<p>Header validation — use system-ID allowlists and <a href="https://mavlink.io/en/guide/serialization.html#mavlink2_packet_format">packet sequence numbers</a> to detect unexpected senders and packet loss. These fields do not authenticate unsigned messages; they cannot replace signature and timestamp validation.</p>
+</li>
+<li>
+<p>Typed-payload validation — reject non-finite parameter values (PARAM_SET) and bound FTP path lengths to defeat malformed-value and buffer-overflow classes.</p>
+</li>
+<li>
+<p>Hardware-enforced enforcement point — where the autopilot firmware cannot be modified or trusted, a bump-in-the-wire validation device placed between the companion computer and the flight controller can apply the above checks in a separate hardware domain, independent of a potentially compromised software stack.</p>
+</li>
+</ul>
+<ol start="2">
+<li><strong>CAN (Controller Area Network) Bus</strong> – A communication protocol used between internal drone system components (e.g., flight controllers, ESCs, GPS modules).</li>
+</ol>
+<ul>
+<li>
+<p>Most attacks require <strong>physical access</strong> to exploit CAN. It works on a differential signal and hardware hacking may be possible by tapping into them.</p>
+</li>
+<li>
+<p>Do not rely on DroneCAN alone to authenticate CAN senders. Its <a href="https://dronecan.github.io/Specification/4.1_CAN_bus_transport_layer/#transfer-crc">multi-frame cyclic redundancy check (CRC)</a> is an unkeyed checksum, not a message authentication code. Protect physical bus access and isolate the bus from untrusted components.</p>
+</li>
+</ul>
+<ol start="3">
+<li><strong>ZigBee</strong> – A low-power wireless protocol often used for telemetry and sensor communication in backup systems.</li>
+</ol>
+<ul>
+<li>
+<p>This has a way to enable <strong>AES-128 encryption</strong> to secure transmissions. Make sure you do that.</p>
+</li>
+<li>
+<p>Deploy <strong>network keys with frequent rotation</strong> to prevent key compromise. Read more about <a href="https://cloud.google.com/kms/docs/key-rotation#:~:text=A%20rotation%20schedule%20defines%20the,require%20periodic%2C%20automatic%20key%20rotation.">key rotations here</a>.</p>
+</li>
+<li>
+<p>Monitor for <strong>ZigBee packet sniffing attacks</strong> using SDR-based tools like <strong>HackRF</strong> or <strong>YARD Stick One</strong>.</p>
+</li>
+</ul>
+<ol start="4">
+<li><strong>Bluetooth</strong> – Used for device connections, such as drone controllers or mobile applications.</li>
+</ol>
+<ul>
+<li>
+<p>You must enforce <strong>Strict Pairing Modes</strong> that is LE (Low Energy) Secure Connections over Bluetooth 4.2+. This uses the Elliptic curve Diffie-Hellman cryptosystem to generate keys. Essentially, its state of the art.</p>
+</li>
+<li>
+<p>Pairing methods such as <a href="https://devzone.nordicsemi.com/f/nordic-q-a/17165/ble-just-works-pairing"><em>Just works</em></a> are vulnerable to MITM attacks! Do not use them if you're setting up your own Bluetooth adapters.</p>
+</li>
+</ul>
+<ol start="5">
+<li><strong>Wi-Fi (802.11a/b/g/n/ac/ax)</strong> – A common method for FPV (First Person View) video transmission and drone control.</li>
+</ol>
+<ul>
+<li>
+<p>Make sure that you are using <strong>WPA3 encryption</strong> for the highest level of security. Note that protocols like <strong>WEP</strong> are vulnerable!</p>
+</li>
+<li>
+<p>Use <strong>802.11w Management Frame Protection (MFP)</strong> to mitigate deauthentication attacks (these are crafted packets that emulate a server and cause deauthentication).</p>
+</li>
+<li>
+<p>Do not rely on hiding the Wi-Fi network name or filtering media access control (MAC) addresses to prevent unauthorized access: <a href="https://support.apple.com/en-ca/102766#hiddennetwork">hidden networks remain discoverable and MAC addresses can be spoofed</a>. Use Wi-Fi authentication and encryption as described above.</p>
+</li>
+</ul>
+<p>By implementing these security measures, drone operators can significantly reduce the risks of cyberattacks and unauthorized access to UAV communication systems.</p>
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<p>The table maps common attacks to relevant controls. Choose controls for the interfaces actually present on the drone and GCS; the impact depends on the implementation. Radio interference, forged messages, and software vulnerabilities require different defenses.</p>
+<table>
+<thead>
+<tr>
+<th>Attack or exposure</th>
+<th>Security measures and limitations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Malware</td>
+<td>Install firmware and GCS software from trusted sources and keep them updated; restrict scripts and plugins. Follow the <a href="https://ardupilot.org/dev/docs/security-landing-page.html#ground-control-stations">GCS hardening guidance</a>.</td>
+</tr>
+<tr>
+<td>Backdoor access</td>
+<td>Restrict administrative interfaces and use <a href="https://ardupilot.org/dev/docs/secure-firmware.html">verified firmware</a>. Login authentication alone cannot prevent access through a backdoor that bypasses it.</td>
+</tr>
+<tr>
+<td>Social engineering</td>
+<td>Train operators to <a href="https://www.ncsc.gov.uk/collection/phishing-scams/spot-scams">verify suspicious requests through a trusted contact channel</a>, especially requests for credentials or software installation.</td>
+</tr>
+<tr>
+<td>Baiting</td>
+<td>Restrict untrusted removable media and peripherals on the GCS and companion computer; combine operator training with <a href="https://www.ncsc.gov.uk/collection/device-security-guidance/policies-and-settings/using-peripherals-securely">device access controls</a>.</td>
+</tr>
+<tr>
+<td>Message injection or modification</td>
+<td>Authenticate messages and validate their contents before acting on them; apply the <a href="#secure-communication-protocols">MAVLink controls above</a>. A valid signature does not make an unsafe command safe.</td>
+</tr>
+<tr>
+<td>Fabricated commands</td>
+<td>Require authenticated commands from trusted controllers. For MAVLink, <a href="https://mavlink.io/en/guide/message_signing.html#accepting_unsigned_packets">reject unsigned commands on untrusted links and protect the shared signing key</a>; any holder of that key can sign messages.</td>
+</tr>
+<tr>
+<td>Reconnaissance</td>
+<td>Reduce exposed interfaces and protect sensitive telemetry. <a href="https://datatracker.ietf.org/doc/html/rfc8446#appendix-E.3">Encryption does not conceal all traffic metadata</a>.</td>
+</tr>
+<tr>
+<td>Network scanning</td>
+<td><a href="https://ardupilot.org/dev/docs/security-landing-page.html#security-attack-surface">Disable unused interfaces and restrict network access</a>. Encrypting traffic does not close reachable ports.</td>
+</tr>
+<tr>
+<td>TCP SYN flooding</td>
+<td>For exposed TCP services, use the platform's <a href="https://datatracker.ietf.org/doc/html/rfc4987#section-3">SYN-flood protections</a>, such as SYN cookies. A normal three-way handshake is not an attack.</td>
+</tr>
+<tr>
+<td>Eavesdropping</td>
+<td>Encrypt sensitive telemetry and control traffic using the <a href="#secure-communication-protocols">secure communication protocols above</a>. Message signing alone does not provide confidentiality.</td>
+</tr>
+<tr>
+<td>Traffic analysis</td>
+<td>Evaluate <a href="https://datatracker.ietf.org/doc/html/rfc8446#appendix-E.3">protocol-supported padding</a> when packet lengths expose sensitive information. Ordinary encryption does not hide traffic timing or volume; padding has bandwidth and latency costs.</td>
+</tr>
+<tr>
+<td>Man-in-the-middle</td>
+<td>Authenticate the communicating peers and encrypt the connection; validate certificates or provisioned keys. See the <a href="Transport_Layer_Security_Cheat_Sheet.html">TLS Cheat Sheet</a>.</td>
+</tr>
+<tr>
+<td>Password guessing or cracking</td>
+<td>Use strong, unique passwords, login rate limits, and multifactor authentication where supported; see the <a href="Authentication_Cheat_Sheet.html">Authentication Cheat Sheet</a>. Do not rely on periodic password changes.</td>
+</tr>
+<tr>
+<td>Wi-Fi credential attacks</td>
+<td>Use <a href="https://support.apple.com/en-ca/102766#security">WPA3 and a strong network password</a> where supported. Avoid WEP and other deprecated security modes; an intrusion detection system does not repair weak authentication.</td>
+</tr>
+<tr>
+<td>Wi-Fi radio jamming</td>
+<td>Configure and test <a href="https://docs.px4.io/main/en/config/safety#data-link-loss-failsafe">link-loss failsafes</a> for the vehicle and mission. These reduce the consequences of a lost link; they do not prevent radio interference.</td>
+</tr>
+<tr>
+<td>Forged Wi-Fi deauthentication</td>
+<td>Require <a href="https://www.cisco.com/c/en/us/support/docs/wireless-mobility/wireless-lan-wlan/212576-configure-802-11w-management-frame-prote.pdf">802.11w Management Frame Protection</a> on compatible endpoints. It protects against forged management frames, not radio jamming.</td>
+</tr>
+<tr>
+<td>Replay</td>
+<td>Authenticate messages and validate freshness; maintain replay state, including across restarts. See the <a href="#secure-communication-protocols">MAVLink signing guidance above</a>.</td>
+</tr>
+<tr>
+<td>Buffer overflow</td>
+<td>Use memory-safe components or enforce <a href="https://cwe.mitre.org/data/definitions/120.html">buffer bounds checks</a>, and patch vulnerable parsers. Changing radio frequencies does not fix memory corruption.</td>
+</tr>
+<tr>
+<td>Denial of service through resource exhaustion</td>
+<td>Bound message sizes and processing resources, apply rate limits, and isolate critical control functions. See the <a href="Denial_of_Service_Cheat_Sheet.html">Denial of Service Cheat Sheet</a>; radio changes do not resolve application resource exhaustion.</td>
+</tr>
+<tr>
+<td>Address Resolution Protocol (ARP) cache poisoning</td>
+<td>On IP networks, isolate untrusted participants and use <a href="https://www.cisco.com/c/en/us/td/docs/switches/lan/catalyst9500/software/release/16-8/configuration_guide/sec/b_168_sec_9500_cg/configuring_dynamic_arp_inspection.html">dynamic ARP inspection with trusted address bindings</a> where supported. This is a local network attack, not radio jamming.</td>
+</tr>
+<tr>
+<td>Ping-of-Death / malformed IP packets</td>
+<td>Keep the network stack patched and use supported <a href="https://www.cisco.com/c/en/us/td/docs/switches/lan/csbss/CBS220/CLI-Guide/b_220CLI/security_dos_commands.pdf">malformed-packet filtering</a>. Changing radio frequencies does not correct packet-processing vulnerabilities.</td>
+</tr>
+<tr>
+<td>GPS spoofing</td>
+<td>Use navigation consistency checks and evaluate <a href="https://ardupilot.org/dev/docs/security-landing-page.html#security-attack-surface">non-GPS navigation as a backup</a>. Do not assume return-to-home is safe when its position estimate is untrusted; test the vehicle's navigation failsafes.</td>
+</tr>
+</tbody>
+</table>
+<p>There are multiple GitHub repos that help with drone attack <a href="https://github.com/nicholasaleks/Damn-Vulnerable-Drone">simulations</a> and <a href="https://github.com/dhondta/dronesploit">actual exploits</a>. Be sure to check them out too for a deeper understanding of drone security.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://csrc.nist.gov/pubs/sp/800/193/final">NIST SP 800-193: Platform Firmware Resiliency Guidelines</a></li>
+<li><a href="https://mavlink.io/en/guide/message_signing.html">MAVLink: Message Signing (Authentication)</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

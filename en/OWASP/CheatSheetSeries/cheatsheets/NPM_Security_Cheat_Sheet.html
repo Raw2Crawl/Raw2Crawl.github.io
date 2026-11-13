@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NPM Security | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · NPM Security">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/NPM_Security_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="npm-security-best-practices">NPM Security best practices<a class="headerlink" href="#npm-security-best-practices" title="Permanent link">&para;</a></h1>
+<p>The following cheatsheet covers several npm security best practices and productivity tips, useful for JavaScript and Node.js developers. This list was originally based on the <a href="https://snyk.io/blog/ten-npm-security-best-practices">10 npm security best practices</a> from the Snyk blog.</p>
+<h2 id="1-avoid-publishing-secrets-to-the-npm-registry">1) Avoid publishing secrets to the npm registry<a class="headerlink" href="#1-avoid-publishing-secrets-to-the-npm-registry" title="Permanent link">&para;</a></h2>
+<p>Whether you’re making use of API keys, passwords or other secrets, they can very easily end up leaking into source control or even a published package on the public npm registry. You may have secrets in your working directory in designated files such as a <code>.env</code> which should be added to a <code>.gitignore</code> to avoid committing it to a SCM, but what happens when you publish an npm package from the project’s directory?</p>
+<p>The npm CLI packs up a project into a tar archive (tarball) in order to push it to the registry. The following criteria determine which files and directories are added to the tarball:</p>
+<ul>
+<li>If there is either a <code>.gitignore</code> or a <code>.npmignore</code> file, the contents of the file are used as an ignore pattern when preparing the package for publication.</li>
+<li>If both ignore files exist, everything not located in <code>.npmignore</code> is published to the registry. This condition is a common source of confusion and is a problem that can lead to leaking secrets.</li>
+</ul>
+<p>Developers may end up updating the <code>.gitignore</code> file, but forget to update <code>.npmignore</code> as well, which can lead to a potentially sensitive file not being pushed to source control, but still being included in the npm package.</p>
+<p>Another good practice to adopt is making use of the <code>files</code> property in <code>package.json</code>, which works as an allowlist and specifies the array of files to be included in the package that is to be created and installed (while the ignore file functions as a denylist). The <code>files</code> property and an ignore file can both be used together to determine which files should explicitly be included, as well as excluded, from the package. When using both, the <code>files</code> property in <code>package.json</code> takes precedence over the ignore file.</p>
+<p>When a package is published, the npm CLI will verbosely display the archive being created. To be extra careful, add a <code>--dry-run</code> command-line argument to your publish command in order to first review how the tarball is created without actually publishing it to the registry.</p>
+<p>For details about revoking access token, see the official documentation: <a href="https://docs.npmjs.com/revoking-access-tokens">Revoking access tokens</a>.</p>
+<h2 id="2-enforce-the-lockfile">2) Enforce the lockfile<a class="headerlink" href="#2-enforce-the-lockfile" title="Permanent link">&para;</a></h2>
+<p>We embraced the birth of package lockfiles with open arms, which introduced: deterministic installations across different environments, and enforced dependency expectations across team collaboration. Life is good! Or so I thought… what would have happened had I slipped a change into the project’s <code>package.json</code> file but had forgotten to commit the lockfile alongside of it?</p>
+<p>Both Yarn and npm act the same during dependency installation. When they detect an inconsistency between the project’s <code>package.json</code> and the lockfile, they compensate for such change based on the <code>package.json</code> manifest by installing different versions than those that were recorded in the lockfile.</p>
+<p>This kind of situation can be hazardous for build and production environments as they could pull in unintended package versions and render the entire benefit of a lockfile futile.</p>
+<p>Luckily, there is a way to tell both Yarn and npm to adhere to a specified set of dependencies and their versions by referencing them from the lockfile. Any inconsistency will abort the installation. The command-line should read as follows:</p>
+<ul>
+<li>If you’re using Yarn, run <code>yarn install --frozen-lockfile</code>.</li>
+<li>If you’re using npm run <code>npm ci</code>.</li>
+</ul>
+<h2 id="3-minimize-attack-surfaces-by-ignoring-run-scripts">3) Minimize attack surfaces by ignoring run-scripts<a class="headerlink" href="#3-minimize-attack-surfaces-by-ignoring-run-scripts" title="Permanent link">&para;</a></h2>
+<p>The npm CLI works with package run-scripts. If you’ve ever run <code>npm start</code> or <code>npm test</code> then you’ve used package run-scripts too. The npm CLI builds on scripts that a package can declare, and allows packages to define scripts to run at specific entry points during the package’s installation in a project. For example, some of these <a href="https://docs.npmjs.com/misc/scripts">script hook</a> entries may be <code>postinstall</code> scripts that a package that is being installed will execute in order to perform housekeeping chores.</p>
+<p>With this capability, bad actors may create or alter packages to perform malicious acts by running any arbitrary command when their package is installed. A couple of cases where we’ve seen this already happening is the popular <a href="https://snyk.io/vuln/npm:eslint-scope:20180712">eslint-scope incident</a> that harvested npm tokens, and the <a href="https://snyk.io/vuln/npm:crossenv:20170802">crossenv incident</a>, along with 36 other packages that abused a typosquatting attack on the npm registry.</p>
+<p>Apply these npm security best practices to minimize the malicious module attack surface:</p>
+<ul>
+<li>Always vet and perform due-diligence on third-party modules you install to confirm their health and credibility.</li>
+<li>Hold-off on upgrading immediately to new versions; allow new package versions some time to circulate before trying them out.</li>
+<li>Before upgrading, make sure to review changelog and release notes for the upgraded version.</li>
+<li>When installing packages make sure to add the <code>--ignore-scripts</code> suffix to disable the execution of any scripts by third-party packages.</li>
+<li>Consider adding <code>ignore-scripts=true</code> to your <code>.npmrc</code> project file, or to your global npm configuration.</li>
+</ul>
+<h3 id="using-an-allowlist-for-lifecycle-scripts">Using an allowlist for lifecycle scripts<a class="headerlink" href="#using-an-allowlist-for-lifecycle-scripts" title="Permanent link">&para;</a></h3>
+<p>Disabling lifecycle scripts by default by adding <code>ignore-scripts=true</code> to your <code>.npmrc</code> file is the safest option. If you use packages that rely on lifecycle scripts for legitimate reasons, you can use a plugin like <a href="https://github.com/LavaMoat/LavaMoat/tree/main/packages/allow-scripts"><code>@lavamoat/allow-scripts</code></a> to create an <em>allowlist</em> of packages authorized to run lifecycle scripts.</p>
+<p>Here's how the allowlist would look like in the <code>package.json</code> file on a project using the popular image processing package <a href="https://www.npmjs.com/package/sharp">sharp</a>:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"lavamoat"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"allowScripts"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"sharp"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="inspecting-a-project-you-did-not-write">Inspecting a project you did not write<a class="headerlink" href="#inspecting-a-project-you-did-not-write" title="Permanent link">&para;</a></h3>
+<p>A fake job interview can hand a candidate a whole project and ask them to install it. The <a href="https://www.ic3.gov/PSA/2024/PSA240903">FBI</a> lists a "pre-employment test" that runs unknown Node.js packages or GitHub repositories as a warning sign, and <a href="https://unit42.paloaltonetworks.com/two-campaigns-by-north-korea-bad-actors-target-job-hunters/">Unit 42</a> describes interviewers asking victims to install an npm package hosted on GitHub that carries malware. Here the risky code is in the project itself, not in a dependency you chose. Before the first install:</p>
+<ul>
+<li>Run it in a disposable VM, ideally a remote one rather than on your own machine or LAN, that has no credentials, SSH keys or wallets, and with no network access, or only restricted and logged access, where you can. The FBI <a href="https://www.ic3.gov/PSA/2024/PSA240903">advises</a> insisting on a VM when a test requires running code. The VM is the real control: the steps below only reduce what runs inside it.</li>
+<li>Open the folder in <a href="https://code.visualstudio.com/docs/editing/workspaces/workspace-trust">VS Code Restricted Mode</a>, which blocks tasks until you trust the folder.</li>
+<li>Check the project's <a href="https://docs.npmjs.com/cli/v11/configuring-npm/npmrc"><code>.npmrc</code></a> for <code>registry</code> lines, and in Yarn projects the <a href="https://yarnpkg.com/configuration/yarnrc#npmRegistryServer"><code>.yarnrc.yml</code></a> <code>npmRegistryServer</code> setting. These change where packages are fetched from. Also check <code>.yarnrc.yml</code> for <a href="https://yarnpkg.com/configuration/yarnrc#yarnPath"><code>yarnPath</code></a>: Yarn runs that file instead of itself for any command in the project, so read it before you run <code>yarn</code> at all.</li>
+<li>Check dependencies for <a href="https://docs.npmjs.com/cli/v11/configuring-npm/package-json">git URLs, tarball URLs and <code>file:</code> paths</a>, and in Yarn projects <a href="https://yarnpkg.com/protocol/link"><code>link:</code> paths</a>, which come from outside the registry. This only catches the visible cases: a typosquatted package name (see <a href="#10-understanding-typosquatting-and-slopsquatting-attacks">section 10</a>) or a tampered lockfile is much harder to spot by hand.</li>
+<li>Install with <code>npm install --ignore-scripts</code>, so the <code>preinstall</code>, <code>install</code>, <code>postinstall</code> and <code>prepare</code> scripts that a plain <code>npm install</code> <a href="https://docs.npmjs.com/cli/v11/using-npm/scripts">runs</a> do not execute on the first install. This only postpones them: <a href="https://docs.npmjs.com/cli/v11/using-npm/config#ignore-scripts"><code>npm run</code>, <code>npm start</code> and <code>npm test</code></a> still run their scripts, and the app itself can be malicious. Yarn's <a href="https://yarnpkg.com/configuration/yarnrc#enableScripts"><code>enableScripts</code></a> setting does not cover this case: it skips scripts from third-party packages but still runs the project's own.</li>
+</ul>
+<h2 id="4-assess-npm-project-health">4) Assess npm project health<a class="headerlink" href="#4-assess-npm-project-health" title="Permanent link">&para;</a></h2>
+<h3 id="npm-outdated-command">npm outdated command<a class="headerlink" href="#npm-outdated-command" title="Permanent link">&para;</a></h3>
+<p>Rushing to constantly upgrade dependencies to their latest releases is not necessarily a good practice if it is done without reviewing release notes, the code changes, and generally testing new upgrades in a comprehensive manner. With that said, staying out of date and not upgrading at all, or after a long time, is a source for trouble as well.</p>
+<p>The npm CLI can provide information about the freshness of dependencies you use with regards to their semantic versioning offset. By running <code>npm outdated</code>, you can see which packages are out of date. Dependencies in yellow correspond to the semantic versioning as specified in the <code>package.json</code> manifest, and dependencies colored in red mean an update is available. Furthermore, the output also shows the latest version for each dependency.</p>
+<h3 id="npm-doctor-command">npm doctor command<a class="headerlink" href="#npm-doctor-command" title="Permanent link">&para;</a></h3>
+<p>Between the variety of Node.js package managers and different versions of Node.js you may have installed in your path, how do you verify a healthy npm installation and working environment? Whether you’re working with the npm CLI in a development environment or within a CI, it is important to assess that everything is working as expected.</p>
+<p>Call the doctor! The npm CLI incorporates a health assessment tool to diagnose your environment for a well-working npm interaction. Run <code>npm doctor</code> to review your npm setup:</p>
+<ul>
+<li>Check the official npm registry is reachable, and display the currently configured registry.</li>
+<li>Check that Git is available.</li>
+<li>Review installed npm and Node.js versions.</li>
+<li>Run permission checks on the various folders such as the local and global <code>node_modules</code>, and on the folder used for package cache.</li>
+<li>Check the local npm module cache for checksum correctness.</li>
+</ul>
+<h2 id="5-audit-for-vulnerabilities-in-open-source-dependencies">5) Audit for vulnerabilities in open source dependencies<a class="headerlink" href="#5-audit-for-vulnerabilities-in-open-source-dependencies" title="Permanent link">&para;</a></h2>
+<p>The npm ecosystem is the single largest repository of application libraries among all the other language ecosystems. The registry and the libraries in it are at the core for JavaScript developers as they are able to leverage work that others have already built and incorporate it into their codebase. With that said, the increasing adoption of open source libraries in applications brings with it an increased risk of introducing security vulnerabilities.</p>
+<p>Many popular npm packages have been found to be vulnerable and may carry a significant risk without proper security auditing of your project’s dependencies. Some examples are npm <a href="https://snyk.io/vuln/npm:request:20160119">request</a>, <a href="https://snyk.io/vuln/search?q=superagent&amp;type=npm">superagent</a>, <a href="https://snyk.io/vuln/search?q=mongoose&amp;type=npm">mongoose</a>, and even security-related packages like <a href="https://snyk.io/vuln/npm:jsonwebtoken:20150331">jsonwebtoken</a>, and <a href="https://snyk.io/vuln/search?q=validator&amp;type=npm">validator</a>.</p>
+<p>Security doesn’t end by just scanning for security vulnerabilities when installing a package but should also be streamlined with developer workflows to be effectively adopted throughout the entire lifecycle of software development, and monitored continuously when code is deployed:</p>
+<ul>
+<li>Scan for security vulnerabilities in <a href="https://owasp.org/www-community/Component_Analysis">third-party open source projects</a></li>
+<li>Monitor snapshots of your project's manifests so you can receive alerts when new CVEs impact them <a href="https://owasp.org/www-project-dependency-track/">OWASP Dependency-Track</a></li>
+</ul>
+<h2 id="6-artifact-governance-and-supply-chain-protections">6) Artifact governance and supply chain protections<a class="headerlink" href="#6-artifact-governance-and-supply-chain-protections" title="Permanent link">&para;</a></h2>
+<h3 id="use-a-local-npm-proxy">Use a local npm proxy<a class="headerlink" href="#use-a-local-npm-proxy" title="Permanent link">&para;</a></h3>
+<p>The npm registry is the biggest collection of packages that is available for all JavaScript developers and is also the home of most Open Source projects for web developers. But sometimes you might have different needs in terms of security, deployments or performance. When this is true, npm allows you to switch to a different registry:</p>
+<p>When you run <code>npm install</code>, it automatically starts a communication with the main registry to resolve all your dependencies; if you wish to use a different registry, that too is pretty straightforward:</p>
+<ul>
+<li>Set <code>npm set registry</code> to set up a default registry.</li>
+<li>Use the argument <code>--registry</code> for one single registry.</li>
+</ul>
+<p><a href="https://verdaccio.org/">Verdaccio</a> is a simple, lightweight zero-config-required private registry and installing it is as simple as follows: <code>$ npm install --global verdaccio</code>.</p>
+<p>Hosting your own registry was never so easy! Let’s check the most important features of this tool:</p>
+<ul>
+<li>It supports the npm registry format including private package features, scope support, package access control and authenticated users in the web interface.</li>
+<li>It provides capabilities to hook remote registries and the power to route dependencies to different registries and cache their tarballs. To reduce duplicate downloads and save bandwidth in your local development and CI servers, you should proxy all dependencies.</li>
+<li>As an authentication provider it uses htpasswd security by default, but also supports GitLab, Bitbucket, and LDAP. You can also use your own.</li>
+<li>It’s easy to scale using a different storage provider.</li>
+<li>If your project is based in Docker, using the official image is the best choice.</li>
+<li>It enables really fast bootstrap for testing environments, and is handy for testing big mono-repo projects.</li>
+</ul>
+<h3 id="governance-verification-steps">Governance &amp; Verification Steps<a class="headerlink" href="#governance-verification-steps" title="Permanent link">&para;</a></h3>
+<p>Supply-chain attacks increasingly target build artifacts, registries and CI credentials. Add lightweight governance and verification steps to reduce risk and improve response time:</p>
+<ul>
+<li>Track provenance and produce an SBOM for builds (CycloneDX/SPDX) so you can trace what was built and where inputs originated.</li>
+</ul>
+<p>CycloneDX Example:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Generate SBOM</span>
+npm<span class="w"> </span>install<span class="w"> </span>@cyclonedx/cyclonedx-npm
+npx<span class="w"> </span>@cyclonedx/cyclonedx-npm<span class="w"> </span>--validate<span class="w"> </span>&gt;<span class="w"> </span>sbom.json<span class="w"> </span><span class="c1"># Use the flag `--omit dev` to exclude dev dependencies from SBOM if needed</span>
+</code></pre></div>
+<ul>
+<li>Sign artifacts and build provenance (for example, use Sigstore / cosign or similar signing tools) so consumers can verify integrity before installing.</li>
+</ul>
+<p>Illustrative <a href="https://github.com/sigstore/sigstore-js/tree/main/packages/client#verifybundle-payload-options">Sigstore 5 verification example</a>, assuming a <a href="https://docs.sigstore.dev/quickstart/verification-cheat-sheet/#verifying-a-signature-created-by-a-workflow">GitHub Actions signing workflow</a>. Replace the placeholder repository and workflow with your trusted release policy. Verify both the expected issuer and certificate identity; identity patterns are regular expressions, so anchor them and escape literal dots. Never derive this policy from the untrusted bundle.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// sign-and-verify.mjs</span>
+<span class="c1">// npm install sigstore@5</span>
+
+<span class="k">import</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">fs</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'fs'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">sigstore</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'sigstore'</span><span class="p">;</span>
+
+<span class="c1">// Path to your built npm package (via `npm pack`)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">artifact</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'my-lib-1.0.0.tgz'</span><span class="p">;</span>
+
+<span class="c1">// --- Sign ---</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">payload</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">readFileSync</span><span class="p">(</span><span class="nx">artifact</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">bundle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">sigstore</span><span class="p">.</span><span class="nx">sign</span><span class="p">(</span><span class="nx">payload</span><span class="p">);</span>
+<span class="nx">fs</span><span class="p">.</span><span class="nx">writeFileSync</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">artifact</span><span class="si">}</span><span class="sb">.sigstore.json`</span><span class="p">,</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">bundle</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">));</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Signed:'</span><span class="p">,</span><span class="w"> </span><span class="nx">artifact</span><span class="p">);</span>
+
+<span class="c1">// --- Verify ---</span>
+<span class="k">await</span><span class="w"> </span><span class="nx">sigstore</span><span class="p">.</span><span class="nx">verify</span><span class="p">(</span><span class="nx">bundle</span><span class="p">,</span><span class="w"> </span><span class="nx">payload</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">certificateIssuer</span><span class="o">:</span><span class="w"> </span><span class="s1">'https://token.actions.githubusercontent.com'</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">certificateIdentityURI</span><span class="o">:</span>
+<span class="w">    </span><span class="s1">'^https://github\\.com/OWNER/REPOSITORY/\\.github/workflows/release\\.yml@refs/heads/main$'</span><span class="p">,</span>
+<span class="p">});</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Verified OK!'</span><span class="p">);</span>
+</code></pre></div>
+<ul>
+<li>Prefer immutable, access-controlled registries or vetted mirrors (private registries, Verdaccio with an upstream cache, or <a href="#use-a-local-npm-proxy">approved mirrors</a>) and enable retention / immutability policies where available.</li>
+<li>Restrict, scope and rotate CI and publisher tokens. Bind publisher tokens to workflows or IP ranges and minimize privileges.</li>
+<li>Verify packages during CI: check signatures or provenance, validate the SBOM, <a href="#5-audit-for-vulnerabilities-in-open-source-dependencies">run SCA and static analysis</a>, and <a href="#2-enforce-the-lockfile">install from pinned lockfile resolutions</a>.</li>
+<li>Automate monitoring and alerts for unusual publishes, token usage or dependency changes and keep a documented remediation playbook (revoke tokens, deprecate/yank compromised packages, publish fixes and notify consumers).</li>
+</ul>
+<p>These measures are incremental and low-risk to adopt. Combined they make supply-chain attacks harder and speed up identification and recovery if a compromise occurs.</p>
+<h2 id="7-responsibly-disclose-security-vulnerabilities">7) Responsibly disclose security vulnerabilities<a class="headerlink" href="#7-responsibly-disclose-security-vulnerabilities" title="Permanent link">&para;</a></h2>
+<p>When security vulnerabilities are found, they pose a potentially serious threat if they are publicised without prior warning or appropriate remedial action for users who cannot protect themselves.</p>
+<p>It is recommended that security researchers follow a responsible disclosure program, which is a set of processes and guidelines that aims to connect the researchers with the vendor or maintainer of the vulnerable asset, in order to convey the vulnerability, its impact and applicability. Once the vulnerability is correctly triaged, the vendor and researcher coordinate a fix and a publication date for the vulnerability in an effort to provide an upgrade-path or remediation for affected users before the security issue is made public.</p>
+<h2 id="8-enable-2fa">8) Enable 2FA<a class="headerlink" href="#8-enable-2fa" title="Permanent link">&para;</a></h2>
+<p>Enabling two-factor authentication (2FA) is a critical npm security best practice. npm requires 2FA or a granular access token configured to bypass 2FA for package publishing. For interactive publishing, require 2FA and disallow token-based publishing where practical.</p>
+<p>npm supports two 2FA modes for an account:</p>
+<ul>
+<li>Authorization-only—when a user logs in to npm via the website or the CLI, or performs other sets of actions such as changing profile information.</li>
+<li>Authorization and write-mode—profile and log-in actions, as well as write actions such as managing tokens and packages, and minor support for team and package visibility information.</li>
+</ul>
+<p>To get started, see the official documentation for <a href="https://docs.npmjs.com/configuring-two-factor-authentication/">configuring 2FA</a> and <a href="https://docs.npmjs.com/requiring-2fa-for-package-publishing-and-settings-modification/">requiring 2FA for package publishing</a>.</p>
+<p>Equip yourself with an authentication application, such as Google Authenticator, which you can install on a mobile device, and you’re ready to get started. One easy way to get started with the 2FA extended protection for your account is through npm’s user interface, which allows enabling it very easily. If you’re a command-line person, it’s also easy to enable 2FA when using a supported npm client version (&gt;=5.5.1):</p>
+<div class="highlight"><pre><span></span><code>npm<span class="w"> </span>profile<span class="w"> </span>enable-2fa<span class="w"> </span>auth-and-writes
+</code></pre></div>
+<p>Follow the command-line instructions to enable 2FA, and to save emergency authentication codes. If you wish to enable 2FA mode for login and profile changes only, you may replace the <code>auth-and-writes</code> with <code>auth-only</code> in the code as it appears above.</p>
+<h2 id="additional-security-resources">Additional Security Resources<a class="headerlink" href="#additional-security-resources" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning">About secret scanning</a></li>
+<li><a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure">Best practices for securing accounts</a></li>
+</ul>
+<h2 id="9-minimize-npm-access-token-use">9) Minimize npm Access Token Use<a class="headerlink" href="#9-minimize-npm-access-token-use" title="Permanent link">&para;</a></h2>
+<p>Classic npm tokens have been revoked. Prefer <a href="https://docs.npmjs.com/trusted-publishers/">trusted publishing with OpenID Connect</a> for supported CI/CD publishing workflows because it avoids stored, long-lived publishing credentials.</p>
+<p>When a token is still required, use a <a href="https://docs.npmjs.com/about-access-tokens/">granular access token</a> with only the packages, organizations, and permissions needed. Use read-only access for dependency installation, set the shortest practical expiration, restrict source IP ranges where stable, and enable bypassing 2FA only for non-interactive workflows that cannot use trusted publishing. Store the token in a CI secret store and never commit it.</p>
+<p>Review tokens regularly with <code>npm token list</code> and immediately revoke unnecessary or exposed tokens with <code>npm token revoke &lt;token-id&gt;</code>.</p>
+<h2 id="10-understanding-typosquatting-and-slopsquatting-attacks">10) Understanding typosquatting and slopsquatting attacks<a class="headerlink" href="#10-understanding-typosquatting-and-slopsquatting-attacks" title="Permanent link">&para;</a></h2>
+<h3 id="typosquatting-attacks">Typosquatting attacks<a class="headerlink" href="#typosquatting-attacks" title="Permanent link">&para;</a></h3>
+<p>Typosquatting is an attack that relies on mistakes made by users, such as typos. With typosquatting, bad actors publish malicious modules to the npm registry with names that look much like existing popular modules. These malicious packages exploit common typing errors or visual similarities to trick developers into installing them instead of the legitimate packages they intended to use.</p>
+<p>The Snyk security team has tracked tens of malicious packages in the npm ecosystem that used typosquatting to trick users into installing them; similar attacks have been observed on the PyPi Python registry as well. Some of the most notable incidents include <a href="https://snyk.io/vuln/npm:crossenv:20170802">cross-env</a>, <a href="https://snyk.io/vuln/SNYK-JS-EVENTSTREAM-72638">event-stream</a>, and <a href="https://snyk.io/vuln/npm:eslint-scope:20180712">eslint-scope</a>.</p>
+<p>One of the main targets for typosquatting attacks are user credentials, since any package has access to environment variables via the global variable <code>process.env</code>. Other examples include the event-stream case, where attackers targeted developers in the hopes of <a href="https://snyk.io/blog/a-post-mortem-of-the-malicious-event-stream-backdoor">injecting malicious code</a> into an application's source code.</p>
+<h3 id="slopsquatting-attacks">Slopsquatting attacks<a class="headerlink" href="#slopsquatting-attacks" title="Permanent link">&para;</a></h3>
+<p>Slopsquatting is a newer attack vector that exploits AI coding assistants. When developers ask AI tools like ChatGPT or GitHub Copilot to suggest packages, these models may hallucinate package names that do not actually exist. Attackers monitor these hallucinations and publish malicious packages with those exact names, knowing developers may blindly trust and install AI-suggested packages.</p>
+<p>Unlike typosquatting which exploits human typing errors, slopsquatting exploits AI's tendency to generate plausible-looking but non-existent package names — making it harder to detect since the suggested name looks completely legitimate.</p>
+<p>For example, an AI assistant might suggest <code>node-fetch-promise</code> instead of the real package <code>node-fetch</code>. If an attacker has already published a malicious package under that hallucinated name, installing it compromises your system silently.</p>
+<p>To protect against slopsquatting:</p>
+<ul>
+<li>Run <code>npm view &lt;package-name&gt;</code> before installing any AI-suggested package to confirm it exists.</li>
+<li>Check the package download count — legitimate packages have thousands or millions of downloads while newly published malicious ones have very few.</li>
+<li>Verify the package has a real GitHub repository with genuine code, commits and contributors.</li>
+<li>Be suspicious of packages created very recently with no release history.</li>
+<li>Never blindly run <code>npm install</code> on packages suggested by AI tools without independent verification.</li>
+<li>In team environments, add <code>npm view &lt;package-name&gt;</code> as a CI check for any new AI-suggested dependencies before they reach production.</li>
+</ul>
+<h2 id="11-use-trusted-publishers-for-secure-package-publishing">11) Use trusted publishers for secure package publishing<a class="headerlink" href="#11-use-trusted-publishers-for-secure-package-publishing" title="Permanent link">&para;</a></h2>
+<p>Traditional npm publishing relies on long-lived tokens that can be compromised or accidentally exposed. Trusted publishing with OpenID Connect (OIDC) provides a more secure alternative by using short-lived, workflow-specific credentials that are automatically generated during CI/CD processes. Check the <a href="https://docs.npmjs.com/trusted-publishers/">official trusted publishing documentation</a> for the current supported providers and runner restrictions.</p>
+<h3 id="how-trusted-publishing-works">How trusted publishing works<a class="headerlink" href="#how-trusted-publishing-works" title="Permanent link">&para;</a></h3>
+<p>Trusted publishing creates a trust relationship between npm and your CI/CD provider using OIDC. When you configure a trusted publisher for your package, npm will accept publishes from the specific workflow you've authorized, in addition to traditional authentication methods like npm tokens and manual publishes. The npm CLI automatically detects OIDC environments and uses them for authentication before falling back to traditional tokens.</p>
+<p>This approach eliminates the security risks associated with long-lived write tokens, which can be compromised, accidentally exposed in logs, or require manual rotation. Instead, each publish uses short-lived, cryptographically-signed tokens that are specific to your workflow and cannot be extracted or reused.</p>
+<h3 id="automatic-provenance-generation">Automatic provenance generation<a class="headerlink" href="#automatic-provenance-generation" title="Permanent link">&para;</a></h3>
+<p>When publishing via trusted publishing, npm automatically generates provenance attestations that provide cryptographic proof of package authenticity. This helps users verify that packages come from legitimate sources and haven't been tampered with.</p>
+<p>For more information, see the <a href="https://docs.npmjs.com/trusted-publishers">npm trusted publishing documentation</a>.</p>
+<h2 id="12-prevent-dependency-confusion-attacks">12) Prevent dependency confusion attacks<a class="headerlink" href="#12-prevent-dependency-confusion-attacks" title="Permanent link">&para;</a></h2>
+<p>A dependency confusion attack occurs when an attacker publishes a malicious package on the public npm registry using the same name as your internal private package, but with a higher version number. When you run <code>npm install</code>, npm may resolve the public malicious package instead of your internal one because of the higher version.</p>
+<p>Attackers typically discover internal package names through:</p>
+<ul>
+<li>Leaked <code>package.json</code> files accidentally pushed to public GitHub repositories</li>
+<li>Job postings that mention internal tools or package names</li>
+<li>Error messages or stack traces that reveal internal dependency names</li>
+</ul>
+<p>To protect against dependency confusion:</p>
+<ul>
+<li>Always use <strong>scoped package names</strong> for internal packages (e.g., <code>@yourorg/package-name</code> instead of <code>package-name</code>)</li>
+<li>Configure your <code>.npmrc</code> to explicitly point scoped packages to your private registry by setting <code>@yourorg:registry=https://your-private-registry.example.com</code></li>
+<li>Reserve your internal package names on the public npm registry by publishing an empty placeholder to prevent attackers from claiming them.</li>
+</ul>
+<h2 id="13-verify-documentation-examples-before-copying-into-production">13) Verify documentation examples before copying into production<a class="headerlink" href="#13-verify-documentation-examples-before-copying-into-production" title="Permanent link">&para;</a></h2>
+<p>Library README files and official examples are often copied directly into production code. While the libraries themselves may use secure defaults internally, their documentation examples sometimes demonstrate insecure patterns that undermine those very defaults. This creates a "documentation attack surface" — a class of vulnerability where the security risk comes not from the library's code, but from how its documentation teaches developers to use it.</p>
+<h3 id="the-pattern">The pattern<a class="headerlink" href="#the-pattern" title="Permanent link">&para;</a></h3>
+<p>A library implements strong security internally but its README examples use weaker configurations for brevity or backward compatibility. Developers copy these examples verbatim, unknowingly introducing vulnerabilities that the library was designed to prevent. Unlike supply chain attacks, these vulnerabilities pass every audit tool because the library code itself is safe — only the copy-pasted usage pattern is insecure.</p>
+<h3 id="real-world-examples">Real-world examples<a class="headerlink" href="#real-world-examples" title="Permanent link">&para;</a></h3>
+<p>This pattern has been documented across popular npm packages with combined weekly downloads exceeding 195 million:</p>
+<ul>
+<li><strong>Weak key derivation</strong>: A widely-used encryption library's README examples derive AES keys from passphrases using MD5 with a single iteration (EVP_BytesToKey), allowing a GPU to test billions of candidate passphrases per second. The library's own PBKDF2 module uses stronger defaults, but the prominent AES examples do not use it.</li>
+<li><strong>Credential exposure on redirect</strong>: An HTTP client library's README demonstrates a <code>beforeRedirect</code> callback that re-injects authorization headers after the library has already stripped them during protocol downgrades (HTTPS to HTTP), effectively bypassing the library's own security mechanism.</li>
+<li><strong>Regex anchoring</strong>: Libraries that accept regex patterns for validation (e.g., JWT audience matching, CORS origin matching) show examples with unanchored patterns like <code>/example\.com/</code>, which match <code>malicious-example.com</code>. The fix is <code>^https:\/\/example\.com$</code>, but the documentation doesn't demonstrate anchoring.</li>
+<li><strong>Insecure randomness</strong>: A file upload library's README generates filenames with <code>Math.random()</code> while the library's own default uses <code>crypto.randomBytes(16)</code>. Developers who customize the filename — following the README example — downgrade from cryptographic to predictable randomness.</li>
+</ul>
+<h3 id="how-to-protect-yourself">How to protect yourself<a class="headerlink" href="#how-to-protect-yourself" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Never copy README examples into production without a security review.</strong> Treat documentation code the same way you treat code from Stack Overflow — as a starting point, not a production-ready solution.</li>
+<li><strong>Check for secure defaults in the library's source code.</strong> If the library internally uses <code>crypto.randomBytes()</code>, <code>PBKDF2</code>, or anchored regex patterns, but the README example uses <code>Math.random()</code>, <code>MD5</code>, or unanchored patterns, prefer the library's internal approach.</li>
+<li><strong>Validate security-sensitive parameters.</strong> When a library accepts patterns, keys, or credentials as input, verify that your usage matches security best practices for that parameter type (anchored regex, authenticated encryption, HTTPS-only credentials).</li>
+<li><strong>Report insecure documentation.</strong> If you find a README example that teaches an insecure pattern, file an issue with the maintainer. Documentation vulnerabilities affect every developer who copies the example.</li>
+</ul>
+<p>For more context on this pattern, see the discussion at the <a href="https://github.com/nodejs/security-wg/issues/1560">Node.js Security Working Group</a>.</p>
+<h2 id="final-recommendations">Final Recommendations<a class="headerlink" href="#final-recommendations" title="Permanent link">&para;</a></h2>
+<p>Closing our list of npm security best practices are the following tips to reduce the risk of such attacks:</p>
+<ul>
+<li>Be extra-careful when copy-pasting package installation instructions into the terminal. Make sure to verify in the source code repository as well as on the npm registry that this is indeed the package you are intending to install. You might verify the metadata of the package with <code>npm info</code> to fetch more information about contributors and latest versions.</li>
+<li>Default to having an npm logged-out user in your daily work routines so your credentials won’t be the weak spot that would lead to easily compromising your account.</li>
+<li>When installing packages, append the <code>--ignore-scripts</code> to reduce the risk of arbitrary command execution. For example: <code>npm install my-malicious-package --ignore-scripts</code></li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://docs.npmjs.com/trusted-publishers/">npm: Trusted Publishing with OIDC</a></li>
+<li><a href="https://docs.npmjs.com/configuring-two-factor-authentication/">npm: Configuring Two-Factor Authentication</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

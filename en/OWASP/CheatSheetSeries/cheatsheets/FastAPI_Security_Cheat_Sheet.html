@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FastAPI Security | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · FastAPI Security">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/FastAPI_Security_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="fastapi-security-cheat-sheet">FastAPI Security Cheat Sheet<a class="headerlink" href="#fastapi-security-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>FastAPI is a Python web framework using the Asynchronous Server Gateway Interface (ASGI). This cheat sheet covers authentication dependencies, input and output models, and deployment controls, building on the <a href="https://fastapi.tiangolo.com/tutorial/security/">FastAPI security documentation</a>.</p>
+<p>See the <a href="REST_Security_Cheat_Sheet.html">REST Security Cheat Sheet</a> for general API controls.</p>
+<p>Code snippets illustrate individual controls, not complete applications. They assume an existing FastAPI application and application-specific user and persistence functions; adapt and test them for your application.</p>
+<h2 id="dependency-injection-and-access-control">Dependency Injection and Access Control<a class="headerlink" href="#dependency-injection-and-access-control" title="Permanent link">&para;</a></h2>
+<p>Use FastAPI's dependency injection system, through <code>Depends()</code>, to enforce authentication and authorization consistently. Missing or insufficient dependencies can leave sensitive operations accessible to unauthorized users. See the <a href="https://fastapi.tiangolo.com/tutorial/dependencies/">FastAPI dependencies tutorial</a>.</p>
+<h3 id="oauth2passwordbearer-does-not-validate-tokens">OAuth2PasswordBearer Does Not Validate Tokens<a class="headerlink" href="#oauth2passwordbearer-does-not-validate-tokens" title="Permanent link">&para;</a></h3>
+<p>The helper class <code>OAuth2PasswordBearer</code> checks the authorization scheme and extracts the bearer token from the <code>Authorization</code> header. It does <strong>not validate the token or verify its signature</strong>. An authentication dependency must verify the token and reject invalid credentials before returning a user. See the <a href="https://fastapi.tiangolo.com/reference/security/#fastapi.security.OAuth2PasswordBearer">OAuth2PasswordBearer reference</a>.</p>
+<h3 id="scoping-authorization-dependencies">Scoping Authorization Dependencies<a class="headerlink" href="#scoping-authorization-dependencies" title="Permanent link">&para;</a></h3>
+<p>Authentication alone does not authorize an operation. Endpoints requiring elevated privileges, such as admin tasks, must also check the user's permissions. In this example, <code>get_current_user</code> is an authentication dependency that rejects invalid credentials.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Depends</span><span class="p">,</span> <span class="n">HTTPException</span><span class="p">,</span> <span class="n">status</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_admin_user</span><span class="p">(</span><span class="n">current_user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user</span><span class="p">)):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">current_user</span><span class="o">.</span><span class="n">is_admin</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">status</span><span class="o">.</span><span class="n">HTTP_403_FORBIDDEN</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">"Operation not permitted"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">current_user</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">"/admin/settings"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_settings</span><span class="p">(</span><span class="n">admin</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_admin_user</span><span class="p">)):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"status"</span><span class="p">:</span> <span class="s2">"success"</span><span class="p">}</span>
+</code></pre></div>
+<h3 id="router-level-deny-by-default">Router-Level Deny-by-Default<a class="headerlink" href="#router-level-deny-by-default" title="Permanent link">&para;</a></h3>
+<p>Apply authentication dependencies to an entire <code>APIRouter</code> so new endpoints in that router inherit the check. This covers only that router's routes; sensitive operations still need permission checks.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">Depends</span>
+
+<span class="c1"># Enforce authentication for all routes registered under this router by default</span>
+<span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">(</span>
+    <span class="n">prefix</span><span class="o">=</span><span class="s2">"/items"</span><span class="p">,</span>
+    <span class="n">dependencies</span><span class="o">=</span><span class="p">[</span><span class="n">Depends</span><span class="p">(</span><span class="n">get_current_user</span><span class="p">)]</span>
+<span class="p">)</span>
+</code></pre></div>
+<h2 id="secure-authentication-and-jwt-implementation">Secure Authentication and JWT Implementation<a class="headerlink" href="#secure-authentication-and-jwt-implementation" title="Permanent link">&para;</a></h2>
+<p>When using JSON Web Tokens (JWTs), developers are responsible for token verification and key management. The <a href="https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/">FastAPI OAuth2 with JWT tutorial</a> demonstrates verification with PyJWT.</p>
+<h3 id="cryptographic-library-choice">Cryptographic Library Choice<a class="headerlink" href="#cryptographic-library-choice" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Use PyJWT:</strong> Delegate token verification to the library rather than writing custom parsing or cryptographic logic. Configure verification using the <a href="https://pyjwt.readthedocs.io/en/latest/api.html#jwt.decode">PyJWT decoding API</a>.</li>
+</ul>
+<h3 id="key-claims-verification">Key Claims Verification<a class="headerlink" href="#key-claims-verification" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Validate Required Claims:</strong> Verify the signature and require <code>exp</code> (expiration), <code>iss</code> (issuer), and <code>aud</code> (audience) for authentication tokens. In PyJWT, use <code>options={"require": ["exp", "iss", "aud"]}</code> and supply the expected <code>issuer</code> and <code>audience</code>. Requiring a claim only checks its presence; keep the corresponding verification enabled. Validate <code>nbf</code> (not before) when present, and require it if your token profile calls for it.</li>
+<li><strong>Explicit Algorithms:</strong> Configure the expected algorithm during decoding, for example <code>algorithms=["HS256"]</code> for tokens issued with that algorithm. Do not derive the accepted algorithms from the token's header.</li>
+<li><strong>Revocation and Replay:</strong> Expiration bounds a token's lifetime. Checking a revocation blocklist rejects revoked tokens, but a stolen, still-active bearer token remains reusable. See the <a href="JSON_Web_Token_Cheat_Sheet.html#replay-protection">JWT replay-protection guidance</a> for controls beyond expiration and revocation.</li>
+</ul>
+<h3 id="cookie-stored-refresh-tokens">Cookie-Stored Refresh Tokens<a class="headerlink" href="#cookie-stored-refresh-tokens" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Cookie Attributes:</strong> If you store refresh tokens in cookies, set <code>HttpOnly</code>, <code>Secure</code>, and <code>SameSite=Lax</code> or <code>Strict</code> where compatible with your authentication flow. <code>HttpOnly</code> prevents JavaScript from reading the cookie; it does not prevent injected scripts from making authenticated requests.</li>
+<li><strong>CSRF Mitigations:</strong> Browsers attach cookies automatically, introducing Cross-Site Request Forgery (CSRF) risk. Protect refresh and other state-changing endpoints with the defenses in the <a href="Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html">CSRF Prevention Cheat Sheet</a>, such as validated CSRF tokens. Treat <code>SameSite</code> as defense in depth.</li>
+</ul>
+<h3 id="signing-key-management">Signing Key Management<a class="headerlink" href="#signing-key-management" title="Permanent link">&para;</a></h3>
+<p>Never hardcode signing secrets or provide a default development key in production. Supply keys from deployment-managed secret storage; prefer a mounted secret file or retrieval from a secret manager, and use environment variables only when safer injection methods are unavailable. Pydantic Settings can read deployment-supplied configuration. Keep local <code>.env</code> files containing secrets out of source control. Follow the <a href="Secrets_Management_Cheat_Sheet.html">Secrets Management Cheat Sheet</a> for provisioning and rotation.</p>
+<h2 id="pydantic-validation-and-input-hardening">Pydantic Validation and Input Hardening<a class="headerlink" href="#pydantic-validation-and-input-hardening" title="Permanent link">&para;</a></h2>
+<p>Pydantic schemas validate data, but they do not replace authorization checks or prevent injection vulnerabilities. See the <a href="https://docs.pydantic.dev/latest/concepts/models/">Pydantic models documentation</a>.</p>
+<h3 id="reject-unrecognized-fields">Reject Unrecognized Fields<a class="headerlink" href="#reject-unrecognized-fields" title="Permanent link">&para;</a></h3>
+<p>By default, Pydantic ignores undeclared input fields. Use <code>extra="forbid"</code> when the API should reject requests containing such fields instead of ignoring them:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">UserCreate</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+    <span class="n">username</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">password</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+<h3 id="prevent-mass-assignment">Prevent Mass Assignment<a class="headerlink" href="#prevent-mass-assignment" title="Permanent link">&para;</a></h3>
+<p>Use separate, restricted input schemas (<code>UserCreate</code>, <code>UserUpdate</code>) that exclude server-controlled fields like <code>is_admin</code> or <code>id</code>. Persist only validated, allowed fields, not the raw request dictionary. <code>extra="forbid"</code> does not prevent clients from setting a sensitive field that you declared in the input schema. See the <a href="Mass_Assignment_Cheat_Sheet.html">Mass Assignment Cheat Sheet</a>.</p>
+<h3 id="prevent-sensitive-data-exposure">Prevent Sensitive Data Exposure<a class="headerlink" href="#prevent-sensitive-data-exposure" title="Permanent link">&para;</a></h3>
+<p>Explicitly specify <code>response_model</code> in path decorators to filter database objects and exclude sensitive fields (e.g., <code>password_hash</code>) from responses. See <a href="https://fastapi.tiangolo.com/tutorial/response-model/">FastAPI Response Model documentation</a>.</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">UserResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">username</span><span class="p">:</span> <span class="nb">str</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">"/users"</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">UserResponse</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_user</span><span class="p">(</span><span class="n">user</span><span class="p">:</span> <span class="n">UserCreate</span><span class="p">):</span>
+    <span class="c1"># Application function must hash the password before storing it.</span>
+    <span class="k">return</span> <span class="n">save_user_to_db</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="strict-typing">Strict Typing<a class="headerlink" href="#strict-typing" title="Permanent link">&para;</a></h3>
+<p>Pydantic can convert input values to the declared types, such as <code>"123"</code> to <code>123</code> for an <code>int</code> field. Where security decisions require an exact input type, use strict types such as <code>StrictInt</code> and <code>StrictBool</code> to reject unintended conversions.</p>
+<h3 id="injection-countermeasure">Injection Countermeasure<a class="headerlink" href="#injection-countermeasure" title="Permanent link">&para;</a></h3>
+<p>Input validation does not prevent SQL injection. Use parameterized queries, including through Object-Relational Mapper (ORM) APIs that bind parameters. Never build raw SQL queries using string formatting with user input. See the <a href="SQL_Injection_Prevention_Cheat_Sheet.html">SQL Injection Prevention Cheat Sheet</a>.</p>
+<h2 id="cross-origin-resource-sharing-cors-configuration">Cross-Origin Resource Sharing (CORS) Configuration<a class="headerlink" href="#cross-origin-resource-sharing-cors-configuration" title="Permanent link">&para;</a></h2>
+<p>Incorrect CORS settings can expose private API responses to untrusted websites in a user's browser. CORS does not replace endpoint authorization or restrict non-browser clients. See the <a href="https://fastapi.tiangolo.com/tutorial/cors/">FastAPI CORS documentation</a>.</p>
+<h3 id="restrictive-cors-settings">Restrictive CORS Settings<a class="headerlink" href="#restrictive-cors-settings" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Explicit Origins:</strong> When using <code>allow_credentials=True</code>, explicitly list trusted origins in <code>allow_origins</code>. Do not combine credentialed requests with <code>allow_origins=["*"]</code>.</li>
+<li><strong>Restrict Headers and Methods:</strong> Limit <code>allow_methods</code> and <code>allow_headers</code> to only the verbs and headers your client application uses.</li>
+<li>For complete CORS design patterns, refer to the <a href="HTML5_Security_Cheat_Sheet.html">OWASP HTML5 Security Cheat Sheet</a>.</li>
+</ul>
+<h2 id="openapi-and-swagger-ui-exposure">OpenAPI and Swagger UI Exposure<a class="headerlink" href="#openapi-and-swagger-ui-exposure" title="Permanent link">&para;</a></h2>
+<p>FastAPI exposes interactive documentation at <code>/docs</code> and <code>/redoc</code>, with the schema at <code>/openapi.json</code>. Decide whether this information should be public. The <a href="https://fastapi.tiangolo.com/how-to/conditional-openapi/#about-security-apis-and-docs">conditional OpenAPI guidance</a> explains why hiding documentation does not secure the API operations themselves.</p>
+<h3 id="hardening-documentation-in-production">Hardening Documentation in Production<a class="headerlink" href="#hardening-documentation-in-production" title="Permanent link">&para;</a></h3>
+<p>If the documentation is private, restrict access to both the documentation pages and schema, or disable them with <code>FastAPI(openapi_url=None)</code>. This prevents disclosure through those routes; authorization must still protect every API operation.</p>
+<h2 id="async-event-loop-and-background-tasks">Async Event Loop and Background Tasks<a class="headerlink" href="#async-event-loop-and-background-tasks" title="Permanent link">&para;</a></h2>
+<p>Blocking a worker's event loop prevents it from handling other requests, creating a Denial of Service (DoS) risk. See the <a href="https://fastapi.tiangolo.com/async/">FastAPI async tutorial</a>.</p>
+<h3 id="event-loop-blocking">Event Loop Blocking<a class="headerlink" href="#event-loop-blocking" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use asynchronous database and network clients inside <code>async def</code> routes. For synchronous libraries, use <code>def</code> routes or dependencies, which FastAPI runs in a thread pool. Ordinary helper functions called directly inside <code>async def</code> are not automatically moved to that pool.</li>
+<li>Move CPU-heavy or long-running work to a separate worker system, such as Celery. <code>BackgroundTasks</code> still runs in the application process; see the <a href="https://fastapi.tiangolo.com/tutorial/background-tasks/#caveat">background-task caveat</a>.</li>
+</ul>
+<h2 id="exception-handling-and-information-leakage">Exception Handling and Information Leakage<a class="headerlink" href="#exception-handling-and-information-leakage" title="Permanent link">&para;</a></h2>
+<p>Control which error details reach clients and logs. FastAPI supports <a href="https://fastapi.tiangolo.com/tutorial/handling-errors/#override-request-validation-exceptions">custom exception handlers</a> for sanitizing validation responses.</p>
+<h3 id="validation-error-leakage">Validation Error Leakage<a class="headerlink" href="#validation-error-leakage" title="Permanent link">&para;</a></h3>
+<p>Request validation errors can include submitted values and custom error details. Avoid reflecting passwords or tokens into responses or recording them in logs. In a <code>RequestValidationError</code> handler, return only safe field locations and error descriptions, or a generic message where necessary. Do not return <code>str(exc)</code> or the entire request body; these can include sensitive input or internal context.</p>
+<h2 id="file-upload-security">File Upload Security<a class="headerlink" href="#file-upload-security" title="Permanent link">&para;</a></h2>
+<p>FastAPI parses multipart uploads into <code>UploadFile</code> objects, which spool larger files to temporary disk storage. See the <a href="https://fastapi.tiangolo.com/tutorial/request-files/#uploadfile">UploadFile documentation</a>.</p>
+<h3 id="upload-protections">Upload Protections<a class="headerlink" href="#upload-protections" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Limit Payloads Before Parsing:</strong> Set a request-body limit at the reverse proxy or gateway, for example Nginx's <a href="https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size"><code>client_max_body_size</code></a>. Ensure clients cannot bypass that layer. FastAPI <a href="https://github.com/fastapi/fastapi/blob/28a206107302ee20ce6a9a876d05a258c1c8d328/fastapi/routing.py#L438-L502">parses the form before running dependencies</a>; checking <code>UploadFile.size</code> in a dependency or endpoint does not protect against the resources already consumed during parsing.</li>
+<li><strong>Treat Metadata as Untrusted:</strong> Do not use <code>UploadFile.filename</code> directly as a storage path or trust <code>content_type</code> as proof of file type. Apply the filename, content-validation, and storage controls in the <a href="File_Upload_Cheat_Sheet.html">File Upload Cheat Sheet</a>.</li>
+</ul>
+<h2 id="rate-limiting">Rate Limiting<a class="headerlink" href="#rate-limiting" title="Permanent link">&para;</a></h2>
+<p>Apply request limits to reduce abuse of sensitive or expensive endpoints.</p>
+<h3 id="mitigation-options">Mitigation Options<a class="headerlink" href="#mitigation-options" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use a dedicated library like <a href="https://github.com/laurentS/slowapi">slowapi</a> to implement route-specific rate limiting in code.</li>
+<li>With multiple workers or replicas, use a shared counter store, such as Redis, so limits apply across instances instead of independently in each process.</li>
+<li>Implement rate limiting at the reverse proxy (Nginx, HAProxy) or API gateway layer.</li>
+</ul>
+<h2 id="asgi-server-hardening">ASGI Server Hardening<a class="headerlink" href="#asgi-server-hardening" title="Permanent link">&para;</a></h2>
+<p>Configure the ASGI server's proxy trust explicitly so clients cannot spoof the client address or request scheme using forwarding headers. See the <a href="https://uvicorn.dev/settings/#http">Uvicorn HTTP settings</a>.</p>
+<h3 id="deployment-configuration">Deployment Configuration<a class="headerlink" href="#deployment-configuration" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Limit Proxy Forwarding:</strong> Set <code>--forwarded-allow-ips</code> to the addresses of trusted reverse proxies and configure those proxies to overwrite untrusted forwarding headers. Avoid <code>--forwarded-allow-ips="*"</code>, which trusts every connecting client. Disable proxy-header handling with <code>--no-proxy-headers</code> if it is not needed.</li>
+<li><strong>Disable Server Header:</strong> Use <code>--no-server-header</code> to suppress Uvicorn's default <code>Server</code> header. This removes one identifying header; it does not prevent other forms of server fingerprinting.</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://fastapi.tiangolo.com/tutorial/dependencies/">FastAPI: Dependencies</a></li>
+<li><a href="https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/">FastAPI: OAuth2 with JWT tokens</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

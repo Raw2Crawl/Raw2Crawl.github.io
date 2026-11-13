@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>REST Assessment | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · REST Assessment">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/REST_Assessment_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="rest-assessment-cheat-sheet">REST Assessment Cheat Sheet<a class="headerlink" href="#rest-assessment-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="about-restful-web-services">About RESTful Web Services<a class="headerlink" href="#about-restful-web-services" title="Permanent link">&para;</a></h2>
+<p>Web Services are an implementation of web technology used for machine to machine communication. As such they are used for Inter application communication, Web 2.0 and Mashups and by desktop and mobile applications to call a server.</p>
+<p>RESTful web services (often called simply REST) are a light weight variant of Web Services based on the RESTful design pattern. In practice RESTful web services utilizes HTTP requests that are similar to regular HTTP calls in contrast with other Web Services technologies such as SOAP which utilizes a complex protocol.</p>
+<h2 id="key-relevant-properties-of-restful-web-services">Key relevant properties of RESTful web services<a class="headerlink" href="#key-relevant-properties-of-restful-web-services" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Use of HTTP methods (<code>GET</code>, <code>POST</code>, <code>PUT</code> and <code>DELETE</code>) as the primary verb for the requested operation.</li>
+<li>Non-standard parameters specifications:<ul>
+<li>As part of the URL.</li>
+<li>In headers.</li>
+</ul>
+</li>
+<li>Structured parameters and responses using JSON or XML in a parameter values, request body or response body. Those are required to communicate machine useful information.</li>
+<li>Custom authentication and session management, often utilizing custom security tokens: this is needed as machine to machine communication does not allow for login sequences.</li>
+<li>Lack of formal documentation. A <a href="http://www.w3.org/Submission/wadl/">proposed standard for describing RESTful web services called WADL</a> was submitted by Sun Microsystems but was never officially adapted.</li>
+</ul>
+<h2 id="the-challenge-of-security-testing-restful-web-services">The challenge of security testing RESTful web services<a class="headerlink" href="#the-challenge-of-security-testing-restful-web-services" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Inspecting the application does not reveal the attack surface, I.e. the URLs and parameter structure used by the RESTful web service. The reasons are:<ul>
+<li>No application utilizes all the available functions and parameters exposed by the service</li>
+<li>Those used are often activated dynamically by client side code and not as links in pages.</li>
+<li>The client application is often not a web application and does not allow inspection of the activating link or even relevant code.</li>
+</ul>
+</li>
+<li>The parameters are non-standard making it hard to determine what is just part of the URL or a constant header and what is a parameter worth <a href="https://owasp.org/www-community/Fuzzing">fuzzing</a>.</li>
+<li>As a machine interface the number of parameters used can be very large, for example a JSON structure may include dozens of parameters. <a href="https://owasp.org/www-community/Fuzzing">fuzzing</a> each one significantly lengthen the time required for testing.</li>
+<li>Custom authentication mechanisms require reverse engineering and make popular tools not useful as they cannot track a login session.</li>
+</ul>
+<h2 id="how-to-pentest-a-restful-web-service">How to pentest a RESTful web service<a class="headerlink" href="#how-to-pentest-a-restful-web-service" title="Permanent link">&para;</a></h2>
+<p>Determine the attack surface through documentation - RESTful pen testing might be better off if some level of clear-box testing is allowed and you can get information about the service.</p>
+<p>This information will ensure fuller coverage of the attack surface. Such information to look for:</p>
+<ul>
+<li>Formal service description - While for other types of web services such as SOAP a formal description, usually in WSDL is often available, this is seldom the case for REST. That said, either WSDL 2.0 or WADL can describe REST and are sometimes used.</li>
+<li>A developer guide for using the service may be less detailed but will commonly be found, and might even be considered <em>opaque-box</em> testing.</li>
+<li>Application source or configuration - in many frameworks, including dotNet ,the REST service definition might be easily obtained from configuration files rather than from code.</li>
+</ul>
+<p>Collect full requests using a <a href="https://www.zaproxy.org/">proxy</a> - while always an important pen testing step, this is more important for REST based applications as the application UI may not give clues on the actual attack surface.</p>
+<p>Note that the proxy must be able to collect full requests and not just URLs as REST services utilize more than just GET parameters.</p>
+<p>Analyze collected requests to determine the attack surface:</p>
+<ul>
+<li>Look for non-standard parameters:<ul>
+<li>Look for abnormal HTTP headers - those would many times be header based parameters.</li>
+<li>Determine if a URL segment has a repeating pattern across URLs. Such patterns can include a date, a number or an ID like string and indicate that the URL segment is a URL embedded parameter.<ul>
+<li>For example: <code>http://server/srv/2013-10-21/use.php</code></li>
+</ul>
+</li>
+<li>Look for structured parameter values - those may be JSON, XML or a non-standard structure.</li>
+<li>If the last element of a URL does not have an extension, it may be a parameter. This is especially true if the application technology normally uses extensions or if a previous segment does have an extension.<ul>
+<li>For example: <code>http://server/svc/Grid.asmx/GetRelatedListItems</code></li>
+</ul>
+</li>
+<li>Look for highly varying URL segments - a single URL segment that has many values may be parameter and not a physical directory.<ul>
+<li>For example if the URL <code>http://server/src/XXXX/page</code> repeats with hundreds of value for <code>XXXX</code>, chances <code>XXXX</code> is a parameter.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Verify non-standard parameters: in some cases (but not all), setting the value of a URL segment suspected of being a parameter to a value expected to be invalid can help determine if it is a path elements of a parameter. If a path element, the web server will return a <em>404</em> message, while for an invalid value to a parameter the answer would be an application level message as the value is legal at the web server level.</p>
+<p>Analyzing collected requests to optimize <a href="https://owasp.org/www-community/Fuzzing">fuzzing</a> - after identifying potential parameters to fuzz, analyze the collected values for each to determine:</p>
+<ul>
+<li>Valid vs. invalid values, so that <a href="https://owasp.org/www-community/Fuzzing">fuzzing</a> can focus on marginal invalid values.<ul>
+<li>For example sending <em>0</em> for a value found to be always a positive integer.</li>
+</ul>
+</li>
+<li>Sequences allowing to fuzz beyond the range presumably allocated to the current user.</li>
+</ul>
+<p>Lastly, when <a href="https://owasp.org/www-community/Fuzzing">fuzzing</a>, don't forget to emulate the authentication mechanism used.</p>
+<h2 id="assessing-openapi-and-swagger-based-rest-apis">Assessing OpenAPI and Swagger-Based REST APIs<a class="headerlink" href="#assessing-openapi-and-swagger-based-rest-apis" title="Permanent link">&para;</a></h2>
+<p>Modern REST APIs commonly publish a machine-readable description in <a href="https://spec.openapis.org/oas/v3.1.0">OpenAPI</a> (formerly Swagger). Unlike the WADL option noted above, this format is widely adopted, and for an assessment it is the fastest route to the attack surface.</p>
+<ul>
+<li>Probe the common description locations first - <code>/openapi.json</code>, <code>/swagger.json</code> and <code>/docs</code> - before relying only on traffic captured through a <a href="https://www.zaproxy.org/">proxy</a>. The description lists paths, methods, parameters, schemas and security requirements in one place.</li>
+<li>Reconcile the description with observed behavior. Call endpoints the description does not mention and send fields the schema does not define; an undocumented field the API accepts is a discrepancy to investigate, not proof of a contract violation, because additional properties may be valid depending on the intended schema and its documentation. Compare what you observed with the intended schema and the authorization policy before treating the field as a violation (see mass assignment below).</li>
+<li>Fuzz from the schema: start with a valid request that satisfies the declared types, required fields and <code>enum</code> values, then mutate one constraint at a time, following the same <a href="https://owasp.org/www-community/Fuzzing">fuzzing</a> approach used above.</li>
+<li>Build the per-operation security test matrix from the effective OpenAPI <a href="https://spec.openapis.org/oas/v3.1.0#security-requirement-object"><code>security</code></a> requirements, which are the root-level requirements unless the operation declares its own <code>security</code>, in which case that declaration replaces them instead of combining with them: no credentials, a valid token, and a token that lacks the declared requirement (see the next section). <a href="https://spec.openapis.org/oas/v3.1.0#security-scheme-object"><code>securitySchemes</code></a> only define the reusable security mechanisms those requirements refer to.</li>
+</ul>
+<h2 id="jwt-and-oauth2-assessment">JWT and OAuth2 Assessment<a class="headerlink" href="#jwt-and-oauth2-assessment" title="Permanent link">&para;</a></h2>
+<p>A REST API is only as strong as the token checks in front of it, so test the token handling itself before testing the endpoints behind it.</p>
+<ul>
+<li>Tamper with the token: change a claim in the payload, re-sign it with a key you control, or remove the signature, and confirm the API rejects it. Also try <code>alg: none</code> and algorithm confusion. The corresponding server-side rules are in the <a href="JSON_Web_Token_Cheat_Sheet.html">JSON Web Token Cheat Sheet</a> and the <a href="REST_Security_Cheat_Sheet.html#jwt">REST Security Cheat Sheet</a>, with the threat background in <a href="https://datatracker.ietf.org/doc/html/rfc8725">RFC 8725</a>.</li>
+<li>Send a token that is expired (<code>exp</code>), not yet valid (<code>nbf</code>), or issued for another issuer (<code>iss</code>) or audience (<code>aud</code>). These <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4">standard claims</a> must be checked against the configuration of the API rather than trusted as presented.</li>
+<li>Send malformed tokens - truncated or extra parts, invalid Base64 or JSON - and confirm the API returns an authentication failure instead of a server error or a partially parsed token.</li>
+<li>Check scope and role enforcement: call each operation with a valid token whose <a href="https://www.rfc-editor.org/rfc/rfc6749">OAuth 2.0</a> scope does not grant it, and with a valid token belonging to a lower-privileged role that lacks permission for it. Both should be denied the result, on read and write operations alike, with the status code that the documented response policy of the API prescribes for such a denial: for example <a href="https://www.rfc-editor.org/rfc/rfc9110#section-15.5.2"><code>401 Unauthorized</code></a> or <a href="https://www.rfc-editor.org/rfc/rfc9110#section-15.5.4"><code>403 Forbidden</code></a> as described for bearer requests in <a href="https://www.rfc-editor.org/rfc/rfc6750#section-3.1">RFC 6750 Section 3.1</a>, or <code>404 Not Found</code> when the API <a href="https://www.rfc-editor.org/rfc/rfc9110#section-15.5.4">conceals the existence of the resource</a>.</li>
+</ul>
+<h2 id="broken-object-level-authorization-bola">Broken Object Level Authorization (BOLA)<a class="headerlink" href="#broken-object-level-authorization-bola" title="Permanent link">&para;</a></h2>
+<p><a href="https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/">Broken Object Level Authorization</a> is the API form of <a href="https://owasp.org/www-community/attacks/insecure_direct_object_reference">IDOR</a>: an endpoint uses an identifier from the request without checking that the caller may access the object it points at.</p>
+<ul>
+<li>Run the swap test: create the same kind of object with two accounts or tenants, then replay each request under the other session's identifiers. Cover reads and writes (<code>GET</code>, <code>PUT</code>, <code>PATCH</code>, <code>DELETE</code>); an ownership check on <code>GET</code> next to an unchecked <code>PUT</code> on the same resource is a common result.</li>
+<li>Prefer identifiers the other session can already observe - list responses, error messages, notification links - over guessing, and include nested routes such as <code>/users/{id}/orders/{id}</code>, where authorization is often only enforced for the outer resource.</li>
+<li>Test vertical escalation too: use a low-privilege token against owner-only or administrator-only operations of the same API; whether a role may call such an operation at all is <a href="https://owasp.org/API-Security/editions/2023/en/0xa5-broken-function-level-authorization/">Broken Function Level Authorization</a>, a separate check from BOLA's per-object access.</li>
+<li>Repeat for every object type the API exposes; the object is wherever an identifier in the request ends up, not only in the obvious profile or order endpoints.</li>
+</ul>
+<p>Prevention guidance is in the <a href="Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html">Insecure Direct Object Reference Prevention Cheat Sheet</a> and the <a href="Authorization_Cheat_Sheet.html">Authorization Cheat Sheet</a>; test methodology is in the <a href="https://wstg.owasp.org/latest/4-Web_Application_Security_Testing/05-Authorization/04-Insecure_Direct_Object_References/">WSTG IDOR test</a>.</p>
+<h2 id="mass-assignment-in-json-apis">Mass Assignment in JSON APIs<a class="headerlink" href="#mass-assignment-in-json-apis" title="Permanent link">&para;</a></h2>
+<p>Frameworks that bind a JSON request body directly to an internal object make <a href="Mass_Assignment_Cheat_Sheet.html">mass assignment</a> testable with a single request: anything the client sends may be written, including fields the API never advertised.</p>
+<ul>
+<li>Take a normal create or update request and add fields outside the contract - a role, a verification flag, an internal identifier - then read the object back to see whether they were stored. Repeat for nested objects and arrays and for each update verb, including partial-update endpoints.</li>
+<li>Confirm effect, not just reflection: a field echoed in the response means little until a following request shows that it persisted and changed behavior.</li>
+<li>Treat every field the server accepts but the schema does not define as a candidate for this test (see the OpenAPI section above).</li>
+</ul>
+<p>See <a href="https://cwe.mitre.org/data/definitions/915.html">CWE-915</a> for the weakness classification.</p>
+<h2 id="rate-limiting-and-throttling-assessment">Rate Limiting and Throttling Assessment<a class="headerlink" href="#rate-limiting-and-throttling-assessment" title="Permanent link">&para;</a></h2>
+<p>Missing or weak limits let an attacker guess credentials, harvest data or consume capacity at will; this is <a href="https://owasp.org/API-Security/editions/2023/en/0xa4-unrestricted-resource-consumption/">API4:2023 Unrestricted Resource Consumption</a>.</p>
+<ul>
+<li>Drive the authentication, token and account recovery endpoints and check that throttling engages; without it, password guessing and <a href="Credential_Stuffing_Prevention_Cheat_Sheet.html">credential stuffing</a> remain cheap. Compare with the <a href="Authentication_Cheat_Sheet.html#login-throttling">login throttling</a> expectations for web applications.</li>
+<li>Exercise the expensive operations - search, export, bulk writes - and note whether a limit applies to them at all. Throttling by request frequency does not by itself bound the amount of work performed within a single request, so check what one request can cost as well.</li>
+<li>Identify what the limit is keyed on: a per-IP limit is worked around by changing address, so per-account or per-API-key limits must still hold, and an authenticated session must not disable them.</li>
+<li>Record the observed limit, the point at which it triggers and the response returned, so each finding states the missing control precisely.</li>
+</ul>
+<h2 id="related-resources">Related Resources<a class="headerlink" href="#related-resources" title="Permanent link">&para;</a></h2>
+<p>See the <a href="REST_Security_Cheat_Sheet.html">REST Security Cheat Sheet</a> for implementation guidance corresponding to these assessment topics.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://datatracker.ietf.org/doc/html/rfc8725">RFC 8725: JSON Web Token Best Current Practices</a></li>
+<li><a href="https://www.rfc-editor.org/rfc/rfc6750#section-3.1">RFC 6750: OAuth 2.0 Bearer Token Usage</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

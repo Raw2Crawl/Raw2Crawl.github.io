@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bean Validation | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Bean Validation">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Bean_Validation_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="bean-validation-cheat-sheet">Bean Validation Cheat Sheet<a class="headerlink" href="#bean-validation-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>This article is focused on providing clear, simple, actionable guidance for providing Java Bean Validation security functionality in your applications.</p>
+<p>Bean validation (aka <a href="https://beanvalidation.org/">Jakarta Validation</a>) is one of the most common ways to perform <a href="/en/OWASP/CheatSheetSeries/cheatsheets/Input_Validation_Cheat_Sheet.html">input validation</a> in Java. It is an application layer agnostic validation spec which provides the developer with the means to define a set of validation constraints on a domain model and then perform validation of those constraints through out the various application tiers.</p>
+<p>One advantage of this approach is that the validation constraints and the corresponding validators are only written once, thus reducing duplication of effort and ensuring uniformity:</p>
+<h3 id="typical-validation">Typical Validation<a class="headerlink" href="#typical-validation" title="Permanent link">&para;</a></h3>
+<p><img alt="Typical" src="../assets/Bean_Validation_Cheat_Sheet_Typical.png" /></p>
+<h3 id="bean-validation">Bean Validation<a class="headerlink" href="#bean-validation" title="Permanent link">&para;</a></h3>
+<p><img alt="JSR" src="../assets/Bean_Validation_Cheat_Sheet_JSR.png" /></p>
+<h2 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h2>
+<p>The illustrative examples below use the legacy <code>javax.validation</code> API, including its <a href="https://docs.hibernate.org/beanvalidation/spec/1.1/api/javax/validation/constraints/package-summary.html">built-in constraint package</a>, with Hibernate Validator. <a href="https://jakarta.ee/specifications/bean-validation/3.0/jakarta-bean-validation-spec-3.0.html">Jakarta Validation 3.0</a> uses <code>jakarta.validation</code>; use API and provider versions compatible with your application.</p>
+<p>Add Hibernate Validator to your <strong>pom.xml</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
+<span class="w">   </span><span class="nt">&lt;groupId&gt;</span>org.hibernate<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">   </span><span class="nt">&lt;artifactId&gt;</span>hibernate-validator<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">   </span><span class="nt">&lt;version&gt;</span>USE_LATEST_VERSION<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div>
+<p>Enable bean validation support in Spring's <strong>context.xml</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;beans:beans</span><span class="w"> </span><span class="err">...</span>
+<span class="w">   </span><span class="err">...</span>
+<span class="w">   </span><span class="err">&lt;mvc:annotation-driven</span><span class="w"> </span><span class="nt">/&gt;</span>
+<span class="w">   </span>...
+<span class="nt">&lt;/beans:beans&gt;</span>
+</code></pre></div>
+<p>For more info, please see the <a href="https://hibernate.org/validator/documentation/getting-started/">setup guide</a></p>
+<h2 id="basics">Basics<a class="headerlink" href="#basics" title="Permanent link">&para;</a></h2>
+<p>In order to get started using Bean Validation, you must add validation constraints (<code>@Pattern</code>, <code>@Digits</code>, <code>@Min</code>, <code>@Max</code>, <code>@Size</code>, <code>@Past</code>, <code>@Future</code>, <code>@CreditCardNumber</code>, <code>@Email</code>, <code>@URL</code>, etc.) to your model and then utilize the <code>@Valid</code> annotation when passing your model around in various application layers.</p>
+<p>Constraints can be applied in several places:</p>
+<ul>
+<li>Fields</li>
+<li>Properties</li>
+<li>Classes</li>
+</ul>
+<p>For Bean Validation 1.1 also on:</p>
+<ul>
+<li>Parameters</li>
+<li>Return values</li>
+<li>Constructors</li>
+</ul>
+<p>For the sake of simplicity all the examples below feature field constraints and all validation is triggered by the controller. Refer to the Bean Validation documentation for a full list of examples.</p>
+<p>When it comes to error handling, the Hibernate Validator returns a <code>BindingResult</code> object which contains a <code>List&lt;ObjectError&gt;</code>. The examples below feature simplistic error handling, while a production ready application would have a more elaborate design that takes care of logging and error page redirection.</p>
+<h2 id="predefined-constraints">Predefined Constraints<a class="headerlink" href="#predefined-constraints" title="Permanent link">&para;</a></h2>
+<h3 id="pattern">@Pattern<a class="headerlink" href="#pattern" title="Permanent link">&para;</a></h3>
+<p><strong>Annotation</strong>:</p>
+<p><code>@Pattern(regexp=,flags=)</code></p>
+<p><strong>Data Type</strong>:</p>
+<p><code>CharSequence</code></p>
+<p><strong>Use</strong>:</p>
+<p>Checks if the annotated string matches the regular expression regex considering the given flag match. Please visit <a href="https://owasp.org/www-community/OWASP_Validation_Regex_Repository">OWASP Validation Regex Repository</a> for other useful regex's.</p>
+<p><strong>Reference</strong>:</p>
+<p><a href="https://docs.jboss.org/hibernate/validator/5.2/reference/en-US/html/ch02.html#section-builtin-constraints">Documentation</a></p>
+<p><strong>Model</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">javax.validation.constraints.Pattern</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Article</span><span class="w">  </span><span class="p">{</span>
+<span class="w"> </span><span class="c1">//Constraint: One or more ASCII letters, digits, or spaces</span>
+<span class="w"> </span><span class="nd">@Pattern</span><span class="p">(</span><span class="n">regexp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"[a-zA-Z0-9 ]+"</span><span class="p">)</span>
+<span class="w"> </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">articleTitle</span><span class="p">;</span>
+<span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getArticleTitle</span><span class="p">()</span><span class="w">  </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w">  </span><span class="n">articleTitle</span><span class="p">;</span>
+<span class="w"> </span><span class="p">}</span>
+<span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setArticleTitle</span><span class="p">(</span><span class="n">String</span><span class="w">  </span><span class="n">articleTitle</span><span class="p">)</span><span class="w">  </span><span class="p">{</span>
+<span class="w">   </span><span class="k">this</span><span class="p">.</span><span class="na">articleTitle</span><span class="w">  </span><span class="o">=</span><span class="w">  </span><span class="n">articleTitle</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="p">...</span>
+
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Controller</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">javax.validation.Valid</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.company.app.model.Article</span><span class="p">;</span>
+
+<span class="nd">@Controller</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ArticleController</span><span class="w">  </span><span class="p">{</span>
+
+<span class="w"> </span><span class="p">...</span>
+
+<span class="w"> </span><span class="nd">@RequestMapping</span><span class="p">(</span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"/postArticle"</span><span class="p">,</span><span class="w">  </span><span class="n">method</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RequestMethod</span><span class="p">.</span><span class="na">POST</span><span class="p">)</span>
+<span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="nd">@ResponseBody</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">postArticle</span><span class="p">(</span><span class="nd">@Valid</span><span class="w">  </span><span class="n">Article</span><span class="w">  </span><span class="n">article</span><span class="p">,</span><span class="w">  </span><span class="n">BindingResult</span><span class="w">  </span><span class="n">result</span><span class="p">,</span>
+<span class="w"> </span><span class="n">HttpServletResponse</span><span class="w">  </span><span class="n">response</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="na">hasErrors</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="n">String</span><span class="w"> </span><span class="n">errorMessage</span><span class="w">  </span><span class="o">=</span><span class="w">  </span><span class="s">""</span><span class="p">;</span>
+<span class="w">   </span><span class="n">response</span><span class="p">.</span><span class="na">setStatus</span><span class="p">(</span><span class="n">HttpServletResponse</span><span class="p">.</span><span class="na">SC_BAD_REQUEST</span><span class="p">);</span>
+<span class="w">   </span><span class="n">List</span><span class="o">&lt;</span><span class="n">ObjectError</span><span class="o">&gt;</span><span class="w"> </span><span class="n">errors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">getAllErrors</span><span class="p">();</span>
+<span class="w">   </span><span class="k">for</span><span class="p">(</span><span class="n">ObjectError</span><span class="w">  </span><span class="n">e</span><span class="w"> </span><span class="p">:</span><span class="w">  </span><span class="n">errors</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">errorMessage</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="s">"ERROR: "</span><span class="w"> </span><span class="o">+</span><span class="w">  </span><span class="n">e</span><span class="p">.</span><span class="na">getDefaultMessage</span><span class="p">();</span>
+<span class="w">   </span><span class="p">}</span>
+<span class="w">   </span><span class="k">return</span><span class="w">  </span><span class="n">errorMessage</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="k">return</span><span class="w">  </span><span class="s">"Validation Successful"</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="digits">@Digits<a class="headerlink" href="#digits" title="Permanent link">&para;</a></h3>
+<p><strong>Annotation</strong>:</p>
+<p><code>@Digits(integer=,fraction=)</code></p>
+<p><strong>Data Type</strong>:</p>
+<p><code>BigDecimal</code>, <code>BigInteger</code>, <code>CharSequence</code>, <code>byte</code>, <code>short</code>, <code>int</code>, <code>long</code> and the respective wrappers of the primitive types; Additionally supported by HV: any sub-type of Number</p>
+<p><strong>Use</strong>:</p>
+<p>Checks whether the annotated value is a number having up to integer digits and fraction fractional digits</p>
+<p><strong>Reference</strong>:</p>
+<p><a href="https://docs.jboss.org/hibernate/validator/5.2/reference/en-US/html/ch02.html#section-builtin-constraints">Documentation</a></p>
+<p><strong>Model</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">javax.validation.constraints.Digits</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Customer</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">//Constraint: Age can only be 3 digits long or less</span>
+<span class="w">  </span><span class="nd">@Digits</span><span class="p">(</span><span class="n">integer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="n">fraction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">getAge</span><span class="p">()</span><span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setAge</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">age</span><span class="p">)</span><span class="w">  </span><span class="p">{</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="na">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Controller</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">javax.validation.Valid</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.company.app.model.Customer</span><span class="p">;</span>
+
+<span class="nd">@Controller</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CustomerController</span><span class="w">  </span><span class="p">{</span>
+
+<span class="w"> </span><span class="p">...</span>
+
+<span class="w"> </span><span class="nd">@RequestMapping</span><span class="p">(</span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"/registerCustomer"</span><span class="p">,</span><span class="w">  </span><span class="n">method</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RequestMethod</span><span class="p">.</span><span class="na">POST</span><span class="p">)</span>
+<span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="nd">@ResponseBody</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">registerCustomer</span><span class="p">(</span><span class="nd">@Valid</span><span class="w"> </span><span class="n">Customer</span><span class="w"> </span><span class="n">customer</span><span class="p">,</span><span class="w"> </span><span class="n">BindingResult</span><span class="w"> </span><span class="n">result</span><span class="p">,</span>
+<span class="w"> </span><span class="n">HttpServletResponse</span><span class="w">  </span><span class="n">response</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="na">hasErrors</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="n">String</span><span class="w"> </span><span class="n">errorMessage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">""</span><span class="p">;</span>
+<span class="w">   </span><span class="n">response</span><span class="p">.</span><span class="na">setStatus</span><span class="p">(</span><span class="n">HttpServletResponse</span><span class="p">.</span><span class="na">SC_BAD_REQUEST</span><span class="p">);</span>
+<span class="w">   </span><span class="n">List</span><span class="o">&lt;</span><span class="n">ObjectError</span><span class="o">&gt;</span><span class="w"> </span><span class="n">errors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">getAllErrors</span><span class="p">();</span>
+
+<span class="w">   </span><span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="n">ObjectError</span><span class="w">  </span><span class="n">e</span><span class="w"> </span><span class="p">:</span><span class="w">  </span><span class="n">errors</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">errorMessage</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="s">"ERROR: "</span><span class="w">  </span><span class="o">+</span><span class="w">  </span><span class="n">e</span><span class="p">.</span><span class="na">getDefaultMessage</span><span class="p">();</span>
+<span class="w">   </span><span class="p">}</span>
+<span class="w">   </span><span class="k">return</span><span class="w">  </span><span class="n">errorMessage</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="k">return</span><span class="w">  </span><span class="s">"Validation Successful"</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="size">@Size<a class="headerlink" href="#size" title="Permanent link">&para;</a></h3>
+<p><strong>Annotation</strong>:</p>
+<p><code>@Size(min=,</code> <code>max=)</code></p>
+<p><strong>Data Type</strong>:</p>
+<p><code>CharSequence</code>, <code>Collection</code>, <code>Map</code> and <code>Arrays</code></p>
+<p><strong>Use</strong>:</p>
+<p>Checks if the annotated element's size is between min and max (inclusive)</p>
+<p><strong>Reference</strong>:</p>
+<p><a href="https://docs.jboss.org/hibernate/validator/5.2/reference/en-US/html/ch02.html#section-builtin-constraints">Documentation</a></p>
+<p><strong>Model</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">javax.validation.constraints.Size</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Message</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="c1">//Constraint: Message must contain 10 to 500 characters, inclusive</span>
+<span class="w">   </span><span class="nd">@Size</span><span class="p">(</span><span class="n">min</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="n">max</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">500</span><span class="p">)</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">message</span><span class="p">;</span>
+
+<span class="w">   </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getMessage</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="n">message</span><span class="p">;</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">   </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setMessage</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">message</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="na">message</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">message</span><span class="p">;</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Controller</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">javax.validation.Valid</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.company.app.model.Message</span><span class="p">;</span>
+
+<span class="nd">@Controller</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MessageController</span><span class="w"> </span><span class="p">{</span>
+
+<span class="p">...</span>
+
+<span class="nd">@RequestMapping</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s">"/sendMessage"</span><span class="p">,</span><span class="w"> </span><span class="n">method</span><span class="o">=</span><span class="n">RequestMethod</span><span class="p">.</span><span class="na">POST</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="nd">@ResponseBody</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">sendMessage</span><span class="p">(</span><span class="nd">@Valid</span><span class="w"> </span><span class="n">Message</span><span class="w"> </span><span class="n">message</span><span class="p">,</span><span class="w"> </span><span class="n">BindingResult</span><span class="w"> </span><span class="n">result</span><span class="p">,</span>
+<span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">){</span>
+
+<span class="w">   </span><span class="k">if</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="na">hasErrors</span><span class="p">()){</span>
+<span class="w">      </span><span class="n">String</span><span class="w"> </span><span class="n">errorMessage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">""</span><span class="p">;</span>
+<span class="w">      </span><span class="n">response</span><span class="p">.</span><span class="na">setStatus</span><span class="p">(</span><span class="n">HttpServletResponse</span><span class="p">.</span><span class="na">SC_BAD_REQUEST</span><span class="p">);</span>
+<span class="w">      </span><span class="n">List</span><span class="o">&lt;</span><span class="n">ObjectError</span><span class="o">&gt;</span><span class="w"> </span><span class="n">errors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">getAllErrors</span><span class="p">();</span>
+<span class="w">      </span><span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="n">ObjectError</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">errors</span><span class="p">){</span>
+<span class="w">         </span><span class="n">errorMessage</span><span class="o">+=</span><span class="w"> </span><span class="s">"ERROR: "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="na">getDefaultMessage</span><span class="p">();</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="n">errorMessage</span><span class="p">;</span>
+<span class="w">   </span><span class="p">}</span>
+<span class="w">   </span><span class="k">else</span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="s">"Validation Successful"</span><span class="p">;</span>
+<span class="w">   </span><span class="p">}</span>
+<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="past-future">@Past / @Future<a class="headerlink" href="#past-future" title="Permanent link">&para;</a></h3>
+<p><strong>Annotation</strong>:</p>
+<p><code>@Past,</code> <code>@Future</code></p>
+<p><strong>Data Type</strong>:</p>
+<p><code>java.util.Date</code>, <code>java.util.Calendar</code>, <code>java.time.chrono.ChronoZonedDateTime</code>, <code>java.time.Instant</code>, <code>java.time.OffsetDateTime</code></p>
+<p><strong>Use</strong>:</p>
+<p>Checks whether the annotated date is in the past / future. Use a supported date type, such as <code>java.util.Date</code>; <a href="https://docs.hibernate.org/beanvalidation/spec/1.1/api/javax/validation/constraints/Future.html"><code>@Future</code> does not validate date strings</a>.</p>
+<p><strong>Reference</strong>:</p>
+<p><a href="https://docs.jboss.org/hibernate/validator/5.2/reference/en-US/html/ch02.html#section-builtin-constraints">Documentation</a></p>
+<p><strong>Model</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Date</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">javax.validation.constraints.Past</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">javax.validation.constraints.Future</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">DoctorVisit</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="c1">//Constraint: Birthdate must be in the past</span>
+<span class="w">   </span><span class="nd">@Past</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="n">Date</span><span class="w"> </span><span class="n">birthDate</span><span class="p">;</span>
+
+<span class="w">   </span><span class="kd">public</span><span class="w"> </span><span class="n">Date</span><span class="w"> </span><span class="nf">getBirthDate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="n">birthDate</span><span class="p">;</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">   </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setBirthDate</span><span class="p">(</span><span class="n">Date</span><span class="w"> </span><span class="n">birthDate</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="na">birthDate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">birthDate</span><span class="p">;</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">   </span><span class="c1">//Constraint: Schedule visit date must be in the future</span>
+<span class="w">   </span><span class="nd">@Future</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="n">Date</span><span class="w"> </span><span class="n">scheduledVisitDate</span><span class="p">;</span>
+
+<span class="w">   </span><span class="kd">public</span><span class="w"> </span><span class="n">Date</span><span class="w"> </span><span class="nf">getScheduledVisitDate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="n">scheduledVisitDate</span><span class="p">;</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">   </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setScheduledVisitDate</span><span class="p">(</span><span class="n">Date</span><span class="w"> </span><span class="n">scheduledVisitDate</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="na">scheduledVisitDate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">scheduledVisitDate</span><span class="p">;</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Controller</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">javax.validation.Valid</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.company.app.model.DoctorVisit</span><span class="p">;</span>
+
+<span class="nd">@Controller</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">DoctorVisitController</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="p">...</span>
+
+<span class="w">   </span><span class="nd">@RequestMapping</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s">"/scheduleVisit"</span><span class="p">,</span><span class="w"> </span><span class="n">method</span><span class="o">=</span><span class="n">RequestMethod</span><span class="p">.</span><span class="na">POST</span><span class="p">)</span>
+<span class="w">   </span><span class="kd">public</span><span class="w"> </span><span class="nd">@ResponseBody</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">scheduleVisit</span><span class="p">(</span><span class="nd">@Valid</span><span class="w"> </span><span class="n">DoctorVisit</span><span class="w"> </span><span class="n">doctorvisit</span><span class="p">,</span><span class="w"> </span><span class="n">BindingResult</span><span class="w"> </span><span class="n">result</span><span class="p">,</span>
+<span class="w">   </span><span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">){</span>
+
+<span class="w">      </span><span class="k">if</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="na">hasErrors</span><span class="p">()){</span>
+<span class="w">         </span><span class="n">String</span><span class="w"> </span><span class="n">errorMessage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">""</span><span class="p">;</span>
+<span class="w">         </span><span class="n">response</span><span class="p">.</span><span class="na">setStatus</span><span class="p">(</span><span class="n">HttpServletResponse</span><span class="p">.</span><span class="na">SC_BAD_REQUEST</span><span class="p">);</span>
+<span class="w">         </span><span class="n">List</span><span class="o">&lt;</span><span class="n">ObjectError</span><span class="o">&gt;</span><span class="w"> </span><span class="n">errors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">getAllErrors</span><span class="p">();</span>
+<span class="w">         </span><span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="n">ObjectError</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">errors</span><span class="p">){</span>
+<span class="w">            </span><span class="n">errorMessage</span><span class="o">+=</span><span class="w"> </span><span class="s">"ERROR: "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="na">getDefaultMessage</span><span class="p">();</span>
+<span class="w">         </span><span class="p">}</span>
+<span class="w">         </span><span class="k">return</span><span class="w"> </span><span class="n">errorMessage</span><span class="p">;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">      </span><span class="k">else</span><span class="p">{</span>
+<span class="w">         </span><span class="k">return</span><span class="w"> </span><span class="s">"Validation Successful"</span><span class="p">;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">   </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="combining-constraints">Combining Constraints<a class="headerlink" href="#combining-constraints" title="Permanent link">&para;</a></h3>
+<p>Validation annotations can be combined in any suitable way. For instance, to specify a valid reviewRating value between 1 and 5, specify the validation like this :</p>
+<p><strong>Annotation</strong>:</p>
+<p><code>@Min(value=),</code> <code>@Max(value=)</code></p>
+<p><strong>Data Type</strong>:</p>
+<p><code>BigDecimal</code>, <code>BigInteger</code>, <code>byte</code>, <code>short</code>, <code>int</code>, <code>long</code> and the respective wrappers of the primitive types; Additionally supported by HV: any sub-type of <code>CharSequence</code> (the numeric value represented by the character sequence is evaluated), any sub-type of Number</p>
+<p><strong>Use</strong>:</p>
+<p>Checks whether the annotated value is higher/lower than or equal to the specified minimum</p>
+<p><strong>Reference:</strong></p>
+<p><a href="https://docs.jboss.org/hibernate/validator/9.0/reference/en-US/html_single/#section-builtin-constraints">Documentation</a></p>
+<p><strong>Model</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">javax.validation.constraints.Min</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">javax.validation.constraints.Max</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Review</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w"> </span><span class="c1">//Constraint: Review rating must be between 1 and 5</span>
+<span class="w"> </span><span class="nd">@Min</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="w"> </span><span class="nd">@Max</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="w"> </span><span class="kd">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">reviewRating</span><span class="p">;</span>
+
+<span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">getReviewRating</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="k">return</span><span class="w"> </span><span class="n">reviewRating</span><span class="p">;</span>
+<span class="w"> </span><span class="p">}</span>
+
+<span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setReviewRating</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">reviewRating</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="k">this</span><span class="p">.</span><span class="na">reviewRating</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reviewRating</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="w"> </span><span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Controller</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">javax.validation.Valid</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.company.app.model.ReviewRating</span><span class="p">;</span>
+
+<span class="nd">@Controller</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ReviewController</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="p">...</span>
+
+<span class="w">   </span><span class="nd">@RequestMapping</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s">"/postReview"</span><span class="p">,</span><span class="w"> </span><span class="n">method</span><span class="o">=</span><span class="n">RequestMethod</span><span class="p">.</span><span class="na">POST</span><span class="p">)</span>
+<span class="w">   </span><span class="kd">public</span><span class="w"> </span><span class="nd">@ResponseBody</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">postReview</span><span class="p">(</span><span class="nd">@Valid</span><span class="w"> </span><span class="n">Review</span><span class="w"> </span><span class="n">review</span><span class="p">,</span><span class="w"> </span><span class="n">BindingResult</span><span class="w"> </span><span class="n">result</span><span class="p">,</span>
+<span class="w">   </span><span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">){</span>
+
+<span class="w">      </span><span class="k">if</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="na">hasErrors</span><span class="p">()){</span>
+<span class="w">         </span><span class="n">String</span><span class="w"> </span><span class="n">errorMessage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">""</span><span class="p">;</span>
+<span class="w">         </span><span class="n">response</span><span class="p">.</span><span class="na">setStatus</span><span class="p">(</span><span class="n">HttpServletResponse</span><span class="p">.</span><span class="na">SC_BAD_REQUEST</span><span class="p">);</span>
+<span class="w">         </span><span class="n">List</span><span class="o">&lt;</span><span class="n">ObjectError</span><span class="o">&gt;</span><span class="w"> </span><span class="n">errors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">getAllErrors</span><span class="p">();</span>
+<span class="w">         </span><span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="n">ObjectError</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">errors</span><span class="p">){</span>
+<span class="w">            </span><span class="n">errorMessage</span><span class="o">+=</span><span class="w"> </span><span class="s">"ERROR: "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="na">getDefaultMessage</span><span class="p">();</span>
+<span class="w">         </span><span class="p">}</span>
+<span class="w">         </span><span class="k">return</span><span class="w"> </span><span class="n">errorMessage</span><span class="p">;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">       </span><span class="k">else</span><span class="p">{</span>
+<span class="w">         </span><span class="k">return</span><span class="w"> </span><span class="s">"Validation Successful"</span><span class="p">;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">   </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="cascading-constraints">Cascading Constraints<a class="headerlink" href="#cascading-constraints" title="Permanent link">&para;</a></h3>
+<p>Validating one bean is a good start, but often, beans are nested or in a complete graph of beans. To validate that graph in one go, apply cascading validation with <a href="https://docs.jboss.org/hibernate/validator/9.0/reference/en-US/html_single/#_cascaded_validation">@Valid</a></p>
+<h3 id="additional-constraints">Additional Constraints<a class="headerlink" href="#additional-constraints" title="Permanent link">&para;</a></h3>
+<p>In addition to providing the complete set of JSR303 constraints, Hibernate Validator also defines some additional constraints for convenience:</p>
+<ul>
+<li><code>@CreditCardNumber</code></li>
+<li><code>@EAN</code></li>
+<li><code>@Email</code></li>
+<li><code>@Length</code></li>
+<li><code>@Range</code></li>
+<li><code>@ScriptAssert</code></li>
+<li><code>@URL</code></li>
+</ul>
+<p>Take a look at this <a href="https://docs.jboss.org/hibernate/validator/9.0/reference/en-US/html_single/#validator-defineconstraints-hv-constraints">list</a> for the complete list.</p>
+<p>Note that <code>@SafeHtml</code>, a previously valid constraint, has been deprecated according to the <a href="https://in.relation.to/2019/11/20/hibernate-validator-610-6018-released/">Hibernate Validator 6.1.0.Final and 6.0.18.Final release blogpost</a>. Please refrain from using the <code>@SafeHtml</code> constraint.</p>
+<h2 id="custom-constraints">Custom Constraints<a class="headerlink" href="#custom-constraints" title="Permanent link">&para;</a></h2>
+<p>One of the most powerful features of bean validation is the ability to define your own constraints that go beyond the simple validation offered by built-in constraints.</p>
+<p>Creating custom constraints is beyond the scope of this guide. Please see this <a href="https://docs.jboss.org/hibernate/validator/">documentation</a>.</p>
+<h2 id="error-messages">Error Messages<a class="headerlink" href="#error-messages" title="Permanent link">&para;</a></h2>
+<p>It is possible to specify a message ID with the validation annotation, so that error messages are customized :</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@Pattern</span><span class="p">(</span><span class="n">regexp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"[a-zA-Z0-9 ]+"</span><span class="p">,</span><span class="w"> </span><span class="n">message</span><span class="o">=</span><span class="s">"article.title.error"</span><span class="p">)</span>
+<span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">articleTitle</span><span class="p">;</span>
+</code></pre></div>
+<p>Spring MVC will then look up a message with ID <em>article.title.error</em> in a defined MessageSource. More on this <a href="https://www.silverbaytech.com/2013/04/16/custom-messages-in-spring-validation/">documentation</a>.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://jakarta.ee/specifications/bean-validation/3.0/jakarta-bean-validation-spec-3.0.html">Jakarta Bean Validation 3.0 Specification</a></li>
+<li><a href="https://docs.hibernate.org/validator/9.0/reference/en-US/html_single/#chapter-message-interpolation">Hibernate Validator 9.0: Interpolating Constraint Error Messages</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

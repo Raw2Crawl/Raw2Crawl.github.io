@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Server Side Template Injection Prevention | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Server Side Template Injection Prevention">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Server_Side_Template_Injection_Prevention_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="server-side-template-injection-prevention-cheat-sheet">Server-Side Template Injection Prevention Cheat Sheet<a class="headerlink" href="#server-side-template-injection-prevention-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>Server-Side Template Injection (SSTI) happens when a server-side template engine evaluates untrusted input as template code instead of rendering it as data (Common Weakness Enumeration <a href="https://cwe.mitre.org/data/definitions/1336.html">CWE-1336</a>). Engines such as Jinja2, Twig, and FreeMarker have their own expression languages, so injected syntax runs with the engine's access to application objects. Depending on the engine and its configuration, the impact ranges from reading sensitive data and files to remote code execution.</p>
+<p>Untrusted input crosses into template code in three ways:</p>
+<ul>
+<li><strong>Input becomes template source.</strong> Untrusted data, such as request parameters, stored user content, or third-party files, is concatenated into a template string, even inside an expression like <code>"Hello {{" + name + "}}"</code>, or passed to a string-to-template API such as Jinja2's <code>from_string()</code> or Flask's <code>render_template_string()</code>.</li>
+<li><strong>A template evaluates input as code.</strong> A fixed template passes a value to a feature that parses strings as template code, such as FreeMarker's <code>?interpret</code> and <code>?eval</code> built-ins or Twig's <code>template_from_string()</code> function.</li>
+<li><strong>Input chooses the template.</strong> User input selects a template name, path, or include target, which can make the engine load files it should not.</li>
+</ul>
+<p>Do not try to filter template syntax out of input. Syntax differs between engines and contexts, so a denylist will miss payloads.</p>
+<p>This cheat sheet covers prevention. To test a running application, use the <a href="https://wstg.owasp.org/latest/4-Web_Application_Security_Testing/07-Injection/18-Server-side_Template_Injection/">OWASP Web Security Testing Guide (WSTG-INJT-18)</a>.</p>
+<h2 id="prevention">Prevention<a class="headerlink" href="#prevention" title="Permanent link">&para;</a></h2>
+<h3 id="treat-templates-as-code">Treat templates as code<a class="headerlink" href="#treat-templates-as-code" title="Permanent link">&para;</a></h3>
+<p>Keep templates with the application source, review changes to them like code, and never build them from untrusted data. Do not let untrusted data choose a template name, path, or include target either: map the user's choice to a fixed list of template names on the server. If users must author templates, follow the User-Supplied Templates section below.</p>
+<h3 id="pass-untrusted-input-only-as-data">Pass untrusted input only as data<a class="headerlink" href="#pass-untrusted-input-only-as-data" title="Permanent link">&para;</a></h3>
+<p>Render a fixed template and pass user values as named variables, the same way a parameterized query keeps data out of SQL.</p>
+<h3 id="keep-the-render-context-minimal">Keep the render context minimal<a class="headerlink" href="#keep-the-render-context-minimal" title="Permanent link">&para;</a></h3>
+<p>A template can read everything in its render context and, depending on the engine, call methods on the objects you pass. Pass only the values a template needs. Do not pass secrets, configuration, service clients, or objects whose methods have side effects. This limits what an injected template can reach, but it does not stop code execution in an engine that is not sandboxed.</p>
+<h3 id="prefer-the-least-powerful-engine">Prefer the least powerful engine<a class="headerlink" href="#prefer-the-least-powerful-engine" title="Permanent link">&para;</a></h3>
+<p>Choose an engine that <a href="https://cwe.mitre.org/data/definitions/1336.html#Potential_Mitigations">limits the power of its expressions, function calls, or commands</a>, such as a logic-less engine like Mustache, unless you need more. Custom helpers and lambdas you register still run as application code.</p>
+<h3 id="keep-output-escaping-on">Keep output escaping on<a class="headerlink" href="#keep-output-escaping-on" title="Permanent link">&para;</a></h3>
+<p>Auto-escaping helps prevent <a href="Cross_Site_Scripting_Prevention_Cheat_Sheet.html">cross-site scripting</a> in HTML output. It does not prevent SSTI, because escaping applies to the values a template prints, not to template code the engine has already parsed. Keep it enabled and never mark untrusted values as safe.</p>
+<h3 id="find-vulnerable-template-code">Find vulnerable template code<a class="headerlink" href="#find-vulnerable-template-code" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Inventory every place the application renders templates, including email and notification bodies, PDF and report generation, prompts for large language models, and every feature that lets users create or edit templates. Treat templates that ship in third-party files as templates you did not write.</li>
+<li>Search for string-to-template APIs and features, such as Jinja2's <code>from_string()</code>, Flask's <code>render_template_string()</code>, Twig's <code>createTemplate()</code> and <code>template_from_string()</code>, and FreeMarker's <code>Template</code> constructor and <code>?interpret</code> and <code>?eval</code> built-ins. Also search for code that builds template source or template names from input.</li>
+<li>For each call site, confirm that untrusted data reaches only render variables and that no template passes it to a feature that evaluates strings as code.</li>
+</ul>
+<h2 id="engine-configuration">Engine Configuration<a class="headerlink" href="#engine-configuration" title="Permanent link">&para;</a></h2>
+<p>Frameworks can change engine defaults, so check the effective settings in your application. For other engines, consult their documentation for restrictions on untrusted templates.</p>
+<table>
+<thead>
+<tr>
+<th>Engine</th>
+<th>Restrictions for untrusted templates</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Jinja2</td>
+<td>Use <a href="https://jinja.palletsprojects.com/en/stable/sandbox/"><code>SandboxedEnvironment</code></a>, or <code>ImmutableSandboxedEnvironment</code> to also block changes to lists, sets, and dictionaries. Restrict attributes further by overriding <code>is_safe_attribute()</code>, and decorate dangerous methods with <code>unsafe()</code>.</td>
+</tr>
+<tr>
+<td>Twig</td>
+<td>Twig treats templates as trusted code, so its <a href="https://twig.symfony.com/doc/3.x/sandbox.html">sandbox</a> is the only boundary for untrusted authors. Give the sandbox its own environment and a strict <code>SecurityPolicy</code> that allowlists the tags, filters, functions, tests, methods, and properties templates may use. The <code>Sandbox</code> class requires Twig 3.29 or later. Never allow <a href="https://twig.symfony.com/doc/3.x/functions/template_from_string.html"><code>template_from_string()</code></a> in sandboxed templates.</td>
+</tr>
+<tr>
+<td>FreeMarker</td>
+<td>Follow the <a href="https://freemarker.apache.org/docs/app_faq.html#faq_template_uploading_security">FAQ on uploaded templates</a>: set the <code>?new</code> class resolver to <code>ALLOWS_NOTHING_RESOLVER</code>, not <code>SAFER_RESOLVER</code>; keep <code>?api</code> disabled (the default), restrict member access with <code>SimpleObjectWrapper</code> or a <code>WhitelistMemberAccessPolicy</code>, disable DOM node wrapping, and use a template loader that only loads approved files.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="user-supplied-templates">User-Supplied Templates<a class="headerlink" href="#user-supplied-templates" title="Permanent link">&para;</a></h2>
+<p>Some products let users write templates by design, such as email builders, content management system themes, and report designers. Treat this as a privileged feature that runs user-written code:</p>
+<ul>
+<li>Limit template editing to authorized roles and log template changes for audit.</li>
+<li>Render with the engine's sandbox or restricted configuration from the table above and keep the engine up to date.</li>
+<li>Register only filters, functions, and globals that are safe to call with any arguments a template author chooses. The sandbox does not limit what your own code does once it is called.</li>
+<li>Contain what the sandbox does not. As <a href="https://twig.symfony.com/doc/3.x/sandbox.html#what-the-sandbox-does-not-protect-against">Twig's documentation explains</a>, a sandbox does not limit CPU or memory use or make the rendered output safe, and Jinja2 and FreeMarker give the same warning about resources. Treat the output as untrusted, and render in an isolated process or container with time and memory limits, no secrets, and restricted network access.</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://cwe.mitre.org/data/definitions/1336.html">CWE-1336: Improper Neutralization of Special Elements Used in a Template Engine</a></li>
+<li><a href="https://twig.symfony.com/doc/3.x/sandbox.html">Twig Documentation: Twig Sandbox</a></li>
+<li><a href="https://freemarker.apache.org/docs/app_faq.html#faq_template_uploading_security">Apache FreeMarker FAQ: Can I allow users to upload templates?</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

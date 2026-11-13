@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Third Party Payment Gateway Integration | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Third Party Payment Gateway Integration">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Third_Party_Payment_Gateway_Integration_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="secure-integration-of-third-party-payment-gateways-cheat-sheet">Secure Integration of Third-Party Payment Gateways Cheat Sheet<a class="headerlink" href="#secure-integration-of-third-party-payment-gateways-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>Integrating third-party payment gateways allows businesses to securely outsource payment processing. These gateways handle sensitive data like cardholder information and offer reduced PCI DSS scope if integrated correctly.</p>
+<p>However, insecure integration can lead to severe vulnerabilities—ranging from payment spoofing and order manipulation to fraud and business logic flaws. This cheat sheet outlines secure practices for integrating any third-party payment gateway, focusing on a general flow. It identifies potential failure points at each step and provides practical recommendations to prevent common mistakes.</p>
+<h2 id="understanding-the-payment-flow">Understanding the Payment Flow<a class="headerlink" href="#understanding-the-payment-flow" title="Permanent link">&para;</a></h2>
+<p>A typical third-party payment flow consists of five core steps:</p>
+<ol>
+<li>
+<p><strong>Cart Preparation</strong><br />
+   The user selects items and initiates checkout.</p>
+</li>
+<li>
+<p><strong>Order Initialization (Merchant Backend → Payment Gateway)</strong><br />
+   The merchant backend creates a transaction or order via API and receives an <code>order_id</code> or <code>payment_url</code>.</p>
+</li>
+<li>
+<p><strong>User Redirection to Payment Gateway</strong><br />
+   The user is redirected to the gateway-hosted payment page.</p>
+</li>
+<li>
+<p><strong>Payment Execution (User → Gateway)</strong><br />
+   The user completes or fails the payment.</p>
+</li>
+<li>
+<p><strong>Return and Verification (Payment Gateway → Merchant)</strong><br />
+   The user is redirected to the merchant site (callback/return URL), and optionally, the gateway sends a server-to-server notification. The merchant verifies the result and proceeds with order fulfillment.</p>
+</li>
+</ol>
+<p>The following sequence diagram explains the steps above.</p>
+<p><img alt="Payment integration sequence flow" src="../assets/third_party_integration_workflow.png" /></p>
+<hr />
+<h2 id="what-can-go-wrong-at-each-step-and-how-to-prevent-it">What Can Go Wrong at Each Step and How to Prevent It<a class="headerlink" href="#what-can-go-wrong-at-each-step-and-how-to-prevent-it" title="Permanent link">&para;</a></h2>
+<h3 id="1-sending-order-data">1. Sending Order data<a class="headerlink" href="#1-sending-order-data" title="Permanent link">&para;</a></h3>
+<p><strong>Risks:</strong></p>
+<ul>
+<li>Price tampering or product substitution via client-side manipulation.</li>
+<li>Missing server-side cart validation.</li>
+</ul>
+<p><strong>Mitigations:</strong></p>
+<ul>
+<li>Validate all cart details (product IDs, prices, discounts) on the backend.</li>
+<li>Recalculate totals server-side using trusted data before order creation.</li>
+</ul>
+<hr />
+<h3 id="2-redirect-to-webhook">2. Redirect to webhook<a class="headerlink" href="#2-redirect-to-webhook" title="Permanent link">&para;</a></h3>
+<p><strong>Risks:</strong></p>
+<ul>
+<li>Trusting unauthenticated or spoofed callbacks.</li>
+<li>Processing orders before verifying payment status.</li>
+<li>Race conditions from multiple callbacks.</li>
+<li>Replaying callbacks to trigger repeated fulfillment (e.g., multiple shipments, account credits).</li>
+<li>Assuming user redirection parameters are trustworthy (these are untrusted and can be manipulated).</li>
+</ul>
+<p><strong>Mitigations:</strong></p>
+<ul>
+<li>Validate all cart details (product IDs, prices, discounts) on the backend.</li>
+<li>Always verify the payment status server-side with the gateway’s API before fulfilling the order.</li>
+<li>Match the expected amount, currency, and order ID.</li>
+<li>Validate the authenticity of callbacks (e.g., HMAC signatures, secret tokens).</li>
+<li>Implement idempotency: only process an order once regardless of how many times the callback is received.</li>
+<li>Treat checkout expiry separately from webhook signature freshness. Gateways can <a href="https://docs.stripe.com/webhooks#automatic-retries">retry delivery</a> or <a href="https://docs.stripe.com/webhooks#event-ordering">send events out of order</a>; verify late notifications and reconcile the current payment state instead of discarding them solely because the checkout expired. Use persistent duplicate-event records and idempotent fulfillment as described in the <a href="Webhook_Security_Cheat_Sheet.html#idempotency-and-duplicate-events">Webhook Security Cheat Sheet</a>.</li>
+<li>Only server-to-server callbacks should be trusted for payment verification and order fulfillment.</li>
+<li>Log all callback attempts for forensic analysis.</li>
+</ul>
+<h2 id="logging-and-monitoring">Logging and Monitoring<a class="headerlink" href="#logging-and-monitoring" title="Permanent link">&para;</a></h2>
+<p><strong>Why it matters:</strong>
+Even with proper validation and logic, monitoring is crucial for detecting abuse, fraud attempts, or system misbehavior.</p>
+<p><strong>Recommendations:</strong></p>
+<ul>
+<li>Log all payment attempts (initiation, redirects, callbacks) with timestamps and IPs.</li>
+<li>Alert on:<ul>
+<li>Unexpected order statuses (e.g., "Paid" without any gateway confirmation).</li>
+<li>Excessive callback attempts for the same order.</li>
+<li>Payment failures followed by repeated attempts with identical data.</li>
+</ul>
+</li>
+<li>Log callback identifiers, validation outcomes, and order correlation data instead of raw headers and bodies. Exclude credentials and unnecessary personal or payment data; apply the <a href="Logging_Cheat_Sheet.html#data-to-exclude">Logging Cheat Sheet's data-exclusion guidance</a>.</li>
+<li>Do not retain sensitive authentication data, such as card verification codes or PIN data, after authorization, <a href="https://www.pcisecuritystandards.org/faqs/1154/">even if encrypted</a>. Restrict access to permitted investigation records and define their retention period.</li>
+<li>Incorporate fraud and risk scoring mechanisms to detect carding attacks and other suspicious activities during payment execution.</li>
+</ul>
+<hr />
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://wstg.owasp.org/latest/4-Web_Application_Security_Testing/10-Business_Logic/10-Payment_Functionality/">OWASP WSTG: Payment Functionality</a></li>
+<li><a href="https://docs.adyen.com/development-resources/api-idempotency">Adyen: API idempotency</a></li>
+<li><a href="https://docs.adyen.com/development-resources/webhooks/secure-webhooks/verify-hmac-signatures">Adyen: Verify HMAC signatures</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

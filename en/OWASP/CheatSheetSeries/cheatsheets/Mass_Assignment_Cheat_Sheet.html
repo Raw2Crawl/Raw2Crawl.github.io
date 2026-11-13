@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mass Assignment | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Mass Assignment">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Mass_Assignment_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="mass-assignment-cheat-sheet">Mass Assignment Cheat Sheet<a class="headerlink" href="#mass-assignment-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<h3 id="definition">Definition<a class="headerlink" href="#definition" title="Permanent link">&para;</a></h3>
+<p>Software frameworks sometimes allow developers to automatically bind HTTP request parameters into program code variables or objects to make using that framework easier on developers. This can sometimes cause harm.</p>
+<p>Attackers can sometimes use this methodology to create new parameters that the developer never intended which in turn creates or overwrites new variable or objects in program code that was not intended.</p>
+<p>This is called a <strong>Mass Assignment</strong> vulnerability.</p>
+<h3 id="alternative-names">Alternative Names<a class="headerlink" href="#alternative-names" title="Permanent link">&para;</a></h3>
+<p>Depending on the language/framework in question, this vulnerability can have several <a href="https://cwe.mitre.org/data/definitions/915.html">alternative names</a>:</p>
+<ul>
+<li><strong>Mass Assignment:</strong> Ruby on Rails, NodeJS.</li>
+<li><strong>Autobinding:</strong> Spring MVC, ASP NET MVC.</li>
+<li><strong>Object injection:</strong> PHP.</li>
+</ul>
+<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
+<p>Suppose there is a form for editing a user's account information:</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">form</span><span class="p">&gt;</span>
+     <span class="p">&lt;</span><span class="nt">input</span> <span class="na">name</span><span class="o">=</span><span class="s">"userid"</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span><span class="p">&gt;</span>
+     <span class="p">&lt;</span><span class="nt">input</span> <span class="na">name</span><span class="o">=</span><span class="s">"password"</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span><span class="p">&gt;</span>
+     <span class="p">&lt;</span><span class="nt">input</span> <span class="na">name</span><span class="o">=</span><span class="s">"email"</span> <span class="na">text</span><span class="o">=</span><span class="s">"text"</span><span class="p">&gt;</span>
+     <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"submit"</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>  
+</code></pre></div>
+<p>Here is the object that the form is binding to:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">User</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">userid</span><span class="p">;</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">password</span><span class="p">;</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="n">isAdmin</span><span class="p">;</span>
+
+<span class="w">   </span><span class="c1">//Getters &amp; Setters</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Here is the controller handling the request:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@RequestMapping</span><span class="p">(</span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"/addUser"</span><span class="p">,</span><span class="w"> </span><span class="n">method</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RequestMethod</span><span class="p">.</span><span class="na">POST</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">submit</span><span class="p">(</span><span class="n">User</span><span class="w"> </span><span class="n">user</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="n">userService</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
+<span class="w">   </span><span class="k">return</span><span class="w"> </span><span class="s">"successPage"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Here is the typical request:</p>
+<div class="highlight"><pre><span></span><code>POST /addUser
+...
+userid=bobbytables&amp;password=hashedpass&amp;email=bobby@tables.com
+</code></pre></div>
+<p>And here is the exploit in which we set the value of the attribute <code>isAdmin</code> of the instance of the class <code>User</code>:</p>
+<div class="highlight"><pre><span></span><code>POST /addUser
+...
+userid=bobbytables&amp;password=hashedpass&amp;email=bobby@tables.com&amp;isAdmin=true
+</code></pre></div>
+<h3 id="exploitability">Exploitability<a class="headerlink" href="#exploitability" title="Permanent link">&para;</a></h3>
+<p>Mass assignment is exploitable when attacker-controlled input can initialize or update fields that the caller is not authorized to change, such as a role or account owner. Field names may be guessed or discovered; source-code access is not required. <a href="https://cwe.mitre.org/data/definitions/915.html">CWE-915</a> defines the weakness in terms of insufficient control over writable attributes.</p>
+<p>An empty constructor is not a general prerequisite. For example, <a href="https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-data-binding.html">Spring supports both constructor and setter binding</a>. Review which inputs the binding mechanism exposes, including nested objects.</p>
+<h3 id="github-case-study">GitHub case study<a class="headerlink" href="#github-case-study" title="Permanent link">&para;</a></h3>
+<p>In 2012, GitHub was hacked using mass assignment. A user was able to upload his public key to any organization and thus make any subsequent changes in their repositories. <a href="https://blog.github.com/2012-03-04-public-key-security-vulnerability-and-mitigation/">GitHub's Blog Post</a>.</p>
+<h3 id="solutions">Solutions<a class="headerlink" href="#solutions" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Prefer dedicated input objects, such as Data Transfer Objects (DTOs), containing only fields the caller may edit; see <a href="https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-data-binding.html">Spring's model design guidance</a>.</li>
+<li>Explicitly allow-list fields when binding to an object with additional properties.</li>
+<li>Do not rely on a block-list as the sole protection: a new or overlooked sensitive field remains bindable. <a href="https://cwe.mitre.org/data/definitions/915.html">CWE-915 recommends allowlists over denylists</a>. The block-list examples below illustrate mechanisms encountered in existing applications, not the recommended design.</li>
+</ul>
+<p>DTOs and field allowlists restrict writable properties; they do not replace <a href="Authorization_Cheat_Sheet.html#validate-the-permissions-on-every-request">authorization for the requested object and operation</a>.</p>
+<h2 id="general-solutions">General Solutions<a class="headerlink" href="#general-solutions" title="Permanent link">&para;</a></h2>
+<p>An architectural approach is to create Data Transfer Objects and avoid binding input directly to domain objects. Only the fields that are meant to be editable by the user are included in the DTO.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserRegistrationFormDTO</span><span class="w"> </span><span class="p">{</span>
+<span class="w"> </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">userid</span><span class="p">;</span>
+<span class="w"> </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">password</span><span class="p">;</span>
+<span class="w"> </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+
+<span class="w"> </span><span class="c1">//NOTE: isAdmin field is not present</span>
+
+<span class="w"> </span><span class="c1">//Getters &amp; Setters</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="language-framework-specific-solutions">Language &amp; Framework specific solutions<a class="headerlink" href="#language-framework-specific-solutions" title="Permanent link">&para;</a></h2>
+<h3 id="spring-mvc">Spring MVC<a class="headerlink" href="#spring-mvc" title="Permanent link">&para;</a></h3>
+<h4 id="allow-listing">Allow-listing<a class="headerlink" href="#allow-listing" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="nd">@Controller</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserController</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="nd">@InitBinder</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">initBinder</span><span class="p">(</span><span class="n">WebDataBinder</span><span class="w"> </span><span class="n">binder</span><span class="p">,</span><span class="w"> </span><span class="n">WebRequest</span><span class="w"> </span><span class="n">request</span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">binder</span><span class="p">.</span><span class="na">setAllowedFields</span><span class="p">(</span><span class="s">"userid"</span><span class="p">,</span><span class="w"> </span><span class="s">"password"</span><span class="p">,</span><span class="w"> </span><span class="s">"email"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>See <a href="https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-data-binding.html">Spring's model design guidance</a> for dedicated input objects and allowed fields.</p>
+<h4 id="block-listing">Block-listing<a class="headerlink" href="#block-listing" title="Permanent link">&para;</a></h4>
+<p>Spring describes <code>disallowedFields</code> as fragile because fields can be missed or added later. Prefer the allow-list above; this example only excludes the named property.</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@Controller</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserController</span>
+<span class="p">{</span>
+<span class="w">   </span><span class="nd">@InitBinder</span>
+<span class="w">   </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">initBinder</span><span class="p">(</span><span class="n">WebDataBinder</span><span class="w"> </span><span class="n">binder</span><span class="p">,</span><span class="w"> </span><span class="n">WebRequest</span><span class="w"> </span><span class="n">request</span><span class="p">)</span>
+<span class="w">   </span><span class="p">{</span>
+<span class="w">      </span><span class="n">binder</span><span class="p">.</span><span class="na">setDisallowedFields</span><span class="p">(</span><span class="s">"isAdmin"</span><span class="p">);</span>
+<span class="w">   </span><span class="p">}</span>
+<span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>See the <a href="https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-data-binding.html">Spring data binding limitations</a>.</p>
+<h3 id="nodejs-mongoose">NodeJS + Mongoose<a class="headerlink" href="#nodejs-mongoose" title="Permanent link">&para;</a></h3>
+<h4 id="allow-listing_1">Allow-listing<a class="headerlink" href="#allow-listing_1" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="nx">UserSchema</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">mongoose</span><span class="p">.</span><span class="nx">Schema</span><span class="p">({</span>
+<span class="w">    </span><span class="nx">userid</span><span class="o">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">password</span><span class="o">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">email</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">isAdmin</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nb">Boolean</span><span class="p">,</span>
+<span class="p">});</span>
+
+<span class="nx">UserSchema</span><span class="p">.</span><span class="nx">statics</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">User</span><span class="p">.</span><span class="nx">userCreateSafeFields</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">'userid'</span><span class="p">,</span><span class="w"> </span><span class="s1">'password'</span><span class="p">,</span><span class="w"> </span><span class="s1">'email'</span><span class="p">]</span>
+<span class="p">};</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="nx">User</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">mongoose</span><span class="p">.</span><span class="nx">model</span><span class="p">(</span><span class="s1">'User'</span><span class="p">,</span><span class="w"> </span><span class="nx">UserSchema</span><span class="p">);</span>
+
+<span class="nx">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'underscore'</span><span class="p">);</span>
+<span class="kd">var</span><span class="w"> </span><span class="nx">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">User</span><span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">pick</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">body</span><span class="p">,</span><span class="w"> </span><span class="nx">User</span><span class="p">.</span><span class="nx">userCreateSafeFields</span><span class="p">));</span>
+</code></pre></div>
+<p>Take a look <a href="http://underscorejs.org/#pick">here</a> for the documentation.</p>
+<h4 id="block-listing_1">Block-listing<a class="headerlink" href="#block-listing_1" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="nx">massAssign</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'mongoose-mass-assign'</span><span class="p">);</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="nx">UserSchema</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">mongoose</span><span class="p">.</span><span class="nx">Schema</span><span class="p">({</span>
+<span class="w">    </span><span class="nx">userid</span><span class="o">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">password</span><span class="o">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">email</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">isAdmin</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nb">Boolean</span><span class="p">,</span><span class="w"> </span><span class="nx">protect</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="k">default</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="p">});</span>
+
+<span class="nx">UserSchema</span><span class="p">.</span><span class="nx">plugin</span><span class="p">(</span><span class="nx">massAssign</span><span class="p">);</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="nx">User</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">mongoose</span><span class="p">.</span><span class="nx">model</span><span class="p">(</span><span class="s1">'User'</span><span class="p">,</span><span class="w"> </span><span class="nx">UserSchema</span><span class="p">);</span>
+
+<span class="cm">/** Static method, useful for creation **/</span>
+<span class="kd">var</span><span class="w"> </span><span class="nx">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">User</span><span class="p">.</span><span class="nx">massAssign</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">body</span><span class="p">);</span>
+
+<span class="cm">/** Instance method, useful for updating**/</span>
+<span class="kd">var</span><span class="w"> </span><span class="nx">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">User</span><span class="p">;</span>
+<span class="nx">user</span><span class="p">.</span><span class="nx">massAssign</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">body</span><span class="p">);</span>
+
+<span class="cm">/** Static massUpdate method **/</span>
+<span class="kd">var</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">userid</span><span class="o">:</span><span class="w"> </span><span class="s1">'bhelx'</span><span class="p">,</span><span class="w"> </span><span class="nx">isAdmin</span><span class="o">:</span><span class="w"> </span><span class="s1">'true'</span><span class="w"> </span><span class="p">};</span>
+<span class="nx">User</span><span class="p">.</span><span class="nx">update</span><span class="p">({</span><span class="w"> </span><span class="s1">'_id'</span><span class="o">:</span><span class="w"> </span><span class="nx">someId</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">$set</span><span class="o">:</span><span class="w"> </span><span class="nx">User</span><span class="p">.</span><span class="nx">massUpdate</span><span class="p">(</span><span class="nx">input</span><span class="p">)</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">);</span>
+</code></pre></div>
+<p>Take a look <a href="https://www.npmjs.com/package/mongoose-mass-assign">here</a> for the documentation.</p>
+<h3 id="ruby-on-rails">Ruby On Rails<a class="headerlink" href="#ruby-on-rails" title="Permanent link">&para;</a></h3>
+<p>Take a look <a href="https://guides.rubyonrails.org/v3.2.9/security.html#mass-assignment">here</a> for the documentation.</p>
+<h3 id="django">Django<a class="headerlink" href="#django" title="Permanent link">&para;</a></h3>
+<p>Take a look <a href="https://coffeeonthekeyboard.com/mass-assignment-security-part-10-855/">here</a> for the documentation.</p>
+<h3 id="asp-net">ASP NET<a class="headerlink" href="#asp-net" title="Permanent link">&para;</a></h3>
+<p>Take a look <a href="https://odetocode.com/Blogs/scott/archive/2012/03/11/complete-guide-to-mass-assignment-in-asp-net-mvc.aspx">here</a> for the documentation.</p>
+<h3 id="php-laravel-eloquent">PHP Laravel + Eloquent<a class="headerlink" href="#php-laravel-eloquent" title="Permanent link">&para;</a></h3>
+<h4 id="allow-listing_2">Allow-listing<a class="headerlink" href="#allow-listing_2" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="cp">&lt;?php</span>
+
+<span class="k">namespace</span> <span class="nx">App</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nx">Illuminate\Database\Eloquent\Model</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">User extends Model</span>
+<span class="p">{</span>
+    <span class="k">private</span> <span class="nv">$userid</span><span class="p">;</span>
+    <span class="k">private</span> <span class="nv">$password</span><span class="p">;</span>
+    <span class="k">private</span> <span class="nv">$email</span><span class="p">;</span>
+    <span class="k">private</span> <span class="nv">$isAdmin</span><span class="p">;</span>
+
+    <span class="k">protected</span> <span class="nv">$fillable </span><span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="s1">'userid'</span><span class="p">,</span><span class="s1">'password'</span><span class="p">,</span><span class="s1">'email'</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Take a look <a href="https://laravel.com/docs/5.2/eloquent#mass-assignment">here</a> for the documentation.</p>
+<h4 id="block-listing_2">Block-listing<a class="headerlink" href="#block-listing_2" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="cp">&lt;?php</span>
+
+<span class="k">namespace</span> <span class="nx">App</span><span class="p">;</span>
+
+<span class="k">use</span> <span class="nx">Illuminate\Database\Eloquent\Model</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">User extends Model</span>
+<span class="p">{</span>
+    <span class="k">private</span> <span class="nv">$userid</span><span class="p">;</span>
+    <span class="k">private</span> <span class="nv">$password</span><span class="p">;</span>
+    <span class="k">private</span> <span class="nv">$email</span><span class="p">;</span>
+    <span class="k">private</span> <span class="nv">$isAdmin</span><span class="p">;</span>
+
+    <span class="k">protected</span> <span class="nv">$guarded </span><span class="o">=</span> <span class="k">array</span><span class="p">(</span><span class="s1">'isAdmin'</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Take a look <a href="https://laravel.com/docs/5.2/eloquent#mass-assignment">here</a> for the documentation.</p>
+<h3 id="grails">Grails<a class="headerlink" href="#grails" title="Permanent link">&para;</a></h3>
+<p>Take a look <a href="http://spring.io/blog/2012/03/28/secure-data-binding-with-grails/">here</a> for the documentation.</p>
+<h3 id="play">Play<a class="headerlink" href="#play" title="Permanent link">&para;</a></h3>
+<p>Take a look <a href="https://www.playframework.com/documentation/1.4.x/controllers#nobinding">here</a> for the documentation.</p>
+<h3 id="jackson-json-object-mapper">Jackson (JSON Object Mapper)<a class="headerlink" href="#jackson-json-object-mapper" title="Permanent link">&para;</a></h3>
+<p>Take a look <a href="https://www.baeldung.com/jackson-field-serializable-deserializable-or-not">here</a> and <a href="http://lifelongprogrammer.blogspot.com/2015/09/using-jackson-view-to-protect-mass-assignment.html">here</a> for the documentation.</p>
+<h3 id="gson-json-object-mapper">GSON (JSON Object Mapper)<a class="headerlink" href="#gson-json-object-mapper" title="Permanent link">&para;</a></h3>
+<p>Take a look <a href="https://sites.google.com/site/gson/gson-user-guide#TOC-Excluding-Fields-From-Serialization-and-Deserialization">here</a> and <a href="https://stackoverflow.com/a/27986860">here</a> for the document.</p>
+<h3 id="json-lib-json-object-mapper">JSON-Lib (JSON Object Mapper)<a class="headerlink" href="#json-lib-json-object-mapper" title="Permanent link">&para;</a></h3>
+<p>Take a look <a href="http://json-lib.sourceforge.net/advanced.html">here</a> for the documentation.</p>
+<h3 id="flexjson-json-object-mapper">Flexjson (JSON Object Mapper)<a class="headerlink" href="#flexjson-json-object-mapper" title="Permanent link">&para;</a></h3>
+<p>Take a look <a href="http://flexjson.sourceforge.net/#Serialization">here</a> for the documentation.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://guides.rubyonrails.org/action_controller_overview.html#strong-parameters">Ruby on Rails: Strong Parameters</a></li>
+<li><a href="https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/validation/DataBinder.html">Spring Framework: DataBinder Security Considerations</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

@@ -672,9 +672,9 @@
 
 <ul>
   <li>A client sends a credential to request login</li>
-  <li>The server responds to a successful login with a <a href="https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html#session-id-properties">session token</a></li>
+  <li>The server responds to a successful login with a <a href="/en/OWASP/CheatSheetSeries/cheatsheets/Session_Management_Cheat_Sheet.html#session-id-properties">session token</a></li>
   <li>An authenticated client sends a session token to request sensitive information from the web site</li>
-  <li>A client sends a token to the web site if they <a href="https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html">forgot their password</a></li>
+  <li>A client sends a token to the web site if they <a href="/en/OWASP/CheatSheetSeries/cheatsheets/Forgot_Password_Cheat_Sheet.html">forgot their password</a></li>
 </ul>
 
 <p>Failure to encrypt any of these credentials in transit can allow attackers with network sniffing tools to view credentials and possibly use them to steal a user’s account. The attacker could sniff traffic directly using <a href="https://www.wireshark.org">Wireshark</a> or similar tools, or they could set up a proxy to capture HTTP requests. Sensitive data should be encrypted in transit to prevent this.</p>

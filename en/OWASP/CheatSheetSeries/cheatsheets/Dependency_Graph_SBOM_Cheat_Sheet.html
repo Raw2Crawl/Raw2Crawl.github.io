@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dependency Graph SBOM | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Dependency Graph SBOM">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Dependency_Graph_SBOM_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="dependency-graph-sbom-best-practices-cheat-sheet">Dependency Graph &amp; SBOM Best Practices Cheat Sheet<a class="headerlink" href="#dependency-graph-sbom-best-practices-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>A software bill of materials (SBOM) inventories software components; a dependency graph records their relationships. Use both to locate vulnerable components in releases and deployments. The <a href="https://cyclonedx.org/guides/OWASP_CycloneDX-Authoritative-Guide-to-SBOM-en.pdf">CycloneDX SBOM guide</a> describes these capabilities.</p>
+<h2 id="capture-components-and-relationships">Capture components and relationships<a class="headerlink" href="#capture-components-and-relationships" title="Permanent link">&para;</a></h2>
+<p>Use a standard machine-readable format such as CycloneDX. Capture:</p>
+<ul>
+<li>Component names, versions, suppliers, package identifiers, and hashes where available.</li>
+<li>Direct and transitive dependency relationships: components used directly and those brought in by other components.</li>
+<li>The product described, SBOM author, generation time, and generator identity/version.</li>
+</ul>
+<p>Record incomplete or unknown coverage explicitly. A component missing from an SBOM is not evidence that it is absent from the software. The <a href="https://cyclonedx.org/guides/OWASP_CycloneDX-Authoritative-Guide-to-SBOM-en.pdf">CycloneDX guide</a> covers metadata and completeness declarations.</p>
+<h2 id="generate-for-each-release">Generate for each release<a class="headerlink" href="#generate-for-each-release" title="Permanent link">&para;</a></h2>
+<p>Automate generation after dependency resolution, then reconcile the inventory with the final package or container image. Include bundled libraries and operating system packages where applicable; manifests alone can misrepresent shipped contents. Record generation scope and known gaps. The <a href="https://cyclonedx.org/guides/OWASP_CycloneDX-Authoritative-Guide-to-SBOM-en.pdf">CycloneDX generation guidance</a> recommends comparing build artifacts with the SBOM and correcting discrepancies.</p>
+<p>Validate the document against its format's schema before publication or ingestion, and separately check the metadata and relationships listed above. Passing these checks does not establish inventory completeness.</p>
+<p>Keep each release's inventory distinct. For pipeline hardening, follow the <a href="CI_CD_Security_Cheat_Sheet.html">CI/CD Security Cheat Sheet</a>.</p>
+<h2 id="bind-and-verify-release-evidence">Bind and verify release evidence<a class="headerlink" href="#bind-and-verify-release-evidence" title="Permanent link">&para;</a></h2>
+<p>Bind the SBOM to the final artifact's cryptographic digest through a signed attestation: a signed statement identifying the artifact and its SBOM. Signing the artifact and SBOM separately does not establish that relationship. An SBOM attestation describes inventory; build provenance separately records how the artifact was produced.</p>
+<p>Use <a href="https://slsa.dev/spec/v1.2/verifying-artifacts">SLSA's provenance verification checks</a> as a model for verifying release evidence before installation or deployment: validate signatures, allowed signer identities, the artifact digest, and the expected attestation type. For build provenance, also check the expected builder identity, source repository, build type, and parameters. Reject missing, invalid, or unexpected evidence when your trust policy requires it.</p>
+<p>Valid signatures authenticate claims and protect their integrity. They do not prove that an SBOM is accurate or complete, that software is safe, or that a trusted builder has not been compromised.</p>
+<p>Preserve original SBOMs and signed evidence alongside each release, even when importing inventory into another system. Restrict write access and limit sharing of sensitive metadata. <a href="https://www.cisa.gov/sites/default/files/2024-08/SECURING_THE_SOFTWARE_SUPPLY_CHAIN_RECOMMENDED_PRACTICES_FOR_SOFTWARE_BILL_OF_MATERIALS_CONSUMPTION-508.pdf">CISA's SBOM consumption guidance</a> covers validation and original-document retention. See the <a href="Software_Supply_Chain_Security_Cheat_Sheet.html">Software Supply Chain Security Cheat Sheet</a> for broader controls.</p>
+<h2 id="use-inventory-for-vulnerability-response">Use inventory for vulnerability response<a class="headerlink" href="#use-inventory-for-vulnerability-response" title="Permanent link">&para;</a></h2>
+<p>Map release SBOMs to deployed systems and reassess components when new advisories arrive. Prioritize direct and transitive dependencies by exploitability, exposure, and impact; dependency depth alone does not determine risk. Use the graph to identify which parent dependency brings in an affected component.</p>
+<p>Vulnerability Exploitability eXchange (VEX) documents state whether a vulnerability affects a particular product. Before accepting a "not affected" claim, authenticate the issuer, verify document integrity, and assess its justification against the exact product version and deployment conditions. <a href="https://www.cisa.gov/sites/default/files/2024-08/SECURING_THE_SOFTWARE_SUPPLY_CHAIN_RECOMMENDED_PRACTICES_FOR_SOFTWARE_BILL_OF_MATERIALS_CONSUMPTION-508.pdf">CISA's consumption guidance</a> recommends checking VEX veracity and reassessing risk over time.</p>
+<p>Use the <a href="Vulnerable_Dependency_Management_Cheat_Sheet.html">Vulnerable Dependency Management Cheat Sheet</a> to select and verify remediation. After rebuilding, compare the new SBOM with the previous release and update deployment mappings. An updated inventory does not by itself prove that the vulnerability is fixed or the mitigations work.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://cyclonedx.org/guides/OWASP_CycloneDX-Authoritative-Guide-to-SBOM-en.pdf">OWASP CycloneDX: Authoritative Guide to SBOM</a></li>
+<li><a href="https://www.cisa.gov/sites/default/files/2024-08/SECURING_THE_SOFTWARE_SUPPLY_CHAIN_RECOMMENDED_PRACTICES_FOR_SOFTWARE_BILL_OF_MATERIALS_CONSUMPTION-508.pdf">CISA: Recommended Practices for Software Bill of Materials Consumption</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

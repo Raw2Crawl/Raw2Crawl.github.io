@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Micro Frontend Security | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Micro Frontend Security">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Micro_Frontend_Security_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="micro-frontend-security-cheat-sheet">Micro-Frontend Security Cheat Sheet<a class="headerlink" href="#micro-frontend-security-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>Micro-frontends combine independently deployed features in a host application, also called a shell. Separate repositories and deployment teams do not create browser security boundaries: the <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Same-origin_policy">same-origin policy</a> separates origins, not individual features within a page.</p>
+<p>This cheat sheet covers the security decisions involved in composing these applications:</p>
+<ul>
+<li>Choose which features may share the host's browser privileges.</li>
+<li>Limit communication and data sharing between applications.</li>
+<li>Enforce authorization on the server for every request.</li>
+<li>Control which remote code each host release loads.</li>
+</ul>
+<p>For general browser security controls, see the <a href="Web_Frontend_Security_Cheat_Sheet.html">Web Frontend Security Cheat Sheet</a>.</p>
+<h2 id="choose-and-enforce-runtime-boundaries">Choose and Enforce Runtime Boundaries<a class="headerlink" href="#choose-and-enforce-runtime-boundaries" title="Permanent link">&para;</a></h2>
+<p>Document the origin, deployment owner, and required data access of each micro-frontend before choosing a composition mechanism.</p>
+<table>
+<thead>
+<tr>
+<th>Composition</th>
+<th>Security decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Remote JavaScript loaded into the host, including Module Federation</td>
+<td>Trust the remote with the host page's privileges. A different download origin does not sandbox the executing code.</td>
+</tr>
+<tr>
+<td>Web Components in the host page</td>
+<td>Treat components as part of the same application. Shadow DOM (Document Object Model) and scoped styles do not isolate their scripts from the host.</td>
+</tr>
+<tr>
+<td>Cross-origin iframe</td>
+<td>Use when the feature must be separated from the host's DOM and origin storage. Restrict its capabilities and explicitly control messages crossing the boundary.</td>
+</tr>
+<tr>
+<td>HTML fragments assembled on a server or at the edge</td>
+<td>Review fragments and their scripts as host content. Assembly before delivery does not create a browser isolation boundary.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="isolate-features-with-different-trust-levels">Isolate Features with Different Trust Levels<a class="headerlink" href="#isolate-features-with-different-trust-levels" title="Permanent link">&para;</a></h3>
+<p>Serve a less-trusted feature from a dedicated origin in an iframe. Apply an <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/iframe#sandbox">iframe sandbox</a>, granting only capabilities the feature requires. Leave top-level navigation and popup permissions disabled unless necessary.</p>
+<p>Do not combine <code>allow-scripts</code> and <code>allow-same-origin</code> for content on the host's own origin; that combination can let the embedded application remove its sandbox. <code>allow-same-origin</code> preserves the frame's original origin; it does not make a cross-origin frame same-origin with the host.</p>
+<p>Without <code>allow-same-origin</code>, a sandboxed document has an opaque origin, reported as <code>"null"</code> in messages. Do not trust <code>"null"</code> as a sender identity. If sensitive messaging requires an identifiable origin, use a dedicated cross-origin frame with a sandbox policy that preserves that origin.</p>
+<p>Origin separation limits direct access to the host's DOM and storage. It does not authorize backend requests or make data deliberately sent to the frame confidential from that frame.</p>
+<h3 id="control-remote-code-and-deployments">Control Remote Code and Deployments<a class="headerlink" href="#control-remote-code-and-deployments" title="Permanent link">&para;</a></h3>
+<p>For remotes executing in the host page, treat permission to publish a remote as permission to change the host's running application:</p>
+<ul>
+<li>Load only approved HTTPS remote URLs from host-controlled configuration. Do not let query parameters or other untrusted input choose executable code.</li>
+<li>Select immutable, reviewed releases, including entry scripts and their dependent chunks. Keep a known-good release available for rollback.</li>
+<li>Separate deployment credentials for the shell and each remote. This limits direct changes to other deployments, but does not contain a compromised remote already trusted to execute in the shell. See the <a href="CI_CD_Security_Cheat_Sheet.html">CI/CD Security Cheat Sheet</a>.</li>
+<li>Use <a href="Third_Party_Javascript_Management_Cheat_Sheet.html#subresource-integrity">Subresource Integrity</a> where the loader supports it. Verify coverage of dynamically loaded chunks; checking an entry script alone does not verify everything it later loads. Integrity checks detect changed bytes, not malicious behavior in an approved release.</li>
+<li>Apply the host's <a href="Content_Security_Policy_Cheat_Sheet.html">Content Security Policy (CSP)</a> to remote loading. A permitted script source is still trusted code; CSP does not isolate one allowed micro-frontend from another.</li>
+</ul>
+<h2 id="restrict-cross-application-communication">Restrict Cross-Application Communication<a class="headerlink" href="#restrict-cross-application-communication" title="Permanent link">&para;</a></h2>
+<p>Apply the general <a href="HTML5_Security_Cheat_Sheet.html#web-messaging">web messaging guidance</a> to every host/frame pair: set an exact <code>targetOrigin</code>, match <code>event.origin</code> exactly, and validate message data. In addition, following the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#security_concerns">postMessage security guidance</a>:</p>
+<ul>
+<li>Define a small message contract for each pair. Accept only the message types and payload fields that the receiving feature needs.</li>
+<li>Check <code>event.source</code> against the expected frame's <code>contentWindow</code> or the expected parent window, not only the origin. Several frames can share one origin.</li>
+<li>Pass the minimum data needed for the operation. Avoid broadcasting credentials or sensitive state to every feature.</li>
+</ul>
+<p>These checks identify the sending origin and window, not the current user's permissions. A message requesting a privileged operation must still lead to server-side authorization. They also do not protect against compromised code running inside the expected sender.</p>
+<p>A shared in-page event bus has no browser-enforced identity boundary between its participants. Do not use event names or application identifiers as proof of authority.</p>
+<h2 id="enforce-backend-authorization-and-limit-shared-data">Enforce Backend Authorization and Limit Shared Data<a class="headerlink" href="#enforce-backend-authorization-and-limit-shared-data" title="Permanent link">&para;</a></h2>
+<h3 id="authorize-every-request-on-the-server">Authorize Every Request on the Server<a class="headerlink" href="#authorize-every-request-on-the-server" title="Permanent link">&para;</a></h3>
+<p>Neither the shell nor a remote micro-frontend can enforce authorization in client-side code. Route guards, hidden controls, and client-side role checks only affect presentation and can be bypassed.</p>
+<p>Enforce permissions for the requested operation, resource, and tenant on every backend request, regardless of which frontend initiated it. Do not trust a role, tenant identifier, or permission flag supplied by the shell or a remote. Use a shared server-side policy where appropriate so independently developed features apply consistent checks. See the <a href="Authorization_Cheat_Sheet.html#validate-the-permissions-on-every-request">Authorization Cheat Sheet</a>.</p>
+<h3 id="keep-sensitive-state-out-of-shared-runtimes">Keep Sensitive State Out of Shared Runtimes<a class="headerlink" href="#keep-sensitive-state-out-of-shared-runtimes" title="Permanent link">&para;</a></h3>
+<p>Browser storage is <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Same-origin_policy#cross-origin_data_storage_access">separated by origin</a>. Storage key prefixes, separate state stores, and component boundaries do not provide security isolation between scripts in the same page. Treat data exposed in the page or origin storage as available to every remote executing there.</p>
+<p>Keep session identifiers out of <code>localStorage</code> and <code>sessionStorage</code>. When using a backend-for-frontend, keep upstream access tokens on the server and use a session cookie configured according to the <a href="Session_Management_Cheat_Sheet.html#cookies">Session Management Cheat Sheet</a>. An <code>HttpOnly</code> cookie prevents JavaScript from reading the cookie, but compromised code in the host can still make authenticated requests. Apply <a href="Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html">cross-site request forgery protection</a> to cookie-authenticated operations.</p>
+<p>Return only data the authenticated user is authorized to access. Clear shared state and cached responses on logout or tenant changes to avoid displaying stale data. This cleanup does not replace backend tenant checks or protect information already exposed to a compromised remote.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Same-origin_policy">MDN: Same-Origin Policy</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#security_concerns">MDN: postMessage Security Concerns</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/iframe#sandbox">MDN: iframe Sandbox</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

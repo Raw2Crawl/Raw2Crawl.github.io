@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Unvalidated Redirects and Forwards | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Unvalidated Redirects and Forwards">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="unvalidated-redirects-and-forwards-cheat-sheet">Unvalidated Redirects and Forwards Cheat Sheet<a class="headerlink" href="#unvalidated-redirects-and-forwards-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>Unvalidated redirects and forwards are possible when a web application accepts untrusted input that could cause the web application to redirect the request to a URL contained within untrusted input. By modifying untrusted URL input to a malicious site, an attacker may successfully launch a phishing scam and steal user credentials.</p>
+<p>Because the server name in the modified link is identical to the original site, phishing attempts may have a more trustworthy appearance. Unvalidated redirect and forward attacks can also be used to maliciously craft a URL that would pass the application's access control check and then forward the attacker to privileged functions that they would normally not be able to access.</p>
+<h2 id="safe-url-redirects">Safe URL Redirects<a class="headerlink" href="#safe-url-redirects" title="Permanent link">&para;</a></h2>
+<p>When we want to redirect a user automatically to another page (without an action of the visitor such as clicking on a hyperlink) you might implement a code such as the following:</p>
+<p>Java</p>
+<div class="highlight"><pre><span></span><code><span class="n">response</span><span class="p">.</span><span class="na">sendRedirect</span><span class="p">(</span><span class="s">"http://www.mysite.com"</span><span class="p">);</span>
+</code></pre></div>
+<p>PHP</p>
+<div class="highlight"><pre><span></span><code><span class="cp">&lt;?php</span>
+<span class="cm">/* Redirect browser */</span>
+<span class="nb">header</span><span class="p">(</span><span class="s2">"Location: http://www.mysite.com"</span><span class="p">);</span>
+<span class="cm">/* Exit to prevent the rest of the code from executing */</span>
+<span class="k">exit</span><span class="p">;</span>
+<span class="cp">?&gt;</span>
+</code></pre></div>
+<p>ASP .NET</p>
+<div class="highlight"><pre><span></span><code><span class="n">Response</span><span class="p">.</span><span class="n">Redirect</span><span class="p">(</span><span class="s">"~/folder/Login.aspx"</span><span class="p">)</span>
+</code></pre></div>
+<p>Rails</p>
+<div class="highlight"><pre><span></span><code><span class="n">redirect_to</span><span class="w"> </span><span class="n">login_path</span>
+</code></pre></div>
+<p>Rust actix web</p>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nb">Ok</span><span class="p">(</span><span class="n">HttpResponse</span><span class="p">::</span><span class="n">Found</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="n">insert_header</span><span class="p">((</span><span class="n">header</span><span class="p">::</span><span class="n">LOCATION</span><span class="p">,</span><span class="w"> </span><span class="s">"https://mysite.com/"</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="n">finish</span><span class="p">())</span>
+</code></pre></div>
+<p>In the examples above, the URL is being explicitly declared in the code and cannot be manipulated by an attacker.</p>
+<h2 id="dangerous-url-redirects">Dangerous URL Redirects<a class="headerlink" href="#dangerous-url-redirects" title="Permanent link">&para;</a></h2>
+<p>The following examples demonstrate unsafe redirect and forward code.</p>
+<h3 id="dangerous-url-redirect-example-1">Dangerous URL Redirect Example 1<a class="headerlink" href="#dangerous-url-redirect-example-1" title="Permanent link">&para;</a></h3>
+<p>The following Java code receives the URL from the parameter named <code>url</code> (<a href="https://docs.oracle.com/javaee/7/api/javax/servlet/ServletRequest.html#getParameter-java.lang.String-">GET or POST</a>) and redirects to that URL:</p>
+<div class="highlight"><pre><span></span><code><span class="n">response</span><span class="p">.</span><span class="na">sendRedirect</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="na">getParameter</span><span class="p">(</span><span class="s">"url"</span><span class="p">));</span>
+</code></pre></div>
+<p>The following PHP code obtains a URL from the query string (via the parameter named <code>url</code>) and then redirects the user to that URL. Additionally, the PHP code after this <code>header()</code> function will continue to execute, so if the user configures their browser to ignore the redirect, they may be able to access the rest of the page.</p>
+<div class="highlight"><pre><span></span><code><span class="x">$redirect_url = $_GET['url'];</span>
+<span class="x">header("Location: " . $redirect_url);</span>
+</code></pre></div>
+<p>A similar example of C# .NET Vulnerable Code:</p>
+<div class="highlight"><pre><span></span><code><span class="kt">string</span><span class="w"> </span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="n">QueryString</span><span class="p">[</span><span class="s">"url"</span><span class="p">];</span>
+<span class="n">Response</span><span class="p">.</span><span class="n">Redirect</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
+</code></pre></div>
+<p>And in Rails:</p>
+<div class="highlight"><pre><span></span><code><span class="n">redirect_to</span><span class="w"> </span><span class="n">params</span><span class="o">[</span><span class="ss">:url</span><span class="o">]</span>
+</code></pre></div>
+<p>Rust actix web</p>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nb">Ok</span><span class="p">(</span><span class="n">HttpResponse</span><span class="p">::</span><span class="n">Found</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="n">insert_header</span><span class="p">((</span><span class="n">header</span><span class="p">::</span><span class="n">LOCATION</span><span class="p">,</span><span class="w"> </span><span class="n">query_string</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="n">as_str</span><span class="p">()))</span>
+<span class="w">        </span><span class="p">.</span><span class="n">finish</span><span class="p">())</span>
+</code></pre></div>
+<p>The above code is vulnerable to an attack if no validation or extra method controls are applied to verify the certainty of the URL. This vulnerability could be used as part of a phishing scam by redirecting users to a malicious site.</p>
+<p>If no validation is applied, a malicious user could create a hyperlink to redirect your users to an unvalidated malicious website, for example:</p>
+<div class="highlight"><pre><span></span><code> http://example.com/example.php?url=http://malicious.example.com
+</code></pre></div>
+<p>The user sees the link directing to the original trusted site (<code>example.com</code>) and does not realize the redirection that could take place</p>
+<h3 id="dangerous-url-redirect-example-2">Dangerous URL Redirect Example 2<a class="headerlink" href="#dangerous-url-redirect-example-2" title="Permanent link">&para;</a></h3>
+<p><a href="https://docs.microsoft.com/en-us/aspnet/mvc/overview/security/preventing-open-redirection-attacks">ASP .NET MVC 1 &amp; 2 websites</a> are particularly vulnerable to open redirection attacks. In order to avoid this vulnerability, you need to apply MVC 3.</p>
+<p>The code for the LogOn action in an ASP.NET MVC 2 application is shown below. After a successful login, the controller returns a redirect to the returnUrl. You can see that no validation is being performed against the returnUrl parameter.</p>
+<p>ASP.NET MVC 2 LogOn action in <code>AccountController.cs</code> (see Microsoft Docs link provided above for the context):</p>
+<div class="highlight"><pre><span></span><code><span class="na">[HttpPost]</span>
+<span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">ActionResult</span><span class="w"> </span><span class="nf">LogOn</span><span class="p">(</span><span class="n">LogOnModel</span><span class="w"> </span><span class="n">model</span><span class="p">,</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="n">returnUrl</span><span class="p">)</span>
+<span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ModelState</span><span class="p">.</span><span class="n">IsValid</span><span class="p">)</span>
+<span class="w">   </span><span class="p">{</span>
+<span class="w">     </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">MembershipService</span><span class="p">.</span><span class="n">ValidateUser</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">UserName</span><span class="p">,</span><span class="w"> </span><span class="n">model</span><span class="p">.</span><span class="n">Password</span><span class="p">))</span>
+<span class="w">     </span><span class="p">{</span>
+<span class="w">       </span><span class="n">FormsService</span><span class="p">.</span><span class="n">SignIn</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">UserName</span><span class="p">,</span><span class="w"> </span><span class="n">model</span><span class="p">.</span><span class="n">RememberMe</span><span class="p">);</span>
+<span class="w">       </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">String</span><span class="p">.</span><span class="n">IsNullOrEmpty</span><span class="p">(</span><span class="n">returnUrl</span><span class="p">))</span>
+<span class="w">       </span><span class="p">{</span>
+<span class="w">         </span><span class="k">return</span><span class="w"> </span><span class="nf">Redirect</span><span class="p">(</span><span class="n">returnUrl</span><span class="p">);</span>
+<span class="w">       </span><span class="p">}</span>
+<span class="w">       </span><span class="k">else</span>
+<span class="w">       </span><span class="p">{</span>
+<span class="w">         </span><span class="k">return</span><span class="w"> </span><span class="nf">RedirectToAction</span><span class="p">(</span><span class="s">"Index"</span><span class="p">,</span><span class="w"> </span><span class="s">"Home"</span><span class="p">);</span>
+<span class="w">       </span><span class="p">}</span>
+<span class="w">     </span><span class="p">}</span>
+<span class="w">     </span><span class="k">else</span>
+<span class="w">     </span><span class="p">{</span>
+<span class="w">       </span><span class="n">ModelState</span><span class="p">.</span><span class="n">AddModelError</span><span class="p">(</span><span class="s">""</span><span class="p">,</span><span class="w"> </span><span class="s">"The user name or password provided is incorrect."</span><span class="p">);</span>
+<span class="w">     </span><span class="p">}</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">   </span><span class="c1">// If we got this far, something failed, redisplay form</span>
+<span class="w">   </span><span class="k">return</span><span class="w"> </span><span class="nf">View</span><span class="p">(</span><span class="n">model</span><span class="p">);</span>
+<span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<h3 id="dangerous-forward-example">Dangerous Forward Example<a class="headerlink" href="#dangerous-forward-example" title="Permanent link">&para;</a></h3>
+<p>When applications allow user input to forward requests between different parts of the site, the application must check that the user is authorized to access the URL, perform the functions it provides, and it is an appropriate URL request.</p>
+<p>If the application fails to perform these checks, an attacker crafted URL may pass the application's access control check and then forward the attacker to an administrative function that is not normally permitted.</p>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code>http://www.example.com/function.jsp?fwd=admin.jsp
+</code></pre></div>
+<p>The following code is a Java servlet that will receive a <code>GET</code> request with a URL parameter named <code>fwd</code> in the request to forward to the address specified in the URL parameter. The servlet will retrieve the URL parameter value <a href="https://docs.oracle.com/javaee/7/api/javax/servlet/ServletRequest.html#getParameter-java.lang.String-">from the request</a> and complete the server-side forward processing before responding to the browser.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ForwardServlet</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">HttpServlet</span>
+<span class="p">{</span>
+<span class="w">  </span><span class="kd">protected</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">doGet</span><span class="p">(</span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">)</span>
+<span class="w">                    </span><span class="kd">throws</span><span class="w"> </span><span class="n">ServletException</span><span class="p">,</span><span class="w"> </span><span class="n">IOException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getQueryString</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">query</span><span class="p">.</span><span class="na">contains</span><span class="p">(</span><span class="s">"fwd"</span><span class="p">))</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="n">String</span><span class="w"> </span><span class="n">fwd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getParameter</span><span class="p">(</span><span class="s">"fwd"</span><span class="p">);</span>
+<span class="w">      </span><span class="k">try</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="n">request</span><span class="p">.</span><span class="na">getRequestDispatcher</span><span class="p">(</span><span class="n">fwd</span><span class="p">).</span><span class="na">forward</span><span class="p">(</span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">      </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">ServletException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="preventing-unvalidated-redirects-and-forwards">Preventing Unvalidated Redirects and Forwards<a class="headerlink" href="#preventing-unvalidated-redirects-and-forwards" title="Permanent link">&para;</a></h2>
+<p>Safe use of redirects and forwards can be done in a number of ways:</p>
+<ul>
+<li>Simply avoid using redirects and forwards.</li>
+<li>If used, do not allow the URL as user input for the destination.</li>
+<li>Where possible, have the user provide short name, ID or token which is mapped server-side to a full target URL.<ul>
+<li>This provides the highest degree of protection against the attack tampering with the URL.</li>
+<li>Be careful that this doesn't introduce an enumeration vulnerability where a user could cycle through IDs to find all possible redirect targets</li>
+</ul>
+</li>
+<li>If user input can’t be avoided, ensure that the supplied <strong>value</strong> is valid, appropriate for the application, and is <strong>authorized</strong> for the user.</li>
+<li>For local return URLs, use a framework helper that rejects non-local destinations, such as <a href="https://learn.microsoft.com/en-us/aspnet/core/security/preventing-open-redirects?view=aspnetcore-10.0">ASP.NET Core LocalRedirect or IsLocalUrl</a>.</li>
+<li>If external destinations are required, allow-list explicitly approved destinations using the parsed URL components, as described below.</li>
+<li>Force all redirects to first go through a page notifying users that they are going off of your site, with the destination clearly displayed, and have them click a link to confirm.</li>
+</ul>
+<h3 id="validating-urls">Validating URLs<a class="headerlink" href="#validating-urls" title="Permanent link">&para;</a></h3>
+<p>Use a maintained URL parser compatible with the redirect API and browser URL interpretation. Compare the parsed scheme, canonical host, and effective port against an explicit allowlist; constrain the path when only specific endpoints are permitted. Reject userinfo and ambiguous input, and redirect using the validated URL rather than transforming it afterward. Do not use raw prefix or suffix matching: <a href="https://docs.gitlab.com/development/secure_coding_guidelines/ruby/#feature-specific-mitigations">GitLab demonstrates how userinfo and misleading hostnames bypass such checks</a>. A server-side mapping from an approved destination ID remains preferable to accepting arbitrary URLs.</p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://cwe.mitre.org/data/definitions/601.html">CWE Entry 601 on Open Redirects</a></li>
+<li><a href="https://learn.microsoft.com/en-us/aspnet/core/security/preventing-open-redirects?view=aspnetcore-10.0">Microsoft: Prevent Open Redirect Attacks in ASP.NET Core</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>

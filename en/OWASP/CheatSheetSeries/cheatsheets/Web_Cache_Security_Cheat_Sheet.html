@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Web Cache Security | Raw2Crawl</title><meta name="description" content="OWASP Cheat Sheet Series · Web Cache Security">
+<link rel="canonical" href="https://raw2crawl.github.io/en/OWASP/CheatSheetSeries/cheatsheets/Web_Cache_Security_Cheat_Sheet.html"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script>
+</head><body id="top" class="documentation series-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="series-layout"><main id="main-content" class="reading-pane series-reading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/OWASP/">OWASP</a><span>/</span><a href="/en/OWASP/CheatSheetSeries/">Cheat Sheet Series</a></nav><article class="doc-content"><h1 id="web-cache-security-cheat-sheet">Web Cache Security Cheat Sheet<a class="headerlink" href="#web-cache-security-cheat-sheet" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>HTTP caches improve performance by reusing stored responses in browsers, reverse proxies, content delivery networks (CDNs), and application data stores. A cache becomes a security boundary when it serves a response to a request other than the one that originally produced it. The <a href="https://www.rfc-editor.org/rfc/rfc9111.html">HTTP caching specification</a> defines the behavior of private and shared caches, while the <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching">MDN HTTP caching guide</a> provides practical examples of common directives.</p>
+<p>This cheat sheet focuses on preventing sensitive data exposure, web cache poisoning, web cache deception, and cross-tenant data leakage. It applies to developers and operators configuring origin applications, reverse proxies, CDNs, and application-level caches.</p>
+<h2 id="key-risks">Key Risks<a class="headerlink" href="#key-risks" title="Permanent link">&para;</a></h2>
+<p>The <a href="https://www.rfc-editor.org/rfc/rfc9111.html#name-security-considerations">security considerations in RFC 9111</a> describe caches as attractive attack targets because one stored response can affect many users. <a href="https://owasp.org/www-community/attacks/Cache_Poisoning">OWASP's cache poisoning overview</a> also explains how a harmful cached response can be distributed to other visitors.</p>
+<ul>
+<li><strong>Sensitive response exposure</strong>: A shared cache stores a personalized or authenticated response and returns it to another user.</li>
+<li><strong>Web cache poisoning</strong>: An attacker-controlled request input changes a response but is excluded from the cache key. The harmful response is then served to other users.</li>
+<li><strong>Web cache deception</strong>: A dynamic or personalized URL is made to look like a static asset, causing an intermediary to cache sensitive content.</li>
+<li><strong>Cache key confusion</strong>: The cache and origin disagree about URL normalization, query parameters, headers, or request routing, causing unrelated requests to share an entry.</li>
+<li><strong>Cross-tenant leakage</strong>: An application cache omits the tenant or authorization context from its key.</li>
+<li><strong>Stale security state</strong>: Cached content remains accessible after permissions, account state, or the underlying resource changes.</li>
+</ul>
+<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
+<p>Treat cacheability and cache-key design as part of the application's authorization model. <a href="https://www.rfc-editor.org/rfc/rfc9111.html">RFC 9111</a> specifies how response directives, request inputs, and validation control whether a stored response can be reused.</p>
+<h3 id="1-classify-responses-before-caching">1. Classify Responses Before Caching<a class="headerlink" href="#1-classify-responses-before-caching" title="Permanent link">&para;</a></h3>
+<p>Define an explicit policy for every route. Default to preventing shared caching for authenticated, personalized, tenant-specific, or otherwise sensitive responses.</p>
+<ul>
+<li>Use <code>Cache-Control: no-store</code> when a response must not be stored by any compliant cache.</li>
+<li>Use <code>Cache-Control: private</code> when a response may be stored by a user's private cache but not by a shared cache.</li>
+<li>Remember that <code>no-cache</code> permits storage but requires successful validation before reuse. It does not mean "do not store."</li>
+<li>Do not assume that cookies make a response private. A <code>Set-Cookie</code> header alone does not prevent caching.</li>
+<li>Do not mark a response influenced by <code>Authorization</code> or session cookies as <code>public</code>, or give it an <code>s-maxage</code>, unless sharing the response has been deliberately designed and reviewed.</li>
+<li>Purge previously stored entries when changing a route to <code>no-store</code>; the directive does not delete old entries.</li>
+</ul>
+<p>For a response containing sensitive data:</p>
+<div class="highlight"><pre><span></span><code><span class="err">Cache-Control: no-store</span>
+</code></pre></div>
+<p>For non-sensitive content that may be stored only in a private cache and must be revalidated:</p>
+<div class="highlight"><pre><span></span><code><span class="err">Cache-Control: private, no-cache</span>
+</code></pre></div>
+<h3 id="2-design-a-complete-cache-key">2. Design a Complete Cache Key<a class="headerlink" href="#2-design-a-complete-cache-key" title="Permanent link">&para;</a></h3>
+<p>Every request input that can change a cacheable response must either be represented in the cache key or be rejected for that route.</p>
+<ul>
+<li>Include the request method, scheme, host, normalized path, and all relevant query parameters.</li>
+<li>Use <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Vary"><code>Vary</code></a> for representation-selecting headers such as <code>Accept-Encoding</code> or <code>Accept-Language</code>.</li>
+<li>Do not use <code>Vary: Cookie</code> as a general authorization boundary. Prefer disabling shared caching for personalized responses.</li>
+<li>Derive tenant and user identifiers from trusted, authenticated server-side context, not directly from an untrusted header or query parameter.</li>
+<li>Apply the same URL normalization and parameter handling at the CDN, reverse proxy, and origin.</li>
+<li>Reject ambiguous requests, including conflicting host information, duplicate parameters with inconsistent meanings, and malformed path encodings.</li>
+</ul>
+<p>For an application-level cache, use a structured, versioned key:</p>
+<div class="highlight"><pre><span></span><code>&lt;environment&gt;:&lt;resource-version&gt;:&lt;tenant-id&gt;:&lt;resource-type&gt;:&lt;resource-id&gt;
+</code></pre></div>
+<p>Do not put session tokens, API keys, or other secrets in cache keys because keys often appear in logs and administrative interfaces.</p>
+<h3 id="3-prevent-web-cache-poisoning">3. Prevent Web Cache Poisoning<a class="headerlink" href="#3-prevent-web-cache-poisoning" title="Permanent link">&para;</a></h3>
+<p><a href="https://developers.cloudflare.com/cache/cache-security/avoid-web-poisoning/">Cloudflare's cache poisoning guidance</a> describes the central design rule: untrusted request inputs that are not part of the cache key must not influence a cacheable response.</p>
+<ul>
+<li>Cache only routes that are explicitly intended to be shared.</li>
+<li>Do not let unkeyed headers or a body on a <code>GET</code> request alter a cacheable response.</li>
+<li>Trust <code>Forwarded</code> and <code>X-Forwarded-*</code> headers only when they were added or replaced by a trusted proxy.</li>
+<li>Canonicalize the host and scheme before using them to generate links, redirects, or security-sensitive headers.</li>
+<li>Do not reflect unvalidated request metadata into cached HTML, JSON, redirects, or response headers.</li>
+<li>Separate static assets and dynamic application routes by hostname or an unambiguous path namespace where practical.</li>
+<li>If poisoning occurs, purge every affected cache layer and fix the key or origin behavior before re-enabling caching.</li>
+</ul>
+<h3 id="4-prevent-web-cache-deception">4. Prevent Web Cache Deception<a class="headerlink" href="#4-prevent-web-cache-deception" title="Permanent link">&para;</a></h3>
+<p>Web cache deception occurs when an attacker causes a shared cache to store personalized content under a URL that appears cacheable. <a href="https://developers.cloudflare.com/cache/cache-security/cache-deception-armor/">Cache Deception Armor</a> documents one mitigation: verifying that the requested file extension agrees with the response <code>Content-Type</code>.</p>
+<ul>
+<li>Base cache eligibility on an allowlisted route and response policy, not only on a file extension.</li>
+<li>Make dynamic routes reject unexpected path segments and static-looking suffixes instead of silently routing them to the same handler.</li>
+<li>Ensure that a request such as <code>/account/profile/image.css</code> cannot resolve to the same personalized handler as <code>/account/profile</code>.</li>
+<li>Verify that the URL extension and response <code>Content-Type</code> agree before caching a static asset.</li>
+<li>Ignore or remove query parameters from a cache key only after proving that they cannot change routing, authorization, or response content.</li>
+</ul>
+<h3 id="5-coordinate-origin-and-intermediary-policies">5. Coordinate Origin and Intermediary Policies<a class="headerlink" href="#5-coordinate-origin-and-intermediary-policies" title="Permanent link">&para;</a></h3>
+<p>A secure origin policy can be weakened by a CDN rule, reverse proxy override, or framework default. <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching">MDN's caching guide</a> recommends explicitly controlling caching rather than relying on heuristic behavior.</p>
+<ul>
+<li>Define browser and shared-cache lifetimes independently with the appropriate directives.</li>
+<li>Review CDN rules that override origin <code>Cache-Control</code> headers or cache responses by status code, path pattern, or file extension.</li>
+<li>Give error pages, redirects, and authentication responses explicit cache policies.</li>
+<li>Use consistent URL normalization at every layer. When a CDN normalizes its cache key, send the normalized form to the origin as well.</li>
+<li>Maintain a tested purge mechanism for individual keys, tags, or narrowly scoped route groups.</li>
+<li>Fail closed when a sensitive route has a missing, malformed, or conflicting cache policy.</li>
+</ul>
+<h3 id="6-protect-application-level-caches">6. Protect Application-Level Caches<a class="headerlink" href="#6-protect-application-level-caches" title="Permanent link">&para;</a></h3>
+<p>In-memory, database, and distributed caches can leak data even when HTTP caching is disabled. Authorization must still be enforced on every request before cached data is returned. See the <a href="Authorization_Cheat_Sheet.html">Authorization Cheat Sheet</a> and <a href="Multi_Tenant_Security_Cheat_Sheet.html">Multi-Tenant Security Cheat Sheet</a> for related controls.</p>
+<ul>
+<li>Namespace keys by environment and application to prevent collisions.</li>
+<li>Include tenant identity and every authorization-relevant resource dimension in the key.</li>
+<li>Do not let a cache hit bypass object-level or tenant-level authorization.</li>
+<li>Avoid caching final authorization decisions unless the key includes the complete subject, object, action, policy version, and a tightly bounded lifetime.</li>
+<li>Version key formats so schema or permission-model changes cannot reuse incompatible entries.</li>
+<li>Restrict administrative access to cache contents, configuration, statistics, and purge operations.</li>
+</ul>
+<h3 id="7-test-the-complete-cache-path">7. Test the Complete Cache Path<a class="headerlink" href="#7-test-the-complete-cache-path" title="Permanent link">&para;</a></h3>
+<p>Test through the same CDN and proxy path used in production. The <a href="https://developers.cloudflare.com/cache/how-to/cache-keys/">Cloudflare cache-key documentation</a> illustrates how scheme, host, path, query parameters, headers, and cookies can contribute to a cache key.</p>
+<ul>
+<li>Request the same URL as two different users and tenants; neither response may contain the other's data.</li>
+<li>Change one header, query parameter, cookie, or path component at a time and verify the expected cache behavior.</li>
+<li>Append static-looking suffixes and unexpected path segments to authenticated routes and verify that they are rejected and not cached.</li>
+<li>Test authorization changes, logout, content updates, and purge operations against already stored entries.</li>
+<li>Monitor for unexpected cache hits on authenticated routes, abrupt hit-ratio changes, unusual forwarded headers, and repeated purge activity.</li>
+<li>Log enough cache-status and routing metadata to investigate incidents, but never log secrets or full sensitive response bodies.</li>
+</ul>
+<h2 id="dos-and-donts">Do's and Don'ts<a class="headerlink" href="#dos-and-donts" title="Permanent link">&para;</a></h2>
+<p>Use these checks alongside the <a href="https://www.rfc-editor.org/rfc/rfc9111.html">HTTP caching requirements in RFC 9111</a> and the application's normal authorization review.</p>
+<p><strong>Do:</strong></p>
+<ul>
+<li>Set an explicit <code>Cache-Control</code> policy on every security-relevant response.</li>
+<li>Verify that every response-changing input is included in the cache key or rejected.</li>
+<li>Keep cache and origin routing rules consistent.</li>
+<li>Authorize the current request before returning cached application data.</li>
+<li>Test with multiple identities and tenants through the production caching path.</li>
+<li>Plan and test targeted cache invalidation before an incident occurs.</li>
+</ul>
+<p><strong>Don't:</strong></p>
+<ul>
+<li>Assume that authentication, cookies, TLS, or <code>Set-Cookie</code> automatically prevents caching.</li>
+<li>Cache every URL with a static-looking extension.</li>
+<li>Allow unkeyed request metadata to influence shared responses.</li>
+<li>Treat <code>Vary: Cookie</code> as a substitute for an authorization design.</li>
+<li>Include credentials or session identifiers in keys, logs, or purge URLs.</li>
+<li>Assume that purging a poisoned entry fixes the underlying vulnerability.</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://www.rfc-editor.org/rfc/rfc9111.html">RFC 9111: HTTP Caching</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching">MDN: HTTP Caching</a></li>
+<li><a href="https://developers.cloudflare.com/cache/cache-security/avoid-web-poisoning/">Cloudflare: Avoid Web Cache Poisoning</a></li>
+</ul></article></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"></nav></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span><span>Cheat Sheet Series © OWASP Foundation &amp; contributors · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/CheatSheetSeries">Source</a></span></footer>
+</body></html>
