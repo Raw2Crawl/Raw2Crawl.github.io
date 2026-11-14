@@ -1,12 +1,18 @@
 (() => {
   'use strict';
+  const isRu = document.documentElement.lang === 'ru';
   const themeButton = document.querySelector('#theme-toggle');
   const media = matchMedia('(prefers-color-scheme: dark)');
   function updateThemeButton() {
     const dark = document.documentElement.dataset.theme === 'dark';
     if (!themeButton) return;
-    themeButton.textContent = dark ? 'Light theme' : 'Dark theme';
-    themeButton.setAttribute('aria-label', `Switch to ${dark ? 'light' : 'dark'} theme`);
+    if (isRu) {
+      themeButton.textContent = dark ? 'Светлая тема' : 'Тёмная тема';
+      themeButton.setAttribute('aria-label', `Переключить на ${dark ? 'светлую' : 'тёмную'} тему`);
+    } else {
+      themeButton.textContent = dark ? 'Light theme' : 'Dark theme';
+      themeButton.setAttribute('aria-label', `Switch to ${dark ? 'light' : 'dark'} theme`);
+    }
   }
   updateThemeButton();
   themeButton?.addEventListener('click', () => {
@@ -20,6 +26,15 @@
     try { saved = localStorage.getItem('raw2crawl-theme'); } catch {}
     if (!saved) { document.documentElement.dataset.theme = media.matches ? 'dark' : 'light'; updateThemeButton(); }
   });
+
+  const langLink = document.querySelector('.lang-link');
+  if (langLink) {
+    langLink.hash = location.hash;
+    window.addEventListener('hashchange', () => { langLink.hash = location.hash; });
+    langLink.addEventListener('click', () => {
+      langLink.hash = location.hash;
+    });
+  }
 
   const toggle = document.querySelector('#contents-toggle');
   function closeContents() { document.body.classList.remove('contents-open'); toggle?.setAttribute('aria-expanded', 'false'); }
@@ -70,7 +85,13 @@
     }
     if (!query && openBeforeSearch) { nav.querySelectorAll('details').forEach(d => { d.open = openBeforeSearch.has(d); }); openBeforeSearch = null; }
     if (clear) clear.hidden = !query;
-    if (counter) { counter.hidden = !query; counter.textContent = `${count} matching sections`; counter.className = 'search-status'; }
+    if (counter) {
+      counter.hidden = !query;
+      counter.textContent = isRu
+        ? `${count} ${count % 10 === 1 && count % 100 !== 11 ? 'раздел' : [2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100) ? 'раздела' : 'разделов'}`
+        : `${count} matching sections`;
+      counter.className = 'search-status';
+    }
   }
   input?.addEventListener('input', filter);
   clear?.addEventListener('click', () => { input.value = ''; filter(); input.focus(); });
@@ -108,10 +129,12 @@
   const index = pages.findIndex(a => normalize(a.href) === current);
   const pager = document.querySelector('.page-navigation');
   if (pager && !pager.children.length && index >= 0) {
-    for (const [label, link] of [['Previous', pages[index - 1]], ['Next', pages[index + 1]]]) {
+    const prevLabel = isRu ? 'Назад' : 'Previous';
+    const nextLabel = isRu ? 'Вперёд' : 'Next';
+    for (const [label, link] of [[prevLabel, pages[index - 1]], [nextLabel, pages[index + 1]]]) {
       if (!link) continue;
       const a = document.createElement('a'); a.href = link.href;
-      a.rel = label === 'Previous' ? 'prev' : 'next';
+      a.rel = label === prevLabel ? 'prev' : 'next';
       const small = document.createElement('small'); small.textContent = label;
       a.append(small, document.createTextNode(link.textContent)); pager.append(a);
     }

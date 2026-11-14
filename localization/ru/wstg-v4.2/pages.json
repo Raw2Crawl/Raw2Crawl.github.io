@@ -1,0 +1,2652 @@
+[
+  {
+    "path": "0-Foreword/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/0-Foreword/",
+    "enTitle": "Foreword by Eoin Keary",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Предисловие Eoin Keary",
+    "reviewedSourceSha256": "1afc3d48df6efe3925012c10022fedc08f6b1b71afa6c69a950ce95bbc8e869f",
+    "reviewedTranslationSha256": "dc3e5a596bbdbb62391a146336c3b409357ebc0513e086f7e3a6c1b0aab0d27f",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "1-Frontispiece/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/1-Frontispiece/",
+    "enTitle": "Frontispiece",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Сведения об издании",
+    "reviewedSourceSha256": "0bc62bb5c05ad6606f33982748153749adc2e51c5cf34d4f53f9ad30e658e2ed",
+    "reviewedTranslationSha256": "38d84a0b57961782b022cdfe95b880cf9a13ea9e7ddac76be95544c945794440",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "2-Introduction/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/2-Introduction/",
+    "enTitle": "Introduction",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework.md",
+    "url": "/ru/OWASP/WSTG-v4.2/3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework/",
+    "enTitle": "The Web Security Testing Framework",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Методология тестирования веб-безопасности",
+    "reviewedSourceSha256": "f9b0b978f2370d6ab22c597b5322090b1d4f3a5dd10c06a513c9e00748dc8d4d",
+    "reviewedTranslationSha256": "d8a84d298219bd9acde5fcd827bcbe3ba184ed16a9c422396b050897cf0ebf82",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "3-The_OWASP_Testing_Framework/1-Penetration_Testing_Methodologies.md",
+    "url": "/ru/OWASP/WSTG-v4.2/3-The_OWASP_Testing_Framework/1-Penetration_Testing_Methodologies/",
+    "enTitle": "Penetration Testing Methodologies",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Методики тестирования на проникновение",
+    "reviewedSourceSha256": "ab26ddd70708e1e1b213be0cca5373cfb008f35ddde4aef6055f7037f88c7139",
+    "reviewedTranslationSha256": "b8688894c0953c8f36262d104bd3ef094f5a80e62f594b68124ebc502087205a",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "3-The_OWASP_Testing_Framework/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/3-The_OWASP_Testing_Framework/",
+    "enTitle": "The OWASP Testing Framework",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Методология тестирования OWASP",
+    "reviewedSourceSha256": "291a16492f5b02a541cb382a1a4e47ef69f5901f652a57d8e1f91ca3e2442502",
+    "reviewedTranslationSha256": "de7963de745a8e676b43f63597e331f2c64438d4e455a3bdd1f5ecb8c4a2ec51",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/00-Introduction_and_Objectives/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/00-Introduction_and_Objectives/",
+    "enTitle": "4.0 Introduction and Objectives",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "4.0 Введение и цели",
+    "reviewedSourceSha256": "91eeb1af5b8bbdf418cbbda9618b62769aff5d5ec6fdd032d4b023c8f894fe54",
+    "reviewedTranslationSha256": "c84d336e10b1ad523c0fe345234bef623ed172de500b490ef96bc331e6af4374",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/01-Information_Gathering/01-Conduct_Search_Engine_Discovery_Reconnaissance_for_Information_Leakage.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/01-Conduct_Search_Engine_Discovery_Reconnaissance_for_Information_Leakage/",
+    "enTitle": "Conduct Search Engine Discovery Reconnaissance for Information Leakage",
+    "wstgId": "WSTG-INFO-01",
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Сбор информации и выявление утечек через поисковые системы",
+    "reviewedSourceSha256": "fba1e88fb186c5419cf2b1adf1a44a0f9ed7f25b53b7e81ae8dd03704a985031",
+    "reviewedTranslationSha256": "144d22963f6438a4b15adc44a15b74eadc37d716e23097c92cbdb1cb68b876a2",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/01-Information_Gathering/02-Fingerprint_Web_Server.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/02-Fingerprint_Web_Server/",
+    "enTitle": "Fingerprint Web Server",
+    "wstgId": "WSTG-INFO-02",
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Определение типа и версии веб-сервера",
+    "reviewedSourceSha256": "4af906dbc70a486550fa56e0b3ed33e0ea7b1879f67dd9004a74b6b6a73b9289",
+    "reviewedTranslationSha256": "93ac75cd68612a1e72485a2aa44141617001f5b09944be262565ca1caf40bc73",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/01-Information_Gathering/03-Review_Webserver_Metafiles_for_Information_Leakage.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/03-Review_Webserver_Metafiles_for_Information_Leakage/",
+    "enTitle": "Review Webserver Metafiles for Information Leakage",
+    "wstgId": "WSTG-INFO-03",
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Анализ метафайлов веб-сервера на предмет утечки информации",
+    "reviewedSourceSha256": "af61c15201afa6a53d4d7ab80b3caec6fae6b8c01efda7d08d5500120078798a",
+    "reviewedTranslationSha256": "d99ac209914a7ef88b6e6508c6d253351726edd4d3fcbf05786b9e70e6d549f7",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/01-Information_Gathering/04-Enumerate_Applications_on_Webserver.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/04-Enumerate_Applications_on_Webserver/",
+    "enTitle": "Enumerate Applications on Webserver",
+    "wstgId": "WSTG-INFO-04",
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Перечисление приложений на веб-сервере",
+    "reviewedSourceSha256": "3e9f94e46e554e1360ba2f100f0c6cadc999d2a93050860141c5dd2194a11fbb",
+    "reviewedTranslationSha256": "827b31a28e3cfa203f92794466641bfd3af3edc72c261d90bc2f94d7ac078624",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/01-Information_Gathering/05-Review_Webpage_Content_for_Information_Leakage.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/05-Review_Webpage_Content_for_Information_Leakage/",
+    "enTitle": "Review Webpage Content for Information Leakage",
+    "wstgId": "WSTG-INFO-05",
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Анализ содержимого веб-страниц на предмет утечки информации",
+    "reviewedSourceSha256": "026f73ce1ea476937d0e00a7633c342613e027570530dc835bd8cab732fa2d12",
+    "reviewedTranslationSha256": "b222e7527efa2651aa28b179cf78493c0c5a3d4c5985d82cfa8c345e4436887e",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/01-Information_Gathering/06-Identify_Application_Entry_Points.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/06-Identify_Application_Entry_Points/",
+    "enTitle": "Identify Application Entry Points",
+    "wstgId": "WSTG-INFO-06",
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Определение точек входа в приложение",
+    "reviewedSourceSha256": "b2b039774a46b96fce3d83add1bf85b8144c7c6cee8be066d391ad50a8f1f075",
+    "reviewedTranslationSha256": "b0c0a4523af64fcf93c79571036834ab7c88f19c54615266fb613c216da22c80",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/01-Information_Gathering/07-Map_Execution_Paths_Through_Application.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/07-Map_Execution_Paths_Through_Application/",
+    "enTitle": "Map Execution Paths Through Application",
+    "wstgId": "WSTG-INFO-07",
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Построение карты путей выполнения в приложении",
+    "reviewedSourceSha256": "40d1dd3d39c3d836ad5b7ed5d81e21442ded5cabe42843f47687777bd316868a",
+    "reviewedTranslationSha256": "a667b1b1387441bfa8311d58f1f0c892fa66a0216fd50071462ceac2810fc4f5",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/01-Information_Gathering/08-Fingerprint_Web_Application_Framework.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/08-Fingerprint_Web_Application_Framework/",
+    "enTitle": "Fingerprint Web Application Framework",
+    "wstgId": "WSTG-INFO-08",
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Определение используемого веб-фреймворка",
+    "reviewedSourceSha256": "314c0b98d859d8c450e1f1dc80d47074f27e8fa3fdb1df7d54433a5a241eafba",
+    "reviewedTranslationSha256": "8dbfb718a03780f14efbbe3868c04ab0a98c7dc5503fc8912f96fd637dc06710",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/01-Information_Gathering/09-Fingerprint_Web_Application.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/09-Fingerprint_Web_Application/",
+    "enTitle": "Fingerprint Web Application",
+    "wstgId": "WSTG-INFO-09",
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Определение используемого веб-приложения",
+    "reviewedSourceSha256": "9090a30b0ff181eaac003867f0f70fecf2c71084423033ef3b4da431c04b1db0",
+    "reviewedTranslationSha256": "8e28ded58b72da21d9029c0f246225c7c80c4601fa968a43dc7b03ed47107f20",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/01-Information_Gathering/10-Map_Application_Architecture.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/10-Map_Application_Architecture/",
+    "enTitle": "Map Application Architecture",
+    "wstgId": "WSTG-INFO-10",
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Построение архитектурной карты приложения",
+    "reviewedSourceSha256": "941dbefdefdf7e1f97c6d274d05a1f8b93a275be28443a0c67369d104bf8b29f",
+    "reviewedTranslationSha256": "17603f99d17bedb92cc1947e29f020dea77d99b667efa791209bb868115f19fa",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/01-Information_Gathering/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/",
+    "enTitle": "4.1 Information Gathering",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "4.1 Сбор информации",
+    "reviewedSourceSha256": "9ca1006d678ec5cec2ac5cf784886efcfb1b878e88aa3cbddce47580fb266094",
+    "reviewedTranslationSha256": "6edb9b528b827cdd88a406b070469e72b2f7972b1b9a887cc8c453cf593900fe",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/01-Test_Network_Infrastructure_Configuration.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/01-Test_Network_Infrastructure_Configuration/",
+    "enTitle": "Test Network Infrastructure Configuration",
+    "wstgId": "WSTG-CONF-01",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/02-Test_Application_Platform_Configuration.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/02-Test_Application_Platform_Configuration/",
+    "enTitle": "Test Application Platform Configuration",
+    "wstgId": "WSTG-CONF-02",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/03-Test_File_Extensions_Handling_for_Sensitive_Information.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/03-Test_File_Extensions_Handling_for_Sensitive_Information/",
+    "enTitle": "Test File Extensions Handling for Sensitive Information",
+    "wstgId": "WSTG-CONF-03",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/04-Review_Old_Backup_and_Unreferenced_Files_for_Sensitive_Information.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/04-Review_Old_Backup_and_Unreferenced_Files_for_Sensitive_Information/",
+    "enTitle": "Review Old Backup and Unreferenced Files for Sensitive Information",
+    "wstgId": "WSTG-CONF-04",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/05-Enumerate_Infrastructure_and_Application_Admin_Interfaces.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/05-Enumerate_Infrastructure_and_Application_Admin_Interfaces/",
+    "enTitle": "Enumerate Infrastructure and Application Admin Interfaces",
+    "wstgId": "WSTG-CONF-05",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/06-Test_HTTP_Methods.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/06-Test_HTTP_Methods/",
+    "enTitle": "Test HTTP Methods",
+    "wstgId": "WSTG-CONF-06",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/07-Test_HTTP_Strict_Transport_Security.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/07-Test_HTTP_Strict_Transport_Security/",
+    "enTitle": "Test HTTP Strict Transport Security",
+    "wstgId": "WSTG-CONF-07",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/08-Test_RIA_Cross_Domain_Policy.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/08-Test_RIA_Cross_Domain_Policy/",
+    "enTitle": "Test RIA Cross Domain Policy",
+    "wstgId": "WSTG-CONF-08",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/09-Test_File_Permission.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/09-Test_File_Permission/",
+    "enTitle": "Test File Permission",
+    "wstgId": "WSTG-CONF-09",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/10-Test_for_Subdomain_Takeover.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/10-Test_for_Subdomain_Takeover/",
+    "enTitle": "Test for Subdomain Takeover",
+    "wstgId": "WSTG-CONF-10",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/11-Test_Cloud_Storage.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/11-Test_Cloud_Storage/",
+    "enTitle": "Test Cloud Storage",
+    "wstgId": "WSTG-CONF-11",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/",
+    "enTitle": "4.2 Configuration and Deployment Management Testing",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "4.2 Тестирование управления конфигурацией и развёртыванием",
+    "reviewedSourceSha256": "685819af09e7b570f776b3401136eb3f42033d73ce4a1cd330df7f04643ed323",
+    "reviewedTranslationSha256": "64a3d3a4c8fa70bb84e9f3c1b7b896993afd92f185d15a34c245c6fee586e618",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/03-Identity_Management_Testing/01-Test_Role_Definitions.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/03-Identity_Management_Testing/01-Test_Role_Definitions/",
+    "enTitle": "Test Role Definitions",
+    "wstgId": "WSTG-IDNT-01",
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Тестирование определений ролей",
+    "reviewedSourceSha256": "d366d2868f018169ab3c58a3827dd5c45b2518d0c6e558fc9844cfeaa44c866e",
+    "reviewedTranslationSha256": "912491b8d87401d2d2e22875aba3cd8c581963439345880d59ab61d520744991",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/03-Identity_Management_Testing/02-Test_User_Registration_Process.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/03-Identity_Management_Testing/02-Test_User_Registration_Process/",
+    "enTitle": "Test User Registration Process",
+    "wstgId": "WSTG-IDNT-02",
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Тестирование процесса регистрации пользователей",
+    "reviewedSourceSha256": "ff300add71d7efb2935764656976f6916e51cbd5fd3aeb5f5b5381f9213f94df",
+    "reviewedTranslationSha256": "7c71824506ecc8b0c2fa4d963fce56a788ed5c4a5745244426b1f4f2cb67ac97",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/03-Identity_Management_Testing/03-Test_Account_Provisioning_Process.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/03-Identity_Management_Testing/03-Test_Account_Provisioning_Process/",
+    "enTitle": "Test Account Provisioning Process",
+    "wstgId": "WSTG-IDNT-03",
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Тестирование процесса подготовки учётных записей",
+    "reviewedSourceSha256": "0a0162aa5919eea7bf1fe1b56c32b986b86522150210b5b02ce57d92d78702ae",
+    "reviewedTranslationSha256": "38ef90ff096225986e9f439b3b44a83cbd352d08c4ef72730eab0a5113f022d1",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/03-Identity_Management_Testing/04-Testing_for_Account_Enumeration_and_Guessable_User_Account.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/03-Identity_Management_Testing/04-Testing_for_Account_Enumeration_and_Guessable_User_Account/",
+    "enTitle": "Testing for Account Enumeration and Guessable User Account",
+    "wstgId": "WSTG-IDNT-04",
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Тестирование на перечисление учётных записей и подбор имён пользователей",
+    "reviewedSourceSha256": "9cbc28c360a8ff639a1247cfb949542251748521b0b58430d1fc3679e7d1c171",
+    "reviewedTranslationSha256": "d13c0a613dbda2ac28ab5b599ee957d102d66c7bead074b22e5681af663c159e",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/03-Identity_Management_Testing/05-Testing_for_Weak_or_Unenforced_Username_Policy.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/03-Identity_Management_Testing/05-Testing_for_Weak_or_Unenforced_Username_Policy/",
+    "enTitle": "Testing for Weak or Unenforced Username Policy",
+    "wstgId": "WSTG-IDNT-05",
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Тестирование слабой или необязательной политики имён пользователей",
+    "reviewedSourceSha256": "773811d5d1c0d1a1931da78310714e74531bdec63e9e43d001a22bc6f3822cb6",
+    "reviewedTranslationSha256": "7273d305a2ae0ec3a65feb641412817f67b908d406c62cf40a1e93b5cf5dd4ea",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/03-Identity_Management_Testing/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/03-Identity_Management_Testing/",
+    "enTitle": "4.3 Identity Management Testing",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "4.3 Тестирование управления идентификационными данными",
+    "reviewedSourceSha256": "c263ac3e21801ecfa8eda783a2302ac890c929ce0a65b2de0d65f277501d0be1",
+    "reviewedTranslationSha256": "87be46c4c4b41b98b7a0de2f4f59cb121dd386c27aad6c270be13ebe1c4e899e",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/04-Authentication_Testing/01-Testing_for_Credentials_Transported_over_an_Encrypted_Channel.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/01-Testing_for_Credentials_Transported_over_an_Encrypted_Channel/",
+    "enTitle": "Testing for Credentials Transported over an Encrypted Channel",
+    "wstgId": "WSTG-ATHN-01",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/04-Authentication_Testing/02-Testing_for_Default_Credentials.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/02-Testing_for_Default_Credentials/",
+    "enTitle": "Testing for Default Credentials",
+    "wstgId": "WSTG-ATHN-02",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/04-Authentication_Testing/03-Testing_for_Weak_Lock_Out_Mechanism.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/03-Testing_for_Weak_Lock_Out_Mechanism/",
+    "enTitle": "Testing for Weak Lock Out Mechanism",
+    "wstgId": "WSTG-ATHN-03",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/04-Authentication_Testing/04-Testing_for_Bypassing_Authentication_Schema.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/04-Testing_for_Bypassing_Authentication_Schema/",
+    "enTitle": "Testing for Bypassing Authentication Schema",
+    "wstgId": "WSTG-ATHN-04",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/04-Authentication_Testing/05-Testing_for_Vulnerable_Remember_Password.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/05-Testing_for_Vulnerable_Remember_Password/",
+    "enTitle": "Testing for Vulnerable Remember Password",
+    "wstgId": "WSTG-ATHN-05",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/04-Authentication_Testing/06-Testing_for_Browser_Cache_Weaknesses.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/06-Testing_for_Browser_Cache_Weaknesses/",
+    "enTitle": "Testing for Browser Cache Weaknesses",
+    "wstgId": "WSTG-ATHN-06",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/04-Authentication_Testing/07-Testing_for_Weak_Password_Policy.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/07-Testing_for_Weak_Password_Policy/",
+    "enTitle": "Testing for Weak Password Policy",
+    "wstgId": "WSTG-ATHN-07",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/04-Authentication_Testing/08-Testing_for_Weak_Security_Question_Answer.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/08-Testing_for_Weak_Security_Question_Answer/",
+    "enTitle": "Testing for Weak Security Question Answer",
+    "wstgId": "WSTG-ATHN-08",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/04-Authentication_Testing/09-Testing_for_Weak_Password_Change_or_Reset_Functionalities.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/09-Testing_for_Weak_Password_Change_or_Reset_Functionalities/",
+    "enTitle": "Testing for Weak Password Change or Reset Functionalities",
+    "wstgId": "WSTG-ATHN-09",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/04-Authentication_Testing/10-Testing_for_Weaker_Authentication_in_Alternative_Channel.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/10-Testing_for_Weaker_Authentication_in_Alternative_Channel/",
+    "enTitle": "Testing for Weaker Authentication in Alternative Channel",
+    "wstgId": "WSTG-ATHN-10",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/04-Authentication_Testing/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/",
+    "enTitle": "4.4 Authentication Testing",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "4.4 Тестирование аутентификации",
+    "reviewedSourceSha256": "7fd14d882f84dd0a17972e8fe179b1a64d20481a0aab041181770adfd062ec3a",
+    "reviewedTranslationSha256": "69c2864c794b3300d7ecf3fd08906a66a962a1b8b3c6e27f712d55fe590575b7",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/05-Authorization_Testing/01-Testing_Directory_Traversal_File_Include.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/05-Authorization_Testing/01-Testing_Directory_Traversal_File_Include/",
+    "enTitle": "Testing Directory Traversal File Include",
+    "wstgId": "WSTG-ATHZ-01",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/05-Authorization_Testing/02-Testing_for_Bypassing_Authorization_Schema.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/05-Authorization_Testing/02-Testing_for_Bypassing_Authorization_Schema/",
+    "enTitle": "Testing for Bypassing Authorization Schema",
+    "wstgId": "WSTG-ATHZ-02",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/05-Authorization_Testing/03-Testing_for_Privilege_Escalation.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/05-Authorization_Testing/03-Testing_for_Privilege_Escalation/",
+    "enTitle": "Testing for Privilege Escalation",
+    "wstgId": "WSTG-ATHZ-03",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/05-Authorization_Testing/04-Testing_for_Insecure_Direct_Object_References.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/05-Authorization_Testing/04-Testing_for_Insecure_Direct_Object_References/",
+    "enTitle": "Testing for Insecure Direct Object References",
+    "wstgId": "WSTG-ATHZ-04",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/05-Authorization_Testing/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/05-Authorization_Testing/",
+    "enTitle": "4.5 Authorization Testing",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "4.5 Тестирование авторизации",
+    "reviewedSourceSha256": "6fca46ca6d4ba074d15a2036467a1857f77607de09be65983f9c8f03f7165761",
+    "reviewedTranslationSha256": "d15e1461d58e4a9268aeb75995d218ca246e122f73416c4873bceea1cb83c624",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/06-Session_Management_Testing/01-Testing_for_Session_Management_Schema.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/01-Testing_for_Session_Management_Schema/",
+    "enTitle": "Testing for Session Management Schema",
+    "wstgId": "WSTG-SESS-01",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/06-Session_Management_Testing/02-Testing_for_Cookies_Attributes.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/02-Testing_for_Cookies_Attributes/",
+    "enTitle": "Testing for Cookies Attributes",
+    "wstgId": "WSTG-SESS-02",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/06-Session_Management_Testing/03-Testing_for_Session_Fixation.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/03-Testing_for_Session_Fixation/",
+    "enTitle": "Testing for Session Fixation",
+    "wstgId": "WSTG-SESS-03",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/06-Session_Management_Testing/04-Testing_for_Exposed_Session_Variables.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/04-Testing_for_Exposed_Session_Variables/",
+    "enTitle": "Testing for Exposed Session Variables",
+    "wstgId": "WSTG-SESS-04",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/06-Session_Management_Testing/05-Testing_for_Cross_Site_Request_Forgery.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/05-Testing_for_Cross_Site_Request_Forgery/",
+    "enTitle": "Testing for Cross Site Request Forgery",
+    "wstgId": "WSTG-SESS-05",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/06-Session_Management_Testing/06-Testing_for_Logout_Functionality.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/06-Testing_for_Logout_Functionality/",
+    "enTitle": "Testing for Logout Functionality",
+    "wstgId": "WSTG-SESS-06",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/06-Session_Management_Testing/07-Testing_Session_Timeout.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/07-Testing_Session_Timeout/",
+    "enTitle": "Testing Session Timeout",
+    "wstgId": "WSTG-SESS-07",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/06-Session_Management_Testing/08-Testing_for_Session_Puzzling.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/08-Testing_for_Session_Puzzling/",
+    "enTitle": "Testing for Session Puzzling",
+    "wstgId": "WSTG-SESS-08",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/06-Session_Management_Testing/09-Testing_for_Session_Hijacking.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/09-Testing_for_Session_Hijacking/",
+    "enTitle": "Testing for Session Hijacking",
+    "wstgId": "WSTG-SESS-09",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/06-Session_Management_Testing/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/",
+    "enTitle": "4.6 Session Management Testing",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "4.6 Тестирование управления сеансами",
+    "reviewedSourceSha256": "93f036d07a7d1142e1669395f1f0bbe73d36bf030fabe45554031cf9605b32c8",
+    "reviewedTranslationSha256": "b6ce034c8a6b94ca42f4bc1d755b200a7edeb1b473ac621cab4a29249c57968c",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/01-Testing_for_Reflected_Cross_Site_Scripting.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/01-Testing_for_Reflected_Cross_Site_Scripting/",
+    "enTitle": "Testing for Reflected Cross Site Scripting",
+    "wstgId": "WSTG-INPV-01",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/02-Testing_for_Stored_Cross_Site_Scripting.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/02-Testing_for_Stored_Cross_Site_Scripting/",
+    "enTitle": "Testing for Stored Cross Site Scripting",
+    "wstgId": "WSTG-INPV-02",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/03-Testing_for_HTTP_Verb_Tampering.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/03-Testing_for_HTTP_Verb_Tampering/",
+    "enTitle": "Testing for HTTP Verb Tampering",
+    "wstgId": "WSTG-INPV-03",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/04-Testing_for_HTTP_Parameter_Pollution.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/04-Testing_for_HTTP_Parameter_Pollution/",
+    "enTitle": "Testing for HTTP Parameter Pollution",
+    "wstgId": "WSTG-INPV-04",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/05-Testing_for_SQL_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05-Testing_for_SQL_Injection/",
+    "enTitle": "Testing for SQL Injection",
+    "wstgId": "WSTG-INPV-05",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.1-Testing_for_Oracle.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.1-Testing_for_Oracle/",
+    "enTitle": "Testing for Oracle",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.2-Testing_for_MySQL.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.2-Testing_for_MySQL/",
+    "enTitle": "Testing for MySQL",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.3-Testing_for_SQL_Server.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.3-Testing_for_SQL_Server/",
+    "enTitle": "Testing for SQL Server",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.4-Testing_PostgreSQL.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.4-Testing_PostgreSQL/",
+    "enTitle": "Testing PostgreSQL",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.5-Testing_for_MS_Access.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.5-Testing_for_MS_Access/",
+    "enTitle": "Testing for MS Access",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.6-Testing_for_NoSQL_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.6-Testing_for_NoSQL_Injection/",
+    "enTitle": "Testing for NoSQL Injection",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.7-Testing_for_ORM_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.7-Testing_for_ORM_Injection/",
+    "enTitle": "Testing for ORM Injection",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.8-Testing_for_Client-side.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.8-Testing_for_Client-side/",
+    "enTitle": "Testing for Client-side",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/06-Testing_for_LDAP_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/06-Testing_for_LDAP_Injection/",
+    "enTitle": "Testing for LDAP Injection",
+    "wstgId": "WSTG-INPV-06",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/07-Testing_for_XML_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/07-Testing_for_XML_Injection/",
+    "enTitle": "Testing for XML Injection",
+    "wstgId": "WSTG-INPV-07",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/08-Testing_for_SSI_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/08-Testing_for_SSI_Injection/",
+    "enTitle": "Testing for SSI Injection",
+    "wstgId": "WSTG-INPV-08",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/09-Testing_for_XPath_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/09-Testing_for_XPath_Injection/",
+    "enTitle": "Testing for XPath Injection",
+    "wstgId": "WSTG-INPV-09",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/10-Testing_for_IMAP_SMTP_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/10-Testing_for_IMAP_SMTP_Injection/",
+    "enTitle": "Testing for IMAP SMTP Injection",
+    "wstgId": "WSTG-INPV-10",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/11-Testing_for_Code_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/11-Testing_for_Code_Injection/",
+    "enTitle": "Testing for Code Injection",
+    "wstgId": "WSTG-INPV-11",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/11.1-Testing_for_Local_File_Inclusion.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/11.1-Testing_for_Local_File_Inclusion/",
+    "enTitle": "Testing for Local File Inclusion",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/11.2-Testing_for_Remote_File_Inclusion.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/11.2-Testing_for_Remote_File_Inclusion/",
+    "enTitle": "Testing for Remote File Inclusion",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/12-Testing_for_Command_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/12-Testing_for_Command_Injection/",
+    "enTitle": "Testing for Command Injection",
+    "wstgId": "WSTG-INPV-12",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/13-Testing_for_Buffer_Overflow.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/13-Testing_for_Buffer_Overflow/",
+    "enTitle": "Testing for Buffer Overflow",
+    "wstgId": "WSTG-INPV-13",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/13-Testing_for_Format_String_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/13-Testing_for_Format_String_Injection/",
+    "enTitle": "Testing for Format String Injection",
+    "wstgId": "WSTG-INPV-13",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/14-Testing_for_Incubated_Vulnerability.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/14-Testing_for_Incubated_Vulnerability/",
+    "enTitle": "Testing for Incubated Vulnerability",
+    "wstgId": "WSTG-INPV-14",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/15-Testing_for_HTTP_Splitting_Smuggling.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/15-Testing_for_HTTP_Splitting_Smuggling/",
+    "enTitle": "Testing for HTTP Splitting Smuggling",
+    "wstgId": "WSTG-INPV-15",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/16-Testing_for_HTTP_Incoming_Requests.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/16-Testing_for_HTTP_Incoming_Requests/",
+    "enTitle": "Testing for HTTP Incoming Requests",
+    "wstgId": "WSTG-INPV-16",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/17-Testing_for_Host_Header_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/17-Testing_for_Host_Header_Injection/",
+    "enTitle": "Testing for Host Header Injection",
+    "wstgId": "WSTG-INPV-17",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/18-Testing_for_Server-side_Template_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/18-Testing_for_Server-side_Template_Injection/",
+    "enTitle": "Testing for Server-side Template Injection",
+    "wstgId": "WSTG-INPV-18",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/19-Testing_for_Server-Side_Request_Forgery.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/19-Testing_for_Server-Side_Request_Forgery/",
+    "enTitle": "Testing for Server-Side Request Forgery",
+    "wstgId": "WSTG-INPV-19",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/07-Input_Validation_Testing/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/",
+    "enTitle": "4.7 Input Validation Testing",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "4.7 Тестирование проверки входных данных",
+    "reviewedSourceSha256": "83714223ff4035a7d221a07a8917feffee1db3cec870847e3e7867d264e3e326",
+    "reviewedTranslationSha256": "a59fa853555247a80682be382498a052c406dd2e3b88de85cf236e5b0dfce1da",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/08-Testing_for_Error_Handling/01-Testing_For_Improper_Error_Handling.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/08-Testing_for_Error_Handling/01-Testing_For_Improper_Error_Handling/",
+    "enTitle": "Testing for Improper Error Handling",
+    "wstgId": "WSTG-ERRH-01",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/08-Testing_for_Error_Handling/02-Testing_for_Stack_Traces.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/08-Testing_for_Error_Handling/02-Testing_for_Stack_Traces/",
+    "enTitle": "Testing for Stack Traces",
+    "wstgId": "WSTG-ERRH-02",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/08-Testing_for_Error_Handling/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/08-Testing_for_Error_Handling/",
+    "enTitle": "4.8 Testing for Error Handling",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "4.8 Тестирование обработки ошибок",
+    "reviewedSourceSha256": "bab308e09dfb83602f998da166f916eea441de2f1ace4197791cea89f67d2c88",
+    "reviewedTranslationSha256": "9fea4ddbea0346f92c66fb7b93c809c3a9073d25c68ad6a977e96a877668671f",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/01-Testing_for_Weak_Transport_Layer_Security.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/01-Testing_for_Weak_Transport_Layer_Security/",
+    "enTitle": "Testing for Weak Transport Layer Security",
+    "wstgId": "WSTG-CRYP-01",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/02-Testing_for_Padding_Oracle.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/02-Testing_for_Padding_Oracle/",
+    "enTitle": "Testing for Padding Oracle",
+    "wstgId": "WSTG-CRYP-02",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/03-Testing_for_Sensitive_Information_Sent_via_Unencrypted_Channels.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/03-Testing_for_Sensitive_Information_Sent_via_Unencrypted_Channels/",
+    "enTitle": "Testing for Sensitive Information Sent via Unencrypted Channels",
+    "wstgId": "WSTG-CRYP-03",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/04-Testing_for_Weak_Encryption.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/04-Testing_for_Weak_Encryption/",
+    "enTitle": "Testing for Weak Encryption",
+    "wstgId": "WSTG-CRYP-04",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/",
+    "enTitle": "4.9 Testing for Weak Cryptography",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "4.9 Тестирование слабой криптографии",
+    "reviewedSourceSha256": "eaa076923f73a40814ac249376e482700b5b9081ca0b04621406ff55b3f8a01f",
+    "reviewedTranslationSha256": "17e06605d9eb83822d2f66ca523be66c9d7b5db6597a581a3fc94ae11ae30eec",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/10-Business_Logic_Testing/00-Introduction_to_Business_Logic.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/00-Introduction_to_Business_Logic/",
+    "enTitle": "Introduction to Business Logic",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/10-Business_Logic_Testing/01-Test_Business_Logic_Data_Validation.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/01-Test_Business_Logic_Data_Validation/",
+    "enTitle": "Test Business Logic Data Validation",
+    "wstgId": "WSTG-BUSL-01",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/10-Business_Logic_Testing/02-Test_Ability_to_Forge_Requests.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/02-Test_Ability_to_Forge_Requests/",
+    "enTitle": "Test Ability to Forge Requests",
+    "wstgId": "WSTG-BUSL-02",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/10-Business_Logic_Testing/03-Test_Integrity_Checks.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/03-Test_Integrity_Checks/",
+    "enTitle": "Test Integrity Checks",
+    "wstgId": "WSTG-BUSL-03",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/10-Business_Logic_Testing/04-Test_for_Process_Timing.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/04-Test_for_Process_Timing/",
+    "enTitle": "Test for Process Timing",
+    "wstgId": "WSTG-BUSL-04",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/10-Business_Logic_Testing/05-Test_Number_of_Times_a_Function_Can_Be_Used_Limits.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/05-Test_Number_of_Times_a_Function_Can_Be_Used_Limits/",
+    "enTitle": "Test Number of Times a Function Can Be Used Limits",
+    "wstgId": "WSTG-BUSL-05",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/10-Business_Logic_Testing/06-Testing_for_the_Circumvention_of_Work_Flows.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/06-Testing_for_the_Circumvention_of_Work_Flows/",
+    "enTitle": "Testing for the Circumvention of Work Flows",
+    "wstgId": "WSTG-BUSL-06",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/10-Business_Logic_Testing/07-Test_Defenses_Against_Application_Misuse.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/07-Test_Defenses_Against_Application_Misuse/",
+    "enTitle": "Test Defenses Against Application Misuse",
+    "wstgId": "WSTG-BUSL-07",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/10-Business_Logic_Testing/08-Test_Upload_of_Unexpected_File_Types.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/08-Test_Upload_of_Unexpected_File_Types/",
+    "enTitle": "Test Upload of Unexpected File Types",
+    "wstgId": "WSTG-BUSL-08",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/10-Business_Logic_Testing/09-Test_Upload_of_Malicious_Files.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/09-Test_Upload_of_Malicious_Files/",
+    "enTitle": "Test Upload of Malicious Files",
+    "wstgId": "WSTG-BUSL-09",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/10-Business_Logic_Testing/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/",
+    "enTitle": "4.10 Business Logic Testing",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "4.10 Тестирование бизнес-логики",
+    "reviewedSourceSha256": "f3e948a8f6284ec3aa4124ff267cc652734ce3bbeba016ac773a740a5dec9151",
+    "reviewedTranslationSha256": "da0f50db7a484f98e834ba54e13ab4fdd7f2f5b6bbbce65279c48c48e13736d7",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/11-Client-side_Testing/01-Testing_for_DOM-based_Cross_Site_Scripting.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/01-Testing_for_DOM-based_Cross_Site_Scripting/",
+    "enTitle": "Testing for DOM-Based Cross Site Scripting",
+    "wstgId": "WSTG-CLNT-01",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/11-Client-side_Testing/02-Testing_for_JavaScript_Execution.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/02-Testing_for_JavaScript_Execution/",
+    "enTitle": "Testing for JavaScript Execution",
+    "wstgId": "WSTG-CLNT-02",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/11-Client-side_Testing/03-Testing_for_HTML_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/03-Testing_for_HTML_Injection/",
+    "enTitle": "Testing for HTML Injection",
+    "wstgId": "WSTG-CLNT-03",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/11-Client-side_Testing/04-Testing_for_Client-side_URL_Redirect.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/04-Testing_for_Client-side_URL_Redirect/",
+    "enTitle": "Testing for Client-side URL Redirect",
+    "wstgId": "WSTG-CLNT-04",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/11-Client-side_Testing/05-Testing_for_CSS_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/05-Testing_for_CSS_Injection/",
+    "enTitle": "Testing for CSS Injection",
+    "wstgId": "WSTG-CLNT-05",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/11-Client-side_Testing/06-Testing_for_Client-side_Resource_Manipulation.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/06-Testing_for_Client-side_Resource_Manipulation/",
+    "enTitle": "Testing for Client-side Resource Manipulation",
+    "wstgId": "WSTG-CLNT-06",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/11-Client-side_Testing/07-Testing_Cross_Origin_Resource_Sharing.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/07-Testing_Cross_Origin_Resource_Sharing/",
+    "enTitle": "Testing Cross Origin Resource Sharing",
+    "wstgId": "WSTG-CLNT-07",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/11-Client-side_Testing/08-Testing_for_Cross_Site_Flashing.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/08-Testing_for_Cross_Site_Flashing/",
+    "enTitle": "Testing for Cross Site Flashing",
+    "wstgId": "WSTG-CLNT-08",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/11-Client-side_Testing/09-Testing_for_Clickjacking.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/09-Testing_for_Clickjacking/",
+    "enTitle": "Testing for Clickjacking",
+    "wstgId": "WSTG-CLNT-09",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/11-Client-side_Testing/10-Testing_WebSockets.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/10-Testing_WebSockets/",
+    "enTitle": "Testing WebSockets",
+    "wstgId": "WSTG-CLNT-10",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/11-Client-side_Testing/11-Testing_Web_Messaging.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/11-Testing_Web_Messaging/",
+    "enTitle": "Testing Web Messaging",
+    "wstgId": "WSTG-CLNT-11",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/11-Client-side_Testing/12-Testing_Browser_Storage.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/12-Testing_Browser_Storage/",
+    "enTitle": "Testing Browser Storage",
+    "wstgId": "WSTG-CLNT-12",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/11-Client-side_Testing/13-Testing_for_Cross_Site_Script_Inclusion.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/13-Testing_for_Cross_Site_Script_Inclusion/",
+    "enTitle": "Testing for Cross Site Script Inclusion",
+    "wstgId": "WSTG-CLNT-13",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/11-Client-side_Testing/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/",
+    "enTitle": "4.11 Client-Side Testing",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "4.11 Тестирование на стороне клиента",
+    "reviewedSourceSha256": "6c563740e036600456ffec91b9b21a4be19f6cfb7e11c5c9ca88bcfd57a13bc3",
+    "reviewedTranslationSha256": "bc5e3649b5d7117606a7060ea87c8e999ae993e84c4ec4d89d080b17e15ddd60",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/12-API_Testing/01-Testing_GraphQL.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/12-API_Testing/01-Testing_GraphQL/",
+    "enTitle": "Testing GraphQL",
+    "wstgId": "WSTG-APIT-01",
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/12-API_Testing/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/12-API_Testing/",
+    "enTitle": "4.12 API Testing",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "4.12 Тестирование API",
+    "reviewedSourceSha256": "1c896c892d7e7fbbc6f803cdc5b5b593f8a260a4a332ebb10299df273be7cd02",
+    "reviewedTranslationSha256": "4260b35712a43cad3ac283893bdb4ef652945a0ab081eea4e580e3d218832724",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "4-Web_Application_Security_Testing/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/",
+    "enTitle": "Web Application Security Testing",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Тестирование безопасности веб-приложений",
+    "reviewedSourceSha256": "4a5d66b469028d73c5277e88d90dd8a801b96b598e5e39bec0067e121f2808fb",
+    "reviewedTranslationSha256": "a0ec4dab38e327a89f70dc01df8b590b2a7b055522b1abbbb4a41961a91344a9",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "5-Reporting/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/5-Reporting/",
+    "enTitle": "Reporting",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Отчётность",
+    "reviewedSourceSha256": "ac4c37f76f1d4ef1aab5d67636cef856a8cfecb0c482cbb73238ef0269fdba12",
+    "reviewedTranslationSha256": "cbfa8d36f7d570532c83f96d132022b64026683de7ef42a6de516165f967a00b",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "6-Appendix/A-Testing_Tools_Resource.md",
+    "url": "/ru/OWASP/WSTG-v4.2/6-Appendix/A-Testing_Tools_Resource/",
+    "enTitle": "Testing Tools Resource",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "6-Appendix/B-Suggested_Reading.md",
+    "url": "/ru/OWASP/WSTG-v4.2/6-Appendix/B-Suggested_Reading/",
+    "enTitle": "Suggested Reading",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "6-Appendix/C-Fuzz_Vectors.md",
+    "url": "/ru/OWASP/WSTG-v4.2/6-Appendix/C-Fuzz_Vectors/",
+    "enTitle": "Fuzz Vectors",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Векторы фаззинга",
+    "reviewedSourceSha256": "234bef25b45de041b815cbf9be512a7028598ad63b59168cb0a430a5b3339605",
+    "reviewedTranslationSha256": "d419b162dcbc28d10c5e1133863ff2629ff2378c76e9b492781ff62271ddcd65",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "6-Appendix/D-Encoded_Injection.md",
+    "url": "/ru/OWASP/WSTG-v4.2/6-Appendix/D-Encoded_Injection/",
+    "enTitle": "Encoded Injection",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "6-Appendix/E-History.md",
+    "url": "/ru/OWASP/WSTG-v4.2/6-Appendix/E-History/",
+    "enTitle": "History",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "История",
+    "reviewedSourceSha256": "0a23322dac8e467a58ffe030c7b46cb97c9475dc1d9b9e5eac2309efcc3d6f93",
+    "reviewedTranslationSha256": "3124bcbbd6f99122d936cbb126f8324cc6d8f723969920cc21c1714c88f0a937",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  },
+  {
+    "path": "6-Appendix/F-Leveraging_Dev_Tools.md",
+    "url": "/ru/OWASP/WSTG-v4.2/6-Appendix/F-Leveraging_Dev_Tools/",
+    "enTitle": "Leveraging Dev Tools",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "6-Appendix/README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/6-Appendix/",
+    "enTitle": "Appendix",
+    "wstgId": null,
+    "status": "pending",
+    "checks": {
+      "structure_match": false,
+      "code_blocks_intact": false,
+      "links_valid": false,
+      "technical_review": false,
+      "language_review": false,
+      "qa_passed": false
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": []
+  },
+  {
+    "path": "README.md",
+    "url": "/ru/OWASP/WSTG-v4.2/",
+    "enTitle": "Foreword by Eoin Keary",
+    "wstgId": null,
+    "status": "verified",
+    "checks": {
+      "structure_match": true,
+      "code_blocks_intact": true,
+      "links_valid": true,
+      "technical_review": true,
+      "language_review": true,
+      "qa_passed": true
+    },
+    "sourceCommit": "e7267903759671fa38b478628725d8ef78d07c03",
+    "issues": [],
+    "ruTitle": "Оглавление",
+    "reviewedSourceSha256": "84bbed0c0f4170d309cb10c6e66a74fb642bc897b549653d832a45704501315c",
+    "reviewedTranslationSha256": "1e03d8b8d64189e69dcc7d1e669c183cd07265f330afad0390d2d078c4b43826",
+    "review": {
+      "kind": "assistant-source-comparison",
+      "date": "2026-11-14",
+      "independentHumanReview": false
+    }
+  }
+]

@@ -5,8 +5,12 @@ import fs from 'node:fs/promises';
 export const ROOT = fileURLToPath(new URL('../', import.meta.url));
 export const DIST = path.join(ROOT, 'dist');
 export const GUIDE = '/en/OWASP/WSTG-v4.2';
+export const RU_GUIDE = '/ru/OWASP/WSTG-v4.2';
 export const ORIGIN = 'https://raw2crawl.github.io';
 export const SNAPSHOT = path.join(ROOT, 'vendor/wstg/site');
+export const RU_DOC_ROOT = path.join(ROOT, 'content/ru/OWASP/WSTG-v4.2/document');
+export const EN_DOC_ROOT = path.join(ROOT, 'content/en/OWASP/WSTG-v4.2/document');
+export const LOCALIZATION_DIR = path.join(ROOT, 'localization/ru/wstg-v4.2');
 
 export async function files(dir) {
   const result = [];

@@ -1,4 +1,5 @@
 /site/
+/Private/
 .obsidian/
 private/
 docs.bak/
@@ -22,3 +23,19 @@ node_modules/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# License documents are retained locally at the owner's request.
+LICENSE
+LICENSE.*
+LICENCE
+LICENCE.*
+COPYING
+COPYING.*
+COPYRIGHT
+COPYRIGHT.*
+
+# Local translation reference material; the runtime route/anchor maps stay tracked.
+/localization/ru/wstg-v4.2/editorial-guide.md
+/localization/ru/wstg-v4.2/glossary.json
+/localization/ru/wstg-v4.2/image-text.json
+/localization/ru/wstg-v4.2/issues.md

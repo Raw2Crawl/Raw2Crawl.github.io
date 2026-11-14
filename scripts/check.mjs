@@ -1,9 +1,25 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { ROOT, DIST, GUIDE, ORIGIN, SNAPSHOT, files } from './paths.mjs';
+import { ROOT, DIST, GUIDE, RU_GUIDE, ORIGIN, SNAPSHOT, RU_DOC_ROOT, LOCALIZATION_DIR, files } from './paths.mjs';
+import { auditTranslations } from './translation-audit.mjs';
 
 const errors = [];
+// The owner keeps license documents locally; they are not required in a checkout.
+const localOnlyLicenses = new Set([
+  'LICENSE',
+  'content/en/OWASP/CheatSheetSeries/LICENSE.md',
+  'content/en/OWASP/WSTG-v4.2/LICENSE',
+]);
+async function sourceBytes(relative) {
+  try { return await fs.readFile(path.join(ROOT, relative)); }
+  catch (error) {
+    if (error.code === 'ENOENT' && localOnlyLicenses.has(relative)) return null;
+    throw error;
+  }
+}
+const translationAudit = await auditTranslations();
+errors.push(...translationAudit.errors);
 const ids = new Map();
 const htmlFiles = (await files(DIST)).filter(f => f.endsWith('.html'));
 const decode = s => s.replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
@@ -108,12 +124,17 @@ for (const original of (await files(path.join(ROOT, 'vendor/cheatsheets/site')))
   seriesCompared++;
 }
 const seriesManifest = JSON.parse(await fs.readFile(path.join(ROOT, 'vendor/cheatsheets/provenance.json'), 'utf8'));
+let verifiedSeriesChecksums = 0;
 for (const [relative, expected] of Object.entries(seriesManifest.sha256)) {
-  const actual = crypto.createHash('sha256').update(await fs.readFile(path.join(ROOT, relative))).digest('hex');
+  const bytes = await sourceBytes(relative);
+  if (bytes === null) continue;
+  verifiedSeriesChecksums++;
+  const actual = crypto.createHash('sha256').update(bytes).digest('hex');
   if (actual !== expected) errors.push(`Cheat Sheet checksum mismatch: ${relative}`);
 }
 const seriesSourceFiles = await files(path.join(ROOT, 'content/en/OWASP/CheatSheetSeries'));
-if (seriesSourceFiles.length !== seriesManifest.source_count) errors.push('Cheat Sheet source file count differs from provenance');
+const missingLocalSeriesLicenses = [...localOnlyLicenses].filter(f => f.startsWith('content/en/OWASP/CheatSheetSeries/') && !seriesSourceFiles.some(s => path.relative(ROOT, s).replaceAll('\\', '/') === f)).length;
+if (seriesSourceFiles.length !== seriesManifest.source_count - missingLocalSeriesLicenses) errors.push('Cheat Sheet source file count differs from provenance');
 const blogRoot = path.join(ROOT, 'content/en/harmj0y');
 const blog = JSON.parse(await fs.readFile(path.join(blogRoot, 'manifest.json'), 'utf8'));
 if (blog.articles.length !== blog.reported_article_count || new Set(blog.articles.map(p => p.id)).size !== blog.articles.length) errors.push('Incomplete or duplicated harmj0y articles');
@@ -153,18 +174,105 @@ for (const file of sourceDocs.filter(f => !f.endsWith('.md'))) {
 }
 // Confirm the vendored original has not drifted since import.
 const manifest = JSON.parse(await fs.readFile(path.join(ROOT, 'vendor/wstg/provenance.json'), 'utf8'));
+let verifiedWstgChecksums = 0;
 for (const [relative, expected] of Object.entries(manifest.sha256)) {
-  const actual = crypto.createHash('sha256').update(await fs.readFile(path.join(ROOT, relative))).digest('hex');
+  const bytes = await sourceBytes(relative);
+  if (bytes === null) continue;
+  verifiedWstgChecksums++;
+  const actual = crypto.createHash('sha256').update(bytes).digest('hex');
   if (actual !== expected) errors.push(`Snapshot checksum mismatch: ${relative}`);
 }
+// Verify Russian edition
+const ruSourceDocs = (await files(RU_DOC_ROOT)).filter(f => f.endsWith('.md'));
+const ruSourceImages = (await files(RU_DOC_ROOT)).filter(f => !f.endsWith('.md'));
+if (ruSourceImages.length !== sourceDocs.filter(f => !f.endsWith('.md')).length) errors.push('RU image inventory is incomplete or has unexpected assets');
+const enLicense = await sourceBytes('content/en/OWASP/WSTG-v4.2/LICENSE');
+let ruLicense = null;
+try { ruLicense = await fs.readFile(path.join(RU_DOC_ROOT, '../LICENSE')); }
+catch (error) { if (error.code !== 'ENOENT') throw error; }
+if (enLicense && ruLicense && !enLicense.equals(ruLicense)) errors.push('RU license differs from the original');
+const pagesData = JSON.parse(await fs.readFile(path.join(LOCALIZATION_DIR, 'pages.json'), 'utf8'));
+const anchorsData = JSON.parse(await fs.readFile(path.join(LOCALIZATION_DIR, 'anchors.json'), 'utf8'));
+
+for (const img of ruSourceImages) {
+  const rel = path.relative(RU_DOC_ROOT, img);
+  const enImg = path.join(docRoot, rel);
+  const distImg = path.join(DIST, RU_GUIDE.slice(1), rel);
+  try {
+    const origBytes = await fs.readFile(enImg);
+    const ruBytes = await fs.readFile(img);
+    const distBytes = await fs.readFile(distImg);
+    if (!origBytes.equals(ruBytes)) errors.push(`RU source image differs from EN original: ${rel}`);
+    if (!origBytes.equals(distBytes)) errors.push(`RU dist image differs from EN original: ${rel}`);
+  } catch {
+    errors.push(`Missing RU image: ${rel}`);
+  }
+}
+
+for (const p of pagesData) {
+  const dest = path.join(DIST, p.url.slice(1).replace(/\/$/, '') + '/index.html');
+  try {
+    const html = await fs.readFile(dest, 'utf8');
+    if (!html.includes('lang="ru"')) errors.push(`Missing lang="ru" on ${p.url}`);
+    if (!html.includes(`<link rel="canonical" href="${ORIGIN}${p.url}">`)) errors.push(`Missing or incorrect canonical on ${p.url}`);
+    if (!html.includes('hreflang="en"') || !html.includes('hreflang="ru"')) errors.push(`Missing hreflang on ${p.url}`);
+    const enUrl = p.url.replace(/^\/ru\//, '/en/');
+    if (!html.includes(`class="lang-link" href="${enUrl}"`)) errors.push(`Wrong EN counterpart on ${p.url}`);
+    const enHtml = await fs.readFile(path.join(DIST, enUrl, 'index.html'), 'utf8');
+    if (!enHtml.includes(`class="lang-link" href="${p.url}"`)) errors.push(`Wrong RU counterpart on ${enUrl}`);
+    const nav = html.match(/<nav class="wstg-nav"[\s\S]*?<\/nav>/)?.[0] || '';
+    if (!nav || [...nav.matchAll(/data-title="([^"]+)"/g)].some(m => !/[А-Яа-яЁё]/.test(m[1]))) errors.push(`Untranslated Russian navigation: ${p.url}`);
+    const article = html.match(/<article class="doc-content">([\s\S]*?)<\/article>/)?.[1] || '';
+    if (p.status === 'pending' && !article.includes('Перевод данного раздела находится в подготовке.')) errors.push(`Pending RU document has no honest notice: ${p.path}`);
+    if (p.status !== 'pending' && article.includes('class="translation-notice"')) errors.push(`Translated RU document rendered as a placeholder: ${p.path}`);
+    if (/href="\/en\/OWASP\/WSTG-v4\.2\//.test(article) && p.status !== 'pending') errors.push(`RU article points internally to EN: ${p.path}`);
+  } catch {
+    errors.push(`RU page missing in dist: ${p.url}`);
+  }
+}
+
+let ruTranslatedChecked = 0;
+for (const ruDoc of ruSourceDocs) {
+  const rel = path.relative(RU_DOC_ROOT, ruDoc).split(path.sep).join('/');
+  const md = await fs.readFile(ruDoc, 'utf8');
+  if (/TODO|LOREM IPSUM/i.test(md)) errors.push(`Placeholder text found in ${rel}`);
+
+  const anchors = anchorsData[rel];
+  if (anchors) {
+    const mdHeadings = [];
+    let inCode = false;
+    for (const line of md.split(/\r?\n/)) {
+      if (line.startsWith('```')) { inCode = !inCode; continue; }
+      if (inCode) continue;
+      const m = line.match(/^(#{1,6})\s+(.+)$/);
+      if (m) mdHeadings.push(m[1].length);
+    }
+    const expectedHeadings = anchors.headings.map(h => h.level);
+    if (JSON.stringify(mdHeadings) !== JSON.stringify(expectedHeadings)) {
+      errors.push(`RU document heading count mismatch in ${rel}: expected ${expectedHeadings.length}, got ${mdHeadings.length}`);
+    }
+  }
+  ruTranslatedChecked++;
+}
+
+for (const catUrl of ['ru/index.html', 'ru/OWASP/index.html']) {
+  try {
+    const html = await fs.readFile(path.join(DIST, catUrl), 'utf8');
+    if (!html.includes('lang="ru"')) errors.push(`Missing lang="ru" on /${catUrl}`);
+  } catch {
+    errors.push(`Missing Russian catalog: ${catUrl}`);
+  }
+}
+
 if (brokenFragments.length) {
   const unique = [...new Set(brokenFragments.map(f => f.target))];
   errors.push(`Broken fragment targets (${unique.length} unique):\n${unique.join('\n')}`);
 }
-console.log(`Checked ${htmlFiles.length} HTML files and ${links} local links; ${sourceDocs.filter(f => f.endsWith('.md')).length} release documents; ${sourceDocs.filter(f => !f.endsWith('.md')).length} release images; ${Object.keys(manifest.sha256).length} source checksums.`);
+console.log(`Checked ${htmlFiles.length} HTML files and ${links} local links; ${sourceDocs.filter(f => f.endsWith('.md')).length} release documents; ${sourceDocs.filter(f => !f.endsWith('.md')).length} release images; ${verifiedWstgChecksums} source checksums (${Object.keys(manifest.sha256).length - verifiedWstgChecksums} local-only license documents absent).`);
 console.log(`Compared ${compared} mirrored pages with original article/navigation markup and verified the custom design assets.`);
 console.log(`Checked ${cheatsheetSources.length} Cheat Sheet source files against the published pages.`);
-console.log(`Compared ${seriesCompared} Cheat Sheet articles and ${Object.keys(seriesManifest.sha256).length} source checksums.`);
+console.log(`Compared ${seriesCompared} Cheat Sheet articles and ${verifiedSeriesChecksums} source checksums (${Object.keys(seriesManifest.sha256).length - verifiedSeriesChecksums} local-only license documents absent).`);
 console.log(`Checked ${blog.articles.filter(p => p.archive_status !== 'source-link').length} complete harmj0y articles, ${blog.articles.filter(p => p.archive_status === 'source-link').length} source-only pages, final source links, and ${blog.assets.length} local image checksums.`);
+console.log(`Checked Russian edition: ${pagesData.length} RU routes, ${ruTranslatedChecked} translated documents, ${translationAudit.verified} verified, ${translationAudit.pending} pending; ${ruSourceImages.length} RU images; Markdown structure, code, inline tokens, links, WSTG IDs and anchors.`);
 if (errors.length) throw Error([...new Set(errors)].join('\n'));
 console.log('All checks passed.');
