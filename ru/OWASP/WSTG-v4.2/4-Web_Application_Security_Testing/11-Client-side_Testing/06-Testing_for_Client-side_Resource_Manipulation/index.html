@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Тестирование манипулирования клиентскими ресурсами | Raw2Crawl</title><meta name="description" content="Security testing documentation.">
+<link rel="canonical" href="https://raw2crawl.github.io/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/06-Testing_for_Client-side_Resource_Manipulation/"><link rel="alternate" hreflang="ru" href="https://raw2crawl.github.io/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/06-Testing_for_Client-side_Resource_Manipulation/"><link rel="alternate" hreflang="en" href="https://raw2crawl.github.io/en/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/06-Testing_for_Client-side_Resource_Manipulation/"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css?v=d89607ea83d6"><script src="/assets/site.js?v=0fe19ad504f9" defer></script>
+</head><body id="top" class="documentation">
+<a class="skip-link" href="#main-content">Перейти к содержанию</a>
+<header class="site-header"><a class="brand" href="/ru/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Документация</span></a>
+<div class="header-actions"><div class="language-switch"><a class="lang-link" href="/en/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/06-Testing_for_Client-side_Resource_Manipulation/" hreflang="en" title="Read in English">EN</a><span class="lang-divider">/</span><span class="lang-active" aria-current="true">RU</span></div><button id="theme-toggle" type="button" aria-label="Переключить тему оформления">Тема</button></div></header>
+
+<div class="mobile-toolbar"><button id="contents-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Содержание</button><span>WSTG v4.2</span></div>
+<div class="docs-layout">
+<aside id="doc-sidebar" class="sidebar" aria-label="Содержание руководства"><div class="sidebar-book"><span class="eyebrow">OWASP</span><a href="/ru/OWASP/WSTG-v4.2/">Руководство по тестированию</a><span class="edition">Версия 4.2 <span aria-hidden="true">·</span> Stable</span></div><nav class="wstg-nav" id="wstg-nav-v42" aria-label="Оглавление WSTG (v4.2)">
+  <p class="wstg-nav-home"><a href="/ru/">← Каталог</a></p>
+  <h2 class="wstg-nav-title"><a href="/ru/OWASP/WSTG-v4.2/">Оглавление WSTG (v4.2)</a></h2>
+  <label class="wstg-nav-filter-label" for="wstg-nav-filter-v42">Поиск по содержанию</label>
+  <input id="wstg-nav-filter-v42" class="wstg-nav-filter" type="search" placeholder="Поиск (XSS, SQL, WSTG-INPV-01, 4.7)" autocomplete="off">
+  <div class="wstg-nav-filter-controls">
+    <button type="button" class="wstg-nav-filter-clear" hidden>Очистить</button>
+    <div class="wstg-nav-filter-count" hidden aria-live="polite" aria-atomic="true"></div>
+  </div>
+  <div class="wstg-nav-controls">
+    <button type="button" data-wstg-expand>Развернуть всё</button>
+    <button type="button" data-wstg-collapse>Свернуть всё</button>
+  </div>
+  <ul class="wstg-nav-list">
+    
+    
+<li class="wstg-nav-item" data-title="0. Предисловие (Eoin Keary)">
+<a href="/ru/OWASP/WSTG-v4.2/0-Foreword/" data-nav-url="0-Foreword/" title="0. Предисловие (Eoin Keary)">0. Предисловие (Eoin Keary)</a>
+</li>
+<li class="wstg-nav-item" data-title="1. Сведения об издании">
+<a href="/ru/OWASP/WSTG-v4.2/1-Frontispiece/" data-nav-url="1-Frontispiece/" title="1. Сведения об издании">1. Сведения об издании</a>
+</li>
+<li class="wstg-nav-item" data-title="2. Введение">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/2-Introduction/" data-nav-url="2-Introduction/" title="2. Введение">2. Введение</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="2.1 Проект OWASP Testing">
+<a href="/ru/OWASP/WSTG-v4.2/2-Introduction/#the-owasp-testing-project" data-nav-url="2-Introduction/#the-owasp-testing-project" title="2.1 Проект OWASP Testing">2.1 Проект OWASP Testing</a>
+</li>
+<li class="wstg-nav-item" data-title="2.2 Принципы тестирования">
+<a href="/ru/OWASP/WSTG-v4.2/2-Introduction/#principles-of-testing" data-nav-url="2-Introduction/#principles-of-testing" title="2.2 Принципы тестирования">2.2 Принципы тестирования</a>
+</li>
+<li class="wstg-nav-item" data-title="2.3 Методы тестирования">
+<a href="/ru/OWASP/WSTG-v4.2/2-Introduction/#testing-techniques-explained" data-nav-url="2-Introduction/#testing-techniques-explained" title="2.3 Методы тестирования">2.3 Методы тестирования</a>
+</li>
+<li class="wstg-nav-item" data-title="2.4 Ручные проверки и экспертный анализ">
+<a href="/ru/OWASP/WSTG-v4.2/2-Introduction/#manual-inspections-and-reviews" data-nav-url="2-Introduction/#manual-inspections-and-reviews" title="2.4 Ручные проверки и экспертный анализ">2.4 Ручные проверки и экспертный анализ</a>
+</li>
+<li class="wstg-nav-item" data-title="2.5 Моделирование угроз">
+<a href="/ru/OWASP/WSTG-v4.2/2-Introduction/#threat-modeling" data-nav-url="2-Introduction/#threat-modeling" title="2.5 Моделирование угроз">2.5 Моделирование угроз</a>
+</li>
+<li class="wstg-nav-item" data-title="2.6 Анализ исходного кода">
+<a href="/ru/OWASP/WSTG-v4.2/2-Introduction/#source-code-review" data-nav-url="2-Introduction/#source-code-review" title="2.6 Анализ исходного кода">2.6 Анализ исходного кода</a>
+</li>
+<li class="wstg-nav-item" data-title="2.7 Тестирование на проникновение">
+<a href="/ru/OWASP/WSTG-v4.2/2-Introduction/#penetration-testing" data-nav-url="2-Introduction/#penetration-testing" title="2.7 Тестирование на проникновение">2.7 Тестирование на проникновение</a>
+</li>
+<li class="wstg-nav-item" data-title="2.8 Необходимость сбалансированного подхода">
+<a href="/ru/OWASP/WSTG-v4.2/2-Introduction/#the-need-for-a-balanced-approach" data-nav-url="2-Introduction/#the-need-for-a-balanced-approach" title="2.8 Необходимость сбалансированного подхода">2.8 Необходимость сбалансированного подхода</a>
+</li>
+<li class="wstg-nav-item" data-title="2.9 Формирование требований к тестированию безопасности">
+<a href="/ru/OWASP/WSTG-v4.2/2-Introduction/#deriving-security-test-requirements" data-nav-url="2-Introduction/#deriving-security-test-requirements" title="2.9 Формирование требований к тестированию безопасности">2.9 Формирование требований к тестированию безопасности</a>
+</li>
+<li class="wstg-nav-item" data-title="2.10 Интеграция тестов безопасности в процессы разработки и тестирования">
+<a href="/ru/OWASP/WSTG-v4.2/2-Introduction/#security-tests-integrated-in-development-and-testing-workflows" data-nav-url="2-Introduction/#security-tests-integrated-in-development-and-testing-workflows" title="2.10 Интеграция тестов безопасности в процессы разработки и тестирования">2.10 Интеграция тестов безопасности в процессы разработки и тестирования</a>
+</li>
+<li class="wstg-nav-item" data-title="2.11 Анализ данных тестирования безопасности и отчётность">
+<a href="/ru/OWASP/WSTG-v4.2/2-Introduction/#security-test-data-analysis-and-reporting" data-nav-url="2-Introduction/#security-test-data-analysis-and-reporting" title="2.11 Анализ данных тестирования безопасности и отчётность">2.11 Анализ данных тестирования безопасности и отчётность</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="3. Методология тестирования OWASP">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/3-The_OWASP_Testing_Framework/" data-nav-url="3-The_OWASP_Testing_Framework/" title="3. Методология тестирования OWASP">3. Методология тестирования OWASP</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="3.1 Методология тестирования веб-безопасности">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework" data-nav-url="3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework" title="3.1 Методология тестирования веб-безопасности">3.1 Методология тестирования веб-безопасности</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="3.2 Этап 1: До начала разработки">
+<a href="/ru/OWASP/WSTG-v4.2/3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework#phase-1-before-development-begins" data-nav-url="3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework#phase-1-before-development-begins" title="3.2 Этап 1: До начала разработки">3.2 Этап 1: До начала разработки</a>
+</li>
+<li class="wstg-nav-item" data-title="3.3 Этап 2: При определении требований и проектировании">
+<a href="/ru/OWASP/WSTG-v4.2/3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework#phase-2-during-definition-and-design" data-nav-url="3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework#phase-2-during-definition-and-design" title="3.3 Этап 2: При определении требований и проектировании">3.3 Этап 2: При определении требований и проектировании</a>
+</li>
+<li class="wstg-nav-item" data-title="3.4 Этап 3: В процессе разработки">
+<a href="/ru/OWASP/WSTG-v4.2/3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework#phase-3-during-development" data-nav-url="3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework#phase-3-during-development" title="3.4 Этап 3: В процессе разработки">3.4 Этап 3: В процессе разработки</a>
+</li>
+<li class="wstg-nav-item" data-title="3.5 Этап 4: При развёртывании">
+<a href="/ru/OWASP/WSTG-v4.2/3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework#phase-4-during-deployment" data-nav-url="3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework#phase-4-during-deployment" title="3.5 Этап 4: При развёртывании">3.5 Этап 4: При развёртывании</a>
+</li>
+<li class="wstg-nav-item" data-title="3.6 Этап 5: При сопровождении и эксплуатации">
+<a href="/ru/OWASP/WSTG-v4.2/3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework#phase-5-during-maintenance-and-operations" data-nav-url="3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework#phase-5-during-maintenance-and-operations" title="3.6 Этап 5: При сопровождении и эксплуатации">3.6 Этап 5: При сопровождении и эксплуатации</a>
+</li>
+<li class="wstg-nav-item" data-title="3.7 Типовой процесс тестирования в SDLC">
+<a href="/ru/OWASP/WSTG-v4.2/3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework#a-typical-sdlc-testing-workflow" data-nav-url="3-The_OWASP_Testing_Framework/0-The_Web_Security_Testing_Framework#a-typical-sdlc-testing-workflow" title="3.7 Типовой процесс тестирования в SDLC">3.7 Типовой процесс тестирования в SDLC</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="3.8 Методики тестирования на проникновение">
+<a href="/ru/OWASP/WSTG-v4.2/3-The_OWASP_Testing_Framework/1-Penetration_Testing_Methodologies" data-nav-url="3-The_OWASP_Testing_Framework/1-Penetration_Testing_Methodologies" title="3.8 Методики тестирования на проникновение">3.8 Методики тестирования на проникновение</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="4. Тестирование безопасности веб-приложений">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/" data-nav-url="4-Web_Application_Security_Testing/" title="4. Тестирование безопасности веб-приложений">4. Тестирование безопасности веб-приложений</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="4.0 Введение и цели">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/00-Introduction_and_Objectives/" data-nav-url="4-Web_Application_Security_Testing/00-Introduction_and_Objectives/" title="4.0 Введение и цели">4.0 Введение и цели</a>
+</li>
+<li class="wstg-nav-item" data-title="4.1 Сбор информации">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/" data-nav-url="4-Web_Application_Security_Testing/01-Information_Gathering/" title="4.1 Сбор информации">4.1 Сбор информации</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="4.1.1 Сбор информации и выявление утечек через поисковые системы" data-hints="wstg-info-01 info-01">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/01-Conduct_Search_Engine_Discovery_Reconnaissance_for_Information_Leakage" data-nav-url="4-Web_Application_Security_Testing/01-Information_Gathering/01-Conduct_Search_Engine_Discovery_Reconnaissance_for_Information_Leakage" title="4.1.1 Сбор информации и выявление утечек через поисковые системы">4.1.1 Сбор информации и выявление утечек через поисковые системы</a>
+</li>
+<li class="wstg-nav-item" data-title="4.1.2 Определение типа и версии веб-сервера" data-hints="wstg-info-02 info-02">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/02-Fingerprint_Web_Server" data-nav-url="4-Web_Application_Security_Testing/01-Information_Gathering/02-Fingerprint_Web_Server" title="4.1.2 Определение типа и версии веб-сервера">4.1.2 Определение типа и версии веб-сервера</a>
+</li>
+<li class="wstg-nav-item" data-title="4.1.3 Анализ метафайлов веб-сервера на предмет утечки информации" data-hints="robots robots.txt sitemap sitemap.xml wstg-info-03 info-03">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/03-Review_Webserver_Metafiles_for_Information_Leakage" data-nav-url="4-Web_Application_Security_Testing/01-Information_Gathering/03-Review_Webserver_Metafiles_for_Information_Leakage" title="4.1.3 Анализ метафайлов веб-сервера на предмет утечки информации">4.1.3 Анализ метафайлов веб-сервера на предмет утечки информации</a>
+</li>
+<li class="wstg-nav-item" data-title="4.1.4 Перечисление приложений на веб-сервере" data-hints="wstg-info-04 info-04">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/04-Enumerate_Applications_on_Webserver" data-nav-url="4-Web_Application_Security_Testing/01-Information_Gathering/04-Enumerate_Applications_on_Webserver" title="4.1.4 Перечисление приложений на веб-сервере">4.1.4 Перечисление приложений на веб-сервере</a>
+</li>
+<li class="wstg-nav-item" data-title="4.1.5 Анализ содержимого веб-страниц на предмет утечки информации" data-hints="wstg-info-05 info-05">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/05-Review_Webpage_Content_for_Information_Leakage" data-nav-url="4-Web_Application_Security_Testing/01-Information_Gathering/05-Review_Webpage_Content_for_Information_Leakage" title="4.1.5 Анализ содержимого веб-страниц на предмет утечки информации">4.1.5 Анализ содержимого веб-страниц на предмет утечки информации</a>
+</li>
+<li class="wstg-nav-item" data-title="4.1.6 Определение точек входа в приложение" data-hints="wstg-info-06 info-06">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/06-Identify_Application_Entry_Points" data-nav-url="4-Web_Application_Security_Testing/01-Information_Gathering/06-Identify_Application_Entry_Points" title="4.1.6 Определение точек входа в приложение">4.1.6 Определение точек входа в приложение</a>
+</li>
+<li class="wstg-nav-item" data-title="4.1.7 Построение карты путей выполнения в приложении" data-hints="wstg-info-07 info-07">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/07-Map_Execution_Paths_Through_Application" data-nav-url="4-Web_Application_Security_Testing/01-Information_Gathering/07-Map_Execution_Paths_Through_Application" title="4.1.7 Построение карты путей выполнения в приложении">4.1.7 Построение карты путей выполнения в приложении</a>
+</li>
+<li class="wstg-nav-item" data-title="4.1.8 Определение используемого веб-фреймворка" data-hints="wstg-info-08 info-08">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/08-Fingerprint_Web_Application_Framework" data-nav-url="4-Web_Application_Security_Testing/01-Information_Gathering/08-Fingerprint_Web_Application_Framework" title="4.1.8 Определение используемого веб-фреймворка">4.1.8 Определение используемого веб-фреймворка</a>
+</li>
+<li class="wstg-nav-item" data-title="4.1.9 Определение используемого веб-приложения" data-hints="wstg-info-09 info-09">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/09-Fingerprint_Web_Application" data-nav-url="4-Web_Application_Security_Testing/01-Information_Gathering/09-Fingerprint_Web_Application" title="4.1.9 Определение используемого веб-приложения">4.1.9 Определение используемого веб-приложения</a>
+</li>
+<li class="wstg-nav-item" data-title="4.1.10 Построение архитектурной карты приложения" data-hints="wstg-info-10 info-10">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/01-Information_Gathering/10-Map_Application_Architecture" data-nav-url="4-Web_Application_Security_Testing/01-Information_Gathering/10-Map_Application_Architecture" title="4.1.10 Построение архитектурной карты приложения">4.1.10 Построение архитектурной карты приложения</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="4.2 Тестирование управления конфигурацией и развёртыванием">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/" data-nav-url="4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/" title="4.2 Тестирование управления конфигурацией и развёртыванием">4.2 Тестирование управления конфигурацией и развёртыванием</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="4.2.1 Тестирование конфигурации сетевой инфраструктуры" data-hints="wstg-conf-01 conf-01">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/01-Test_Network_Infrastructure_Configuration" data-nav-url="4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/01-Test_Network_Infrastructure_Configuration" title="4.2.1 Тестирование конфигурации сетевой инфраструктуры">4.2.1 Тестирование конфигурации сетевой инфраструктуры</a>
+</li>
+<li class="wstg-nav-item" data-title="4.2.2 Тестирование конфигурации платформы приложений" data-hints="wstg-conf-02 conf-02">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/02-Test_Application_Platform_Configuration" data-nav-url="4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/02-Test_Application_Platform_Configuration" title="4.2.2 Тестирование конфигурации платформы приложений">4.2.2 Тестирование конфигурации платформы приложений</a>
+</li>
+<li class="wstg-nav-item" data-title="4.2.3 Тестирование обработки расширений файлов на предмет утечки конфиденциальных данных" data-hints="wstg-conf-03 conf-03">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/03-Test_File_Extensions_Handling_for_Sensitive_Information" data-nav-url="4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/03-Test_File_Extensions_Handling_for_Sensitive_Information" title="4.2.3 Тестирование обработки расширений файлов на предмет утечки конфиденциальных данных">4.2.3 Тестирование обработки расширений файлов на предмет утечки конфиденциальных данных</a>
+</li>
+<li class="wstg-nav-item" data-title="4.2.4 Анализ старых резервных копий и несвязанных файлов на предмет конфиденциальных данных" data-hints="wstg-conf-04 conf-04">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/04-Review_Old_Backup_and_Unreferenced_Files_for_Sensitive_Information" data-nav-url="4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/04-Review_Old_Backup_and_Unreferenced_Files_for_Sensitive_Information" title="4.2.4 Анализ старых резервных копий и несвязанных файлов на предмет конфиденциальных данных">4.2.4 Анализ старых резервных копий и несвязанных файлов на предмет конфиденциальных данных</a>
+</li>
+<li class="wstg-nav-item" data-title="4.2.5 Перечисление административных интерфейсов инфраструктуры и приложений" data-hints="wstg-conf-05 conf-05">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/05-Enumerate_Infrastructure_and_Application_Admin_Interfaces" data-nav-url="4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/05-Enumerate_Infrastructure_and_Application_Admin_Interfaces" title="4.2.5 Перечисление административных интерфейсов инфраструктуры и приложений">4.2.5 Перечисление административных интерфейсов инфраструктуры и приложений</a>
+</li>
+<li class="wstg-nav-item" data-title="4.2.6 Тестирование HTTP-методов" data-hints="wstg-conf-06 conf-06">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/06-Test_HTTP_Methods" data-nav-url="4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/06-Test_HTTP_Methods" title="4.2.6 Тестирование HTTP-методов">4.2.6 Тестирование HTTP-методов</a>
+</li>
+<li class="wstg-nav-item" data-title="4.2.7 Тестирование HTTP Strict Transport Security (HSTS)" data-hints="hsts headers wstg-conf-07 conf-07">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/07-Test_HTTP_Strict_Transport_Security" data-nav-url="4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/07-Test_HTTP_Strict_Transport_Security" title="4.2.7 Тестирование HTTP Strict Transport Security (HSTS)">4.2.7 Тестирование HTTP Strict Transport Security (HSTS)</a>
+</li>
+<li class="wstg-nav-item" data-title="4.2.8 Тестирование междоменных политик RIA" data-hints="crossdomain.xml clientaccesspolicy wstg-conf-08 conf-08">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/08-Test_RIA_Cross_Domain_Policy" data-nav-url="4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/08-Test_RIA_Cross_Domain_Policy" title="4.2.8 Тестирование междоменных политик RIA">4.2.8 Тестирование междоменных политик RIA</a>
+</li>
+<li class="wstg-nav-item" data-title="4.2.9 Тестирование прав доступа к файлам" data-hints="wstg-conf-09 conf-09">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/09-Test_File_Permission" data-nav-url="4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/09-Test_File_Permission" title="4.2.9 Тестирование прав доступа к файлам">4.2.9 Тестирование прав доступа к файлам</a>
+</li>
+<li class="wstg-nav-item" data-title="4.2.10 Тестирование на захват поддоменов" data-hints="wstg-conf-10 conf-10">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/10-Test_for_Subdomain_Takeover" data-nav-url="4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/10-Test_for_Subdomain_Takeover" title="4.2.10 Тестирование на захват поддоменов">4.2.10 Тестирование на захват поддоменов</a>
+</li>
+<li class="wstg-nav-item" data-title="4.2.11 Тестирование облачных хранилищ" data-hints="s3 bucket blob storage wstg-conf-11 conf-11">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/11-Test_Cloud_Storage" data-nav-url="4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/11-Test_Cloud_Storage" title="4.2.11 Тестирование облачных хранилищ">4.2.11 Тестирование облачных хранилищ</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="4.3 Тестирование управления идентификационными данными">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/03-Identity_Management_Testing/" data-nav-url="4-Web_Application_Security_Testing/03-Identity_Management_Testing/" title="4.3 Тестирование управления идентификационными данными">4.3 Тестирование управления идентификационными данными</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="4.3.1 Тестирование определений ролей" data-hints="wstg-idnt-01 idnt-01">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/03-Identity_Management_Testing/01-Test_Role_Definitions" data-nav-url="4-Web_Application_Security_Testing/03-Identity_Management_Testing/01-Test_Role_Definitions" title="4.3.1 Тестирование определений ролей">4.3.1 Тестирование определений ролей</a>
+</li>
+<li class="wstg-nav-item" data-title="4.3.2 Тестирование процесса регистрации пользователей" data-hints="wstg-idnt-02 idnt-02">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/03-Identity_Management_Testing/02-Test_User_Registration_Process" data-nav-url="4-Web_Application_Security_Testing/03-Identity_Management_Testing/02-Test_User_Registration_Process" title="4.3.2 Тестирование процесса регистрации пользователей">4.3.2 Тестирование процесса регистрации пользователей</a>
+</li>
+<li class="wstg-nav-item" data-title="4.3.3 Тестирование процесса подготовки учётных записей" data-hints="wstg-idnt-03 idnt-03">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/03-Identity_Management_Testing/03-Test_Account_Provisioning_Process" data-nav-url="4-Web_Application_Security_Testing/03-Identity_Management_Testing/03-Test_Account_Provisioning_Process" title="4.3.3 Тестирование процесса подготовки учётных записей">4.3.3 Тестирование процесса подготовки учётных записей</a>
+</li>
+<li class="wstg-nav-item" data-title="4.3.4 Тестирование на перечисление учётных записей и подбор имён пользователей" data-hints="wstg-idnt-04 idnt-04">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/03-Identity_Management_Testing/04-Testing_for_Account_Enumeration_and_Guessable_User_Account" data-nav-url="4-Web_Application_Security_Testing/03-Identity_Management_Testing/04-Testing_for_Account_Enumeration_and_Guessable_User_Account" title="4.3.4 Тестирование на перечисление учётных записей и подбор имён пользователей">4.3.4 Тестирование на перечисление учётных записей и подбор имён пользователей</a>
+</li>
+<li class="wstg-nav-item" data-title="4.3.5 Тестирование слабой или необязательной политики имён пользователей" data-hints="wstg-idnt-05 idnt-05">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/03-Identity_Management_Testing/05-Testing_for_Weak_or_Unenforced_Username_Policy" data-nav-url="4-Web_Application_Security_Testing/03-Identity_Management_Testing/05-Testing_for_Weak_or_Unenforced_Username_Policy" title="4.3.5 Тестирование слабой или необязательной политики имён пользователей">4.3.5 Тестирование слабой или необязательной политики имён пользователей</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="4.4 Тестирование аутентификации">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/" data-nav-url="4-Web_Application_Security_Testing/04-Authentication_Testing/" title="4.4 Тестирование аутентификации">4.4 Тестирование аутентификации</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="4.4.1 Тестирование передачи учётных данных по зашифрованным каналам" data-hints="tls ssl https wstg-athn-01 athn-01">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/01-Testing_for_Credentials_Transported_over_an_Encrypted_Channel" data-nav-url="4-Web_Application_Security_Testing/04-Authentication_Testing/01-Testing_for_Credentials_Transported_over_an_Encrypted_Channel" title="4.4.1 Тестирование передачи учётных данных по зашифрованным каналам">4.4.1 Тестирование передачи учётных данных по зашифрованным каналам</a>
+</li>
+<li class="wstg-nav-item" data-title="4.4.2 Тестирование учётных данных по умолчанию" data-hints="wstg-athn-02 athn-02">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/02-Testing_for_Default_Credentials" data-nav-url="4-Web_Application_Security_Testing/04-Authentication_Testing/02-Testing_for_Default_Credentials" title="4.4.2 Тестирование учётных данных по умолчанию">4.4.2 Тестирование учётных данных по умолчанию</a>
+</li>
+<li class="wstg-nav-item" data-title="4.4.3 Тестирование слабого механизма блокировки учётных записей" data-hints="rate limit bruteforce brute force account lockout wstg-athn-03 athn-03">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/03-Testing_for_Weak_Lock_Out_Mechanism" data-nav-url="4-Web_Application_Security_Testing/04-Authentication_Testing/03-Testing_for_Weak_Lock_Out_Mechanism" title="4.4.3 Тестирование слабого механизма блокировки учётных записей">4.4.3 Тестирование слабого механизма блокировки учётных записей</a>
+</li>
+<li class="wstg-nav-item" data-title="4.4.4 Тестирование обхода схемы аутентификации" data-hints="wstg-athn-04 athn-04">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/04-Testing_for_Bypassing_Authentication_Schema" data-nav-url="4-Web_Application_Security_Testing/04-Authentication_Testing/04-Testing_for_Bypassing_Authentication_Schema" title="4.4.4 Тестирование обхода схемы аутентификации">4.4.4 Тестирование обхода схемы аутентификации</a>
+</li>
+<li class="wstg-nav-item" data-title="4.4.5 Тестирование уязвимостей функции запоминания пароля" data-hints="wstg-athn-05 athn-05">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/05-Testing_for_Vulnerable_Remember_Password" data-nav-url="4-Web_Application_Security_Testing/04-Authentication_Testing/05-Testing_for_Vulnerable_Remember_Password" title="4.4.5 Тестирование уязвимостей функции запоминания пароля">4.4.5 Тестирование уязвимостей функции запоминания пароля</a>
+</li>
+<li class="wstg-nav-item" data-title="4.4.6 Тестирование уязвимостей кэширования в браузере" data-hints="wstg-athn-06 athn-06">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/06-Testing_for_Browser_Cache_Weaknesses" data-nav-url="4-Web_Application_Security_Testing/04-Authentication_Testing/06-Testing_for_Browser_Cache_Weaknesses" title="4.4.6 Тестирование уязвимостей кэширования в браузере">4.4.6 Тестирование уязвимостей кэширования в браузере</a>
+</li>
+<li class="wstg-nav-item" data-title="4.4.7 Тестирование слабой политики паролей" data-hints="wstg-athn-07 athn-07">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/07-Testing_for_Weak_Password_Policy" data-nav-url="4-Web_Application_Security_Testing/04-Authentication_Testing/07-Testing_for_Weak_Password_Policy" title="4.4.7 Тестирование слабой политики паролей">4.4.7 Тестирование слабой политики паролей</a>
+</li>
+<li class="wstg-nav-item" data-title="4.4.8 Тестирование слабых секретных вопросов и ответов" data-hints="wstg-athn-08 athn-08">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/08-Testing_for_Weak_Security_Question_Answer" data-nav-url="4-Web_Application_Security_Testing/04-Authentication_Testing/08-Testing_for_Weak_Security_Question_Answer" title="4.4.8 Тестирование слабых секретных вопросов и ответов">4.4.8 Тестирование слабых секретных вопросов и ответов</a>
+</li>
+<li class="wstg-nav-item" data-title="4.4.9 Тестирование слабых функций смены и сброса пароля" data-hints="wstg-athn-09 athn-09">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/09-Testing_for_Weak_Password_Change_or_Reset_Functionalities" data-nav-url="4-Web_Application_Security_Testing/04-Authentication_Testing/09-Testing_for_Weak_Password_Change_or_Reset_Functionalities" title="4.4.9 Тестирование слабых функций смены и сброса пароля">4.4.9 Тестирование слабых функций смены и сброса пароля</a>
+</li>
+<li class="wstg-nav-item" data-title="4.4.10 Тестирование ослабленной аутентификации в альтернативных каналах" data-hints="wstg-athn-10 athn-10">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/04-Authentication_Testing/10-Testing_for_Weaker_Authentication_in_Alternative_Channel" data-nav-url="4-Web_Application_Security_Testing/04-Authentication_Testing/10-Testing_for_Weaker_Authentication_in_Alternative_Channel" title="4.4.10 Тестирование ослабленной аутентификации в альтернативных каналах">4.4.10 Тестирование ослабленной аутентификации в альтернативных каналах</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="4.5 Тестирование авторизации">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/05-Authorization_Testing/" data-nav-url="4-Web_Application_Security_Testing/05-Authorization_Testing/" title="4.5 Тестирование авторизации">4.5 Тестирование авторизации</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="4.5.1 Тестирование обхода каталогов и включения файлов" data-hints="path traversal dotdot lfi wstg-athz-01 athz-01">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/05-Authorization_Testing/01-Testing_Directory_Traversal_File_Include" data-nav-url="4-Web_Application_Security_Testing/05-Authorization_Testing/01-Testing_Directory_Traversal_File_Include" title="4.5.1 Тестирование обхода каталогов и включения файлов">4.5.1 Тестирование обхода каталогов и включения файлов</a>
+</li>
+<li class="wstg-nav-item" data-title="4.5.2 Тестирование обхода схемы авторизации" data-hints="wstg-athz-02 athz-02">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/05-Authorization_Testing/02-Testing_for_Bypassing_Authorization_Schema" data-nav-url="4-Web_Application_Security_Testing/05-Authorization_Testing/02-Testing_for_Bypassing_Authorization_Schema" title="4.5.2 Тестирование обхода схемы авторизации">4.5.2 Тестирование обхода схемы авторизации</a>
+</li>
+<li class="wstg-nav-item" data-title="4.5.3 Тестирование повышения привилегий" data-hints="privesc wstg-athz-03 athz-03">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/05-Authorization_Testing/03-Testing_for_Privilege_Escalation" data-nav-url="4-Web_Application_Security_Testing/05-Authorization_Testing/03-Testing_for_Privilege_Escalation" title="4.5.3 Тестирование повышения привилегий">4.5.3 Тестирование повышения привилегий</a>
+</li>
+<li class="wstg-nav-item" data-title="4.5.4 Тестирование небезопасных прямых ссылок на объекты (IDOR)" data-hints="idor wstg-athz-04 athz-04">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/05-Authorization_Testing/04-Testing_for_Insecure_Direct_Object_References" data-nav-url="4-Web_Application_Security_Testing/05-Authorization_Testing/04-Testing_for_Insecure_Direct_Object_References" title="4.5.4 Тестирование небезопасных прямых ссылок на объекты (IDOR)">4.5.4 Тестирование небезопасных прямых ссылок на объекты (IDOR)</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="4.6 Тестирование управления сеансами">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/" data-nav-url="4-Web_Application_Security_Testing/06-Session_Management_Testing/" title="4.6 Тестирование управления сеансами">4.6 Тестирование управления сеансами</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="4.6.1 Тестирование схемы управления сеансами" data-hints="wstg-sess-01 sess-01">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/01-Testing_for_Session_Management_Schema" data-nav-url="4-Web_Application_Security_Testing/06-Session_Management_Testing/01-Testing_for_Session_Management_Schema" title="4.6.1 Тестирование схемы управления сеансами">4.6.1 Тестирование схемы управления сеансами</a>
+</li>
+<li class="wstg-nav-item" data-title="4.6.2 Тестирование атрибутов cookie-файлов" data-hints="cookies set-cookie httponly samesite secure flag wstg-sess-02 sess-02">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/02-Testing_for_Cookies_Attributes" data-nav-url="4-Web_Application_Security_Testing/06-Session_Management_Testing/02-Testing_for_Cookies_Attributes" title="4.6.2 Тестирование атрибутов cookie-файлов">4.6.2 Тестирование атрибутов cookie-файлов</a>
+</li>
+<li class="wstg-nav-item" data-title="4.6.3 Тестирование фиксации сеанса" data-hints="wstg-sess-03 sess-03">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/03-Testing_for_Session_Fixation" data-nav-url="4-Web_Application_Security_Testing/06-Session_Management_Testing/03-Testing_for_Session_Fixation" title="4.6.3 Тестирование фиксации сеанса">4.6.3 Тестирование фиксации сеанса</a>
+</li>
+<li class="wstg-nav-item" data-title="4.6.4 Тестирование раскрытия переменных сеанса" data-hints="wstg-sess-04 sess-04">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/04-Testing_for_Exposed_Session_Variables" data-nav-url="4-Web_Application_Security_Testing/06-Session_Management_Testing/04-Testing_for_Exposed_Session_Variables" title="4.6.4 Тестирование раскрытия переменных сеанса">4.6.4 Тестирование раскрытия переменных сеанса</a>
+</li>
+<li class="wstg-nav-item" data-title="4.6.5 Тестирование подделки межсайтовых запросов (CSRF)" data-hints="csrf xsrf wstg-sess-05 sess-05">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/05-Testing_for_Cross_Site_Request_Forgery" data-nav-url="4-Web_Application_Security_Testing/06-Session_Management_Testing/05-Testing_for_Cross_Site_Request_Forgery" title="4.6.5 Тестирование подделки межсайтовых запросов (CSRF)">4.6.5 Тестирование подделки межсайтовых запросов (CSRF)</a>
+</li>
+<li class="wstg-nav-item" data-title="4.6.6 Тестирование функции завершения сеанса" data-hints="wstg-sess-06 sess-06">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/06-Testing_for_Logout_Functionality" data-nav-url="4-Web_Application_Security_Testing/06-Session_Management_Testing/06-Testing_for_Logout_Functionality" title="4.6.6 Тестирование функции завершения сеанса">4.6.6 Тестирование функции завершения сеанса</a>
+</li>
+<li class="wstg-nav-item" data-title="4.6.7 Тестирование таймаута сеанса" data-hints="wstg-sess-07 sess-07">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/07-Testing_Session_Timeout" data-nav-url="4-Web_Application_Security_Testing/06-Session_Management_Testing/07-Testing_Session_Timeout" title="4.6.7 Тестирование таймаута сеанса">4.6.7 Тестирование таймаута сеанса</a>
+</li>
+<li class="wstg-nav-item" data-title="4.6.8 Тестирование спутывания переменных сеанса (Session Puzzling)" data-hints="wstg-sess-08 sess-08">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/08-Testing_for_Session_Puzzling" data-nav-url="4-Web_Application_Security_Testing/06-Session_Management_Testing/08-Testing_for_Session_Puzzling" title="4.6.8 Тестирование спутывания переменных сеанса (Session Puzzling)">4.6.8 Тестирование спутывания переменных сеанса (Session Puzzling)</a>
+</li>
+<li class="wstg-nav-item" data-title="4.6.9 Тестирование перехвата сеанса" data-hints="wstg-sess-09 sess-09">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/06-Session_Management_Testing/09-Testing_for_Session_Hijacking" data-nav-url="4-Web_Application_Security_Testing/06-Session_Management_Testing/09-Testing_for_Session_Hijacking" title="4.6.9 Тестирование перехвата сеанса">4.6.9 Тестирование перехвата сеанса</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="4.7 Тестирование проверки входных данных">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/" title="4.7 Тестирование проверки входных данных">4.7 Тестирование проверки входных данных</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="4.7.1 Тестирование отражённого межсайтового скриптинга (Reflected XSS)" data-hints="xss wstg-inpv-01 inpv-01">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/01-Testing_for_Reflected_Cross_Site_Scripting" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/01-Testing_for_Reflected_Cross_Site_Scripting" title="4.7.1 Тестирование отражённого межсайтового скриптинга (Reflected XSS)">4.7.1 Тестирование отражённого межсайтового скриптинга (Reflected XSS)</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.2 Тестирование хранимого межсайтового скриптинга (Stored XSS)" data-hints="xss wstg-inpv-02 inpv-02">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/02-Testing_for_Stored_Cross_Site_Scripting" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/02-Testing_for_Stored_Cross_Site_Scripting" title="4.7.2 Тестирование хранимого межсайтового скриптинга (Stored XSS)">4.7.2 Тестирование хранимого межсайтового скриптинга (Stored XSS)</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.3 Тестирование подмены HTTP-методов (Verb Tampering)" data-hints="verb tampering wstg-inpv-03 inpv-03">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/03-Testing_for_HTTP_Verb_Tampering" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/03-Testing_for_HTTP_Verb_Tampering" title="4.7.3 Тестирование подмены HTTP-методов (Verb Tampering)">4.7.3 Тестирование подмены HTTP-методов (Verb Tampering)</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.4 Тестирование загрязнения HTTP-параметров (HPP)" data-hints="hpp wstg-inpv-04 inpv-04">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/04-Testing_for_HTTP_Parameter_Pollution" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/04-Testing_for_HTTP_Parameter_Pollution" title="4.7.4 Тестирование загрязнения HTTP-параметров (HPP)">4.7.4 Тестирование загрязнения HTTP-параметров (HPP)</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.5 Тестирование внедрения SQL-кода (SQL Injection)" data-hints="sqli wstg-inpv-05 inpv-05">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05-Testing_for_SQL_Injection" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/05-Testing_for_SQL_Injection" title="4.7.5 Тестирование внедрения SQL-кода (SQL Injection)">4.7.5 Тестирование внедрения SQL-кода (SQL Injection)</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="4.7.5.1 Тестирование СУБД Oracle">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.1-Testing_for_Oracle" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.1-Testing_for_Oracle" title="4.7.5.1 Тестирование СУБД Oracle">4.7.5.1 Тестирование СУБД Oracle</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.5.2 Тестирование СУБД MySQL">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.2-Testing_for_MySQL" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.2-Testing_for_MySQL" title="4.7.5.2 Тестирование СУБД MySQL">4.7.5.2 Тестирование СУБД MySQL</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.5.3 Тестирование СУБД SQL Server" data-hints="mssql sql server">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.3-Testing_for_SQL_Server" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.3-Testing_for_SQL_Server" title="4.7.5.3 Тестирование СУБД SQL Server">4.7.5.3 Тестирование СУБД SQL Server</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.5.4 Тестирование СУБД PostgreSQL">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.4-Testing_PostgreSQL" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.4-Testing_PostgreSQL" title="4.7.5.4 Тестирование СУБД PostgreSQL">4.7.5.4 Тестирование СУБД PostgreSQL</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.5.5 Тестирование СУБД MS Access">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.5-Testing_for_MS_Access" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.5-Testing_for_MS_Access" title="4.7.5.5 Тестирование СУБД MS Access">4.7.5.5 Тестирование СУБД MS Access</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.5.6 Тестирование NoSQL-инъекций" data-hints="sqli nosqli">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.6-Testing_for_NoSQL_Injection" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.6-Testing_for_NoSQL_Injection" title="4.7.5.6 Тестирование NoSQL-инъекций">4.7.5.6 Тестирование NoSQL-инъекций</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.5.7 Тестирование ORM-инъекций">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.7-Testing_for_ORM_Injection" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.7-Testing_for_ORM_Injection" title="4.7.5.7 Тестирование ORM-инъекций">4.7.5.7 Тестирование ORM-инъекций</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.5.8 Тестирование на стороне клиента">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.8-Testing_for_Client-side" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.8-Testing_for_Client-side" title="4.7.5.8 Тестирование на стороне клиента">4.7.5.8 Тестирование на стороне клиента</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="4.7.6 Тестирование внедрения кода LDAP" data-hints="ldapi wstg-inpv-06 inpv-06">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/06-Testing_for_LDAP_Injection" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/06-Testing_for_LDAP_Injection" title="4.7.6 Тестирование внедрения кода LDAP">4.7.6 Тестирование внедрения кода LDAP</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.7 Тестирование внедрения кода XML" data-hints="xxe xmli xml injection wstg-inpv-07 inpv-07">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/07-Testing_for_XML_Injection" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/07-Testing_for_XML_Injection" title="4.7.7 Тестирование внедрения кода XML">4.7.7 Тестирование внедрения кода XML</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.8 Тестирование внедрения SSI" data-hints="ssi injection wstg-inpv-08 inpv-08">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/08-Testing_for_SSI_Injection" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/08-Testing_for_SSI_Injection" title="4.7.8 Тестирование внедрения SSI">4.7.8 Тестирование внедрения SSI</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.9 Тестирование внедрения кода XPath" data-hints="xpathi xml wstg-inpv-09 inpv-09">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/09-Testing_for_XPath_Injection" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/09-Testing_for_XPath_Injection" title="4.7.9 Тестирование внедрения кода XPath">4.7.9 Тестирование внедрения кода XPath</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.10 Тестирование внедрения команд IMAP и SMTP" data-hints="email injection wstg-inpv-10 inpv-10">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/10-Testing_for_IMAP_SMTP_Injection" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/10-Testing_for_IMAP_SMTP_Injection" title="4.7.10 Тестирование внедрения команд IMAP и SMTP">4.7.10 Тестирование внедрения команд IMAP и SMTP</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.11 Тестирование внедрения произвольного кода" data-hints="rce wstg-inpv-11 inpv-11">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/11-Testing_for_Code_Injection" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/11-Testing_for_Code_Injection" title="4.7.11 Тестирование внедрения произвольного кода">4.7.11 Тестирование внедрения произвольного кода</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="4.7.11.1 Тестирование локального включения файлов (LFI)" data-hints="lfi rfi">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/11.1-Testing_for_Local_File_Inclusion" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/11.1-Testing_for_Local_File_Inclusion" title="4.7.11.1 Тестирование локального включения файлов (LFI)">4.7.11.1 Тестирование локального включения файлов (LFI)</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.11.2 Тестирование удалённого включения файлов (RFI)" data-hints="lfi rfi">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/11.2-Testing_for_Remote_File_Inclusion" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/11.2-Testing_for_Remote_File_Inclusion" title="4.7.11.2 Тестирование удалённого включения файлов (RFI)">4.7.11.2 Тестирование удалённого включения файлов (RFI)</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="4.7.12 Тестирование внедрения команд операционной системы" data-hints="rce cmdi os command wstg-inpv-12 inpv-12">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/12-Testing_for_Command_Injection" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/12-Testing_for_Command_Injection" title="4.7.12 Тестирование внедрения команд операционной системы">4.7.12 Тестирование внедрения команд операционной системы</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.13 Тестирование уязвимостей форматной строки" data-hints="format string bug wstg-inpv-13 inpv-13">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/13-Testing_for_Format_String_Injection" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/13-Testing_for_Format_String_Injection" title="4.7.13 Тестирование уязвимостей форматной строки">4.7.13 Тестирование уязвимостей форматной строки</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.14 Тестирование инкубированных (отложенных) уязвимостей" data-hints="wstg-inpv-14 inpv-14">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/14-Testing_for_Incubated_Vulnerability" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/14-Testing_for_Incubated_Vulnerability" title="4.7.14 Тестирование инкубированных (отложенных) уязвимостей">4.7.14 Тестирование инкубированных (отложенных) уязвимостей</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.15 Тестирование расщепления и контрабанды HTTP-запросов" data-hints="wstg-inpv-15 inpv-15">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/15-Testing_for_HTTP_Splitting_Smuggling" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/15-Testing_for_HTTP_Splitting_Smuggling" title="4.7.15 Тестирование расщепления и контрабанды HTTP-запросов">4.7.15 Тестирование расщепления и контрабанды HTTP-запросов</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.16 Тестирование входящих HTTP-запросов" data-hints="wstg-inpv-16 inpv-16">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/16-Testing_for_HTTP_Incoming_Requests" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/16-Testing_for_HTTP_Incoming_Requests" title="4.7.16 Тестирование входящих HTTP-запросов">4.7.16 Тестирование входящих HTTP-запросов</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.17 Тестирование внедрения в заголовок Host" data-hints="host header injection headers wstg-inpv-17 inpv-17">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/17-Testing_for_Host_Header_Injection" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/17-Testing_for_Host_Header_Injection" title="4.7.17 Тестирование внедрения в заголовок Host">4.7.17 Тестирование внедрения в заголовок Host</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.18 Тестирование внедрения серверных шаблонов (SSTI)" data-hints="ssti wstg-inpv-18 inpv-18">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/18-Testing_for_Server-side_Template_Injection" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/18-Testing_for_Server-side_Template_Injection" title="4.7.18 Тестирование внедрения серверных шаблонов (SSTI)">4.7.18 Тестирование внедрения серверных шаблонов (SSTI)</a>
+</li>
+<li class="wstg-nav-item" data-title="4.7.19 Тестирование подделки запросов на стороне сервера (SSRF)" data-hints="ssrf wstg-inpv-19 inpv-19">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/07-Input_Validation_Testing/19-Testing_for_Server-Side_Request_Forgery" data-nav-url="4-Web_Application_Security_Testing/07-Input_Validation_Testing/19-Testing_for_Server-Side_Request_Forgery" title="4.7.19 Тестирование подделки запросов на стороне сервера (SSRF)">4.7.19 Тестирование подделки запросов на стороне сервера (SSRF)</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="4.8 Тестирование обработки ошибок">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/08-Testing_for_Error_Handling/" data-nav-url="4-Web_Application_Security_Testing/08-Testing_for_Error_Handling/" title="4.8 Тестирование обработки ошибок">4.8 Тестирование обработки ошибок</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="4.8.1 Тестирование некорректной обработки ошибок" data-hints="wstg-errh-01 errh-01">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/08-Testing_for_Error_Handling/01-Testing_For_Improper_Error_Handling" data-nav-url="4-Web_Application_Security_Testing/08-Testing_for_Error_Handling/01-Testing_For_Improper_Error_Handling" title="4.8.1 Тестирование некорректной обработки ошибок">4.8.1 Тестирование некорректной обработки ошибок</a>
+</li>
+<li class="wstg-nav-item" data-title="4.8.2 Тестирование раскрытия стека вызовов (Stack Traces)" data-hints="wstg-errh-02 errh-02">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/08-Testing_for_Error_Handling/02-Testing_for_Stack_Traces" data-nav-url="4-Web_Application_Security_Testing/08-Testing_for_Error_Handling/02-Testing_for_Stack_Traces" title="4.8.2 Тестирование раскрытия стека вызовов (Stack Traces)">4.8.2 Тестирование раскрытия стека вызовов (Stack Traces)</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="4.9 Тестирование слабой криптографии">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/" data-nav-url="4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/" title="4.9 Тестирование слабой криптографии">4.9 Тестирование слабой криптографии</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="4.9.1 Тестирование слабой защиты транспортного уровня (TLS)" data-hints="tls ssl https wstg-cryp-01 cryp-01">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/01-Testing_for_Weak_Transport_Layer_Security" data-nav-url="4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/01-Testing_for_Weak_Transport_Layer_Security" title="4.9.1 Тестирование слабой защиты транспортного уровня (TLS)">4.9.1 Тестирование слабой защиты транспортного уровня (TLS)</a>
+</li>
+<li class="wstg-nav-item" data-title="4.9.2 Тестирование оракула дополнения (Padding Oracle)" data-hints="padding oracle attack wstg-cryp-02 cryp-02">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/02-Testing_for_Padding_Oracle" data-nav-url="4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/02-Testing_for_Padding_Oracle" title="4.9.2 Тестирование оракула дополнения (Padding Oracle)">4.9.2 Тестирование оракула дополнения (Padding Oracle)</a>
+</li>
+<li class="wstg-nav-item" data-title="4.9.3 Тестирование передачи конфиденциальных данных по незашифрованным каналам" data-hints="tls ssl https cleartext wstg-cryp-03 cryp-03">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/03-Testing_for_Sensitive_Information_Sent_via_Unencrypted_Channels" data-nav-url="4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/03-Testing_for_Sensitive_Information_Sent_via_Unencrypted_Channels" title="4.9.3 Тестирование передачи конфиденциальных данных по незашифрованным каналам">4.9.3 Тестирование передачи конфиденциальных данных по незашифрованным каналам</a>
+</li>
+<li class="wstg-nav-item" data-title="4.9.4 Тестирование слабого шифрования" data-hints="wstg-cryp-04 cryp-04">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/04-Testing_for_Weak_Encryption" data-nav-url="4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/04-Testing_for_Weak_Encryption" title="4.9.4 Тестирование слабого шифрования">4.9.4 Тестирование слабого шифрования</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="4.10 Тестирование бизнес-логики">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/" data-nav-url="4-Web_Application_Security_Testing/10-Business_Logic_Testing/" title="4.10 Тестирование бизнес-логики">4.10 Тестирование бизнес-логики</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="4.10.0 Введение в тестирование бизнес-логики">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/00-Introduction_to_Business_Logic" data-nav-url="4-Web_Application_Security_Testing/10-Business_Logic_Testing/00-Introduction_to_Business_Logic" title="4.10.0 Введение в тестирование бизнес-логики">4.10.0 Введение в тестирование бизнес-логики</a>
+</li>
+<li class="wstg-nav-item" data-title="4.10.1 Тестирование проверки данных бизнес-логики" data-hints="wstg-busl-01 busl-01">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/01-Test_Business_Logic_Data_Validation" data-nav-url="4-Web_Application_Security_Testing/10-Business_Logic_Testing/01-Test_Business_Logic_Data_Validation" title="4.10.1 Тестирование проверки данных бизнес-логики">4.10.1 Тестирование проверки данных бизнес-логики</a>
+</li>
+<li class="wstg-nav-item" data-title="4.10.2 Тестирование возможности подделки запросов" data-hints="wstg-busl-02 busl-02">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/02-Test_Ability_to_Forge_Requests" data-nav-url="4-Web_Application_Security_Testing/10-Business_Logic_Testing/02-Test_Ability_to_Forge_Requests" title="4.10.2 Тестирование возможности подделки запросов">4.10.2 Тестирование возможности подделки запросов</a>
+</li>
+<li class="wstg-nav-item" data-title="4.10.3 Тестирование проверок целостности" data-hints="wstg-busl-03 busl-03">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/03-Test_Integrity_Checks" data-nav-url="4-Web_Application_Security_Testing/10-Business_Logic_Testing/03-Test_Integrity_Checks" title="4.10.3 Тестирование проверок целостности">4.10.3 Тестирование проверок целостности</a>
+</li>
+<li class="wstg-nav-item" data-title="4.10.4 Тестирование временных параметров процессов" data-hints="race condition toctou wstg-busl-04 busl-04">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/04-Test_for_Process_Timing" data-nav-url="4-Web_Application_Security_Testing/10-Business_Logic_Testing/04-Test_for_Process_Timing" title="4.10.4 Тестирование временных параметров процессов">4.10.4 Тестирование временных параметров процессов</a>
+</li>
+<li class="wstg-nav-item" data-title="4.10.5 Тестирование лимитов на количество вызовов функций" data-hints="rate limit bruteforce brute force wstg-busl-05 busl-05">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/05-Test_Number_of_Times_a_Function_Can_Be_Used_Limits" data-nav-url="4-Web_Application_Security_Testing/10-Business_Logic_Testing/05-Test_Number_of_Times_a_Function_Can_Be_Used_Limits" title="4.10.5 Тестирование лимитов на количество вызовов функций">4.10.5 Тестирование лимитов на количество вызовов функций</a>
+</li>
+<li class="wstg-nav-item" data-title="4.10.6 Тестирование обхода рабочих процессов (Workflows)" data-hints="wstg-busl-06 busl-06">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/06-Testing_for_the_Circumvention_of_Work_Flows" data-nav-url="4-Web_Application_Security_Testing/10-Business_Logic_Testing/06-Testing_for_the_Circumvention_of_Work_Flows" title="4.10.6 Тестирование обхода рабочих процессов (Workflows)">4.10.6 Тестирование обхода рабочих процессов (Workflows)</a>
+</li>
+<li class="wstg-nav-item" data-title="4.10.7 Тестирование механизмов защиты от нецелевого использования приложения" data-hints="wstg-busl-07 busl-07">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/07-Test_Defenses_Against_Application_Misuse" data-nav-url="4-Web_Application_Security_Testing/10-Business_Logic_Testing/07-Test_Defenses_Against_Application_Misuse" title="4.10.7 Тестирование механизмов защиты от нецелевого использования приложения">4.10.7 Тестирование механизмов защиты от нецелевого использования приложения</a>
+</li>
+<li class="wstg-nav-item" data-title="4.10.8 Тестирование загрузки файлов непредусмотренных типов" data-hints="wstg-busl-08 busl-08">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/08-Test_Upload_of_Unexpected_File_Types" data-nav-url="4-Web_Application_Security_Testing/10-Business_Logic_Testing/08-Test_Upload_of_Unexpected_File_Types" title="4.10.8 Тестирование загрузки файлов непредусмотренных типов">4.10.8 Тестирование загрузки файлов непредусмотренных типов</a>
+</li>
+<li class="wstg-nav-item" data-title="4.10.9 Тестирование загрузки вредоносных файлов" data-hints="wstg-busl-09 busl-09">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/10-Business_Logic_Testing/09-Test_Upload_of_Malicious_Files" data-nav-url="4-Web_Application_Security_Testing/10-Business_Logic_Testing/09-Test_Upload_of_Malicious_Files" title="4.10.9 Тестирование загрузки вредоносных файлов">4.10.9 Тестирование загрузки вредоносных файлов</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="4.11 Тестирование на стороне клиента">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/" data-nav-url="4-Web_Application_Security_Testing/11-Client-side_Testing/" title="4.11 Тестирование на стороне клиента">4.11 Тестирование на стороне клиента</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="4.11.1 Тестирование межсайтового скриптинга на основе DOM (DOM-based XSS)" data-hints="xss dom xss domxss wstg-clnt-01 clnt-01">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/01-Testing_for_DOM-based_Cross_Site_Scripting" data-nav-url="4-Web_Application_Security_Testing/11-Client-side_Testing/01-Testing_for_DOM-based_Cross_Site_Scripting" title="4.11.1 Тестирование межсайтового скриптинга на основе DOM (DOM-based XSS)">4.11.1 Тестирование межсайтового скриптинга на основе DOM (DOM-based XSS)</a>
+</li>
+<li class="wstg-nav-item" data-title="4.11.2 Тестирование выполнения кода JavaScript" data-hints="wstg-clnt-02 clnt-02">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/02-Testing_for_JavaScript_Execution" data-nav-url="4-Web_Application_Security_Testing/11-Client-side_Testing/02-Testing_for_JavaScript_Execution" title="4.11.2 Тестирование выполнения кода JavaScript">4.11.2 Тестирование выполнения кода JavaScript</a>
+</li>
+<li class="wstg-nav-item" data-title="4.11.3 Тестирование внедрения HTML-кода" data-hints="wstg-clnt-03 clnt-03">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/03-Testing_for_HTML_Injection" data-nav-url="4-Web_Application_Security_Testing/11-Client-side_Testing/03-Testing_for_HTML_Injection" title="4.11.3 Тестирование внедрения HTML-кода">4.11.3 Тестирование внедрения HTML-кода</a>
+</li>
+<li class="wstg-nav-item" data-title="4.11.4 Тестирование клиентских перенаправлений URL" data-hints="open redirect wstg-clnt-04 clnt-04">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/04-Testing_for_Client-side_URL_Redirect" data-nav-url="4-Web_Application_Security_Testing/11-Client-side_Testing/04-Testing_for_Client-side_URL_Redirect" title="4.11.4 Тестирование клиентских перенаправлений URL">4.11.4 Тестирование клиентских перенаправлений URL</a>
+</li>
+<li class="wstg-nav-item" data-title="4.11.5 Тестирование внедрения CSS-кода" data-hints="wstg-clnt-05 clnt-05">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/05-Testing_for_CSS_Injection" data-nav-url="4-Web_Application_Security_Testing/11-Client-side_Testing/05-Testing_for_CSS_Injection" title="4.11.5 Тестирование внедрения CSS-кода">4.11.5 Тестирование внедрения CSS-кода</a>
+</li>
+<li class="wstg-nav-item" data-title="4.11.6 Тестирование манипулирования клиентскими ресурсами" data-hints="wstg-clnt-06 clnt-06">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/06-Testing_for_Client-side_Resource_Manipulation" data-nav-url="4-Web_Application_Security_Testing/11-Client-side_Testing/06-Testing_for_Client-side_Resource_Manipulation" title="4.11.6 Тестирование манипулирования клиентскими ресурсами">4.11.6 Тестирование манипулирования клиентскими ресурсами</a>
+</li>
+<li class="wstg-nav-item" data-title="4.11.7 Тестирование совместного использования ресурсов между разными источниками (CORS)" data-hints="cors headers wstg-clnt-07 clnt-07">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/07-Testing_Cross_Origin_Resource_Sharing" data-nav-url="4-Web_Application_Security_Testing/11-Client-side_Testing/07-Testing_Cross_Origin_Resource_Sharing" title="4.11.7 Тестирование совместного использования ресурсов между разными источниками (CORS)">4.11.7 Тестирование совместного использования ресурсов между разными источниками (CORS)</a>
+</li>
+<li class="wstg-nav-item" data-title="4.11.8 Тестирование Cross Site Flashing" data-hints="wstg-clnt-08 clnt-08">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/08-Testing_for_Cross_Site_Flashing" data-nav-url="4-Web_Application_Security_Testing/11-Client-side_Testing/08-Testing_for_Cross_Site_Flashing" title="4.11.8 Тестирование Cross Site Flashing">4.11.8 Тестирование Cross Site Flashing</a>
+</li>
+<li class="wstg-nav-item" data-title="4.11.9 Тестирование кликджекинга (Clickjacking)" data-hints="ui redress ui redressing x-frame-options framing wstg-clnt-09 clnt-09">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/09-Testing_for_Clickjacking" data-nav-url="4-Web_Application_Security_Testing/11-Client-side_Testing/09-Testing_for_Clickjacking" title="4.11.9 Тестирование кликджекинга (Clickjacking)">4.11.9 Тестирование кликджекинга (Clickjacking)</a>
+</li>
+<li class="wstg-nav-item" data-title="4.11.10 Тестирование WebSockets" data-hints="ws wstg-clnt-10 clnt-10">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/10-Testing_WebSockets" data-nav-url="4-Web_Application_Security_Testing/11-Client-side_Testing/10-Testing_WebSockets" title="4.11.10 Тестирование WebSockets">4.11.10 Тестирование WebSockets</a>
+</li>
+<li class="wstg-nav-item" data-title="4.11.11 Тестирование Web Messaging" data-hints="postmessage post message wstg-clnt-11 clnt-11">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/11-Testing_Web_Messaging" data-nav-url="4-Web_Application_Security_Testing/11-Client-side_Testing/11-Testing_Web_Messaging" title="4.11.11 Тестирование Web Messaging">4.11.11 Тестирование Web Messaging</a>
+</li>
+<li class="wstg-nav-item" data-title="4.11.12 Тестирование хранилищ браузера" data-hints="localstorage sessionstorage wstg-clnt-12 clnt-12">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/12-Testing_Browser_Storage" data-nav-url="4-Web_Application_Security_Testing/11-Client-side_Testing/12-Testing_Browser_Storage" title="4.11.12 Тестирование хранилищ браузера">4.11.12 Тестирование хранилищ браузера</a>
+</li>
+<li class="wstg-nav-item" data-title="4.11.13 Тестирование межсайтового включения скриптов (XSSI)" data-hints="xssi wstg-clnt-13 clnt-13">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/13-Testing_for_Cross_Site_Script_Inclusion" data-nav-url="4-Web_Application_Security_Testing/11-Client-side_Testing/13-Testing_for_Cross_Site_Script_Inclusion" title="4.11.13 Тестирование межсайтового включения скриптов (XSSI)">4.11.13 Тестирование межсайтового включения скриптов (XSSI)</a>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="4.12 Тестирование API">
+<details>
+<summary>
+<span class="wstg-nav-summary-row">
+<span class="wstg-nav-chevron" aria-hidden="true"></span>
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/12-API_Testing/" data-nav-url="4-Web_Application_Security_Testing/12-API_Testing/" title="4.12 Тестирование API">4.12 Тестирование API</a>
+</span>
+</summary>
+<ul>
+<li class="wstg-nav-item" data-title="4.12.1 Тестирование GraphQL" data-hints="gql wstg-apit-01 apit-01">
+<a href="/ru/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/12-API_Testing/01-Testing_GraphQL" data-nav-url="4-Web_Application_Security_Testing/12-API_Testing/01-Testing_GraphQL" title="4.12.1 Тестирование GraphQL">4.12.1 Тестирование GraphQL</a>
+</li>
+</ul>
+</details>
+</li>
+</ul>
+</details>
+</li>
+<li class="wstg-nav-item" data-title="5. Отчётность">
+<a href="/ru/OWASP/WSTG-v4.2/5-Reporting/" data-nav-url="5-Reporting/" title="5. Отчётность">5. Отчётность</a>
+</li>
+<li class="wstg-nav-item" data-title="Приложение A. Инструменты тестирования">
+<a href="/ru/OWASP/WSTG-v4.2/6-Appendix/A-Testing_Tools_Resource" data-nav-url="6-Appendix/A-Testing_Tools_Resource" title="Приложение A. Инструменты тестирования">Приложение A. Инструменты тестирования</a>
+</li>
+<li class="wstg-nav-item" data-title="Приложение B. Рекомендуемая литература">
+<a href="/ru/OWASP/WSTG-v4.2/6-Appendix/B-Suggested_Reading" data-nav-url="6-Appendix/B-Suggested_Reading" title="Приложение B. Рекомендуемая литература">Приложение B. Рекомендуемая литература</a>
+</li>
+<li class="wstg-nav-item" data-title="Приложение C. Векторы фаззинга">
+<a href="/ru/OWASP/WSTG-v4.2/6-Appendix/C-Fuzz_Vectors" data-nav-url="6-Appendix/C-Fuzz_Vectors" title="Приложение C. Векторы фаззинга">Приложение C. Векторы фаззинга</a>
+</li>
+<li class="wstg-nav-item" data-title="Приложение D. Кодированные инъекции">
+<a href="/ru/OWASP/WSTG-v4.2/6-Appendix/D-Encoded_Injection" data-nav-url="6-Appendix/D-Encoded_Injection" title="Приложение D. Кодированные инъекции">Приложение D. Кодированные инъекции</a>
+</li>
+<li class="wstg-nav-item" data-title="Приложение E. История">
+<a href="/ru/OWASP/WSTG-v4.2/6-Appendix/E-History" data-nav-url="6-Appendix/E-History" title="Приложение E. История">Приложение E. История</a>
+</li>
+<li class="wstg-nav-item" data-title="Приложение F. Использование инструментов разработчика">
+<a href="/ru/OWASP/WSTG-v4.2/6-Appendix/F-Leveraging_Dev_Tools" data-nav-url="6-Appendix/F-Leveraging_Dev_Tools" title="Приложение F. Использование инструментов разработчика">Приложение F. Использование инструментов разработчика</a>
+</li>
+
+  </ul>
+</nav></aside>
+<main id="main-content" class="reading-pane"><nav class="breadcrumbs" aria-label="Навигация"><a href="/ru/">Библиотека</a><span>/</span><a href="/ru/OWASP/">OWASP</a><span>/</span><a href="/ru/OWASP/WSTG-v4.2/">WSTG v4.2</a></nav><article class="doc-content">
+<span id="testing-for-client-side-resource-manipulation" aria-hidden="true"></span><span id="summary" aria-hidden="true"></span><span id="test-objectives" aria-hidden="true"></span><span id="how-to-test" aria-hidden="true"></span>
+<h1>Тестирование манипулирования клиентскими ресурсами</h1>
+<div class="translation-notice">
+  <p><strong>Перевод данного раздела находится в подготовке.</strong></p>
+  <p>Вы можете ознакомиться с оригинальным текстом руководства на английском языке:</p>
+  <p><a href="/en/OWASP/WSTG-v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/06-Testing_for_Client-side_Resource_Manipulation/" class="primary-link">Testing for Client-side Resource Manipulation ↗</a></p>
+</div>
+</article><nav class="page-navigation" aria-label="Предыдущая и следующая страница"></nav></main>
+<aside class="page-outline" aria-label="На этой странице"><p class="eyebrow">На этой странице</p><nav id="page-toc"></nav><a class="back-top" href="#top">Наверх ↑</a></aside>
+</div>
+<footer class="site-footer"><span>Raw2Crawl · Документация по безопасности</span><span>WSTG © OWASP Foundation &amp; авторы · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a> · <a href="https://github.com/OWASP/wstg">Исходный репозиторий</a></span></footer>
+</body></html>
