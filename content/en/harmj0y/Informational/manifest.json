@@ -1,0 +1,13 @@
+{
+  "id": 12,
+  "name": "Informational",
+  "slug": "informational",
+  "folder": "Informational",
+  "url": "https://blog.harmj0y.net/category/informational/",
+  "reported_count": 3,
+  "articles": [
+    "a-three-year-retrospective",
+    "empire-meterpreter-and-offensive-half-life",
+    "cracking-the-perimeter-ctp-and-osce-review"
+  ]
+}

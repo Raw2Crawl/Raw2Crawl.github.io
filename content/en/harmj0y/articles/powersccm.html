@@ -1,0 +1,149 @@
+<p>I&#8217;m taking a quick break from our Empire series to bring you something my ATD teammate <a href="https://twitter.com/enigma0x3">Matt Nelson</a> and myself have been working on over the last month or so- a project called <a href="https://github.com/PowerShellMafia/PowerSCCM">PowerSCCM</a>. This is the first primarily defensive-oriented post I&#8217;ve published, but fear not, more offensive material is in the hopper ;)</p>
+<p>Using Microsoft&#8217;s System Center Configuration Manager (SCCM) for unintended purposes has been on a people&#8217;s radar since Dave Kennedy&#8217;s &#8220;<em><a href="https://www.trustedsec.com/files/Owning_One_Rule_All_v2.pdf">Owning One To Rule Them All</a></em>&#8221; presentation at Defcon 20. Matt expanded on this type of material in his ShmooCon Firetalk &#8220;<em><a href="http://www.slideshare.net/enigma0x3/red-team-upgrades-using-sccm-for-malware-deployment-57117235">Red Team Upgrades: Using SCCM for Malware Deployment</a></em>&#8221; and <a href="https://enigma0x3.wordpress.com/2015/10/27/targeted-workstation-compromise-with-sccm/">accompanying blog post</a>. I&#8217;ve recently started getting involved in some defensive development with <a href="https://twitter.com/jaredcatkinson">@jaredcatkinson</a> and <a href="https://twitter.com/mattifestation">@mattifestation</a>, and we began to look into SCCM as a data source for defensive/hunt purposes. We&#8217;re fans of taking advantage of existing solutions and infrastructure for both defensive and offensive applications, and the amount of host data SCCM collects makes it an ideal candidate for finding maliciousness in an enterprise. It also has the benefit of not tipping your hand to adversaries who may be monitoring for things like defensive agents.</p>
+<p>This post will cover the background and design considerations of <a href="https://github.com/powershellmafia/PowerSCCM/">PowerSCCM</a>, as well as some of the defensive applications of the toolset. <a href="https://twitter.com/enigma0x3">@enigma0x3</a> just <a href="https://enigma0x3.wordpress.com/2016/02/29/offensive-operations-with-powersccm/">released a post as well</a> that covers more background on SCCM, as well as the offensive capabilities of the project. Definitely check out his post in order to gain a more complete knowledge of PowerSCCM and its capabilities.</p>
+<p>But before I start, here&#8217;s some background and previous work on using SCCM for defensive purposes:</p>
+<ul>
+<li>&#8220;<em><a href="https://cr0n1c.wordpress.com/2016/01/27/using-sccm-to-violate-best-practices/">Using SCCM to violate best practices</a></em>&#8221; by Brandon Helms</li>
+<li>&#8220;<em><a href="http://informationonsecurity.blogspot.com/2015/11/microsofts-accidental-enterprise-dfir.html">Microsoft&#8217;s Accidental Enterprise DFIR Tool</a></em>&#8221; by Keith Tyler</li>
+<li>&#8220;<em>SCCM (System Center Configuration Manager) and Incident Response</em>&#8221; <a href="http://www.hexacorn.com/blog/2013/11/01/sccm-system-center-configuration-manager-and-incident-response/">part 1</a> and <a href="http://www.hexacorn.com/blog/2015/01/30/sccm-system-center-configuration-manager-and-incident-response-part-2/">part 2</a> on the Hexacorn blog</li>
+<li>&#8220;<em><a href="https://digital-forensics.sans.org/summit-archives/DFIR_Summit/Mining-for-Evil-John-McLeod-Mike-Pilkington.pdf">Mining For Evil</a></em>&#8221; by John McLeod and Mike Pilkington at the SANS 2013 DFIR Summit</li>
+</ul>
+<p>There are a few existing SCCM toolsets as well (that I&#8217;m aware of, if I missed something let me know) which PowerSCCM drew inspiration from:</p>
+<ul>
+<li>Brandon Helms&#8217; <a href="https://github.com/Cr0n1c/SCCM-Enumeration">SCCM-Enumeration</a></li>
+<li><a href="http://www.snowland.se/powershell/sccm-posh/">SCCM POSH</a> by Rikard Rönnkvist</li>
+</ul>
+<p><strong>Note: </strong>PowerSCCM is a new codebase with limited testing, so if you hit an issue or have a suggestion for something else to collect, let us know!</p>
+<h2>Background</h2>
+<p>PowerSCCM&#8217;s goal is to provide an easy way to connect to, query, and manipulate an installation of SCCM. While there is a set of existing <a href="https://technet.microsoft.com/en-us/library/jj821831(v=sc.20).aspx">Microsoft-supported SCCM cmdlets</a>, PowerSCCM was built as a single self-contained file that&#8217;s PowerShell version 2.0 compatible. This was done to ensure it works in nearly all environments and functions appropriately in an offensive context. You can load up PowerSCCM either by cloning <a href="https://github.com/powershellmafia/PowerSCCM/">the repository</a> and dropping it into C:\Windows\System32\WindowsPowerShell\v1.0\Modules\ (or %UserProfile%\Documents\WindowsPowerShell\Modules) and executing <strong>Import-Module PowerSCCM</strong>, or by importing the .ps1 directly.</p>
+<p>PowerSCCM integrates a session model similar to the <a href="https://blogs.msdn.microsoft.com/powershell/2012/08/24/introduction-to-cim-cmdlets/">CimSession cmdlets</a>. To create a new connection to a SCCM server over WMI or SQL (more on this later), use <strong>New-SccmSession</strong> with an optional -Credential parameter to specify alternate credentials for the connection.</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-2354" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/02/new_sccmsession-1024x457.png" alt="new_sccmsession" width="640" height="286" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/02/new_sccmsession-1024x457.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/02/new_sccmsession-300x134.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/02/new_sccmsession-768x343.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/02/new_sccmsession.png 1398w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p>If you don&#8217;t already know the SCCM site code, you can enumerate this with <strong>Find-SccmSiteCode</strong>, which also accepts -ConnectionType and -Credential parameters. You can also use <strong>Find-LocalSccmInfo</strong> to enumerate the SCCM site configuration for the current host you&#8217;re executing PowerSCCM on, granted that it&#8217;s enrolled in SCCM.</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-2355" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/02/find_sccmsitecode-1024x361.png" alt="find_sccmsitecode" width="640" height="226" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/02/find_sccmsitecode-1024x361.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/02/find_sccmsitecode-300x106.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/02/find_sccmsitecode-768x271.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/02/find_sccmsitecode.png 1405w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p>New-SCCMSession will return a custom PowerSccm.Session object which can be used with any of the querying cmdlets though the <strong>-Session</strong> argument. You can also use <strong>Get-SccmSession</strong> to return all currently registered session objects and pipe the results directly to most cmdlets.</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-2356" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/02/get_sccmsession-1024x446.png" alt="get_sccmsession" width="640" height="279" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/02/get_sccmsession-1024x446.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/02/get_sccmsession-300x131.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/02/get_sccmsession-768x335.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/02/get_sccmsession.png 1404w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p>If you have multiple sessions established, you can instruction <strong>Get-SccmSession</strong> to only return sessions matching a particular -Id, -Name, -ComputerName, -SiteCode, or -ConnectionType.</p>
+<h2>The SCCM SQL Schema</h2>
+<p>One way to interact with a SCCM installation is through a MSSQL database connection directly into the SCCM database for a particular site. You can use <strong>-ConnectionType SQL </strong>with New-SCCMSession to specify a SQL connection for the session.</p>
+<p>The SCCM schema is not pretty and is not well documented. Slide 14 from the &#8220;<em><a href="https://digital-forensics.sans.org/summit-archives/DFIR_Summit/Mining-for-Evil-John-McLeod-Mike-Pilkington.pdf">Mining For Evil</a></em>&#8221; presentation shows what I mean:</p>
+<p><figure id="attachment_2351" aria-describedby="caption-attachment-2351" style="width: 640px" class="wp-caption aligncenter"><a href="https://digital-forensics.sans.org/summit-archives/DFIR_Summit/Mining-for-Evil-John-McLeod-Mike-Pilkington.pdf" rel="attachment wp-att-2351"><img loading="lazy" decoding="async" class="size-large wp-image-2351" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/02/mining_for_evil_slide_14-1024x768.png" alt="https://digital-forensics.sans.org/summit-archives/DFIR_Summit/Mining-for-Evil-John-McLeod-Mike-Pilkington.pdf" width="640" height="480" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/02/mining_for_evil_slide_14-1024x768.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/02/mining_for_evil_slide_14-300x225.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/02/mining_for_evil_slide_14-768x576.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/02/mining_for_evil_slide_14.png 1500w" sizes="(max-width: 640px) 100vw, 640px" /></a><figcaption id="caption-attachment-2351" class="wp-caption-text">https://digital-forensics.sans.org/summit-archives/DFIR_Summit/Mining-for-Evil-John-McLeod-Mike-Pilkington.pdf</figcaption></figure></p>
+<p>It took Matt Nelson and myself a while to get a grasp on the backend schema and what fields proved the most useful. There&#8217;s <em>some</em> <a href="https://technet.microsoft.com/en-us/library/dd334669.aspx">Microsoft documentation</a> on a few interesting views, and the &#8220;<em><a href="https://digital-forensics.sans.org/summit-archives/DFIR_Summit/Mining-for-Evil-John-McLeod-Mike-Pilkington.pdf">Mining For Evil</a></em>&#8221; and Keith&#8217;s <a href="http://informationonsecurity.blogspot.com/2015/11/microsofts-accidental-enterprise-dfir.html">blog post</a> were also good resources. Here are some of the tables/views that we ended up with:</p>
+<ul>
+<li><strong>v_GS_SERVICE</strong> &#8211; currently installed services</li>
+<li><strong>v_HS_SERVICE</strong> &#8211; historical information on installed services</li>
+<li><strong>v_GS_AUTOSTART_SOFTWARE</strong> &#8211; information about programs in a few auto start locations (note that this is not as complete as something like <a href="https://technet.microsoft.com/en-us/sysinternals/bb963902.aspx">Autoruns</a>)</li>
+<li><strong>v_GS_PROCESS</strong> &#8211; information on currently running processes</li>
+<li><strong>v_HS_PROCESS</strong> &#8211; historical information on running processes</li>
+<li><strong>v_GS_CCM_RECENTLY_USED_APPS</strong> &#8211; information on recently used applications</li>
+<li><strong>v_GS_SYSTEM_DRIVER</strong> &#8211; details on drivers currently installed</li>
+<li><strong>v_GS_SYSTEM_CONSOLE_USER</strong> &#8211; information on console usage, complete with user information</li>
+<li><strong>v_GS_SoftwareFile</strong> &#8211; details on inventoried files (more on this in &#8216;Tuning SCCM for Defense&#8217; below)</li>
+<li><strong>v_GS_BROWSER_HELPER_OBJECT</strong> &#8211; information on installed browser helper objects</li>
+<li><strong>v_GS_SHARE</strong> &#8211; details on created shares</li>
+<li><strong>vMDMUsersPrimaryMachines</strong> &#8211; details on primary user -&gt; machine mappings</li>
+</ul>
+<h2>SCCM: WMI vs SQL</h2>
+<p>It&#8217;s also possible to interact with an SCCM installation through a number of WMI classes that reside in the SMS WMI provider. While Microsoft states that &#8220;<a href="https://technet.microsoft.com/en-us/library/dd334624.aspx">&#8230;there is no direct mapping for a SQL view and the SMS Provider WMI schema class&#8230;</a>&#8220;, in general there&#8217;s a fairly reasonable mapping between parts of the SQL schema and an associated WMI class. While Microsoft DOES provide documentation of the <a href="https://msdn.microsoft.com/en-us/library/hh948405.aspx">Configuration Manager SMS Namespace</a>, I recommend <a href="https://wmie.codeplex.com/">WMI Explorer</a> for exploring the WMI classes yourself on a specific SCCM server.</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-2362" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/02/wmi_explorer-1024x608.png" alt="wmi_explorer" width="640" height="380" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/02/wmi_explorer-1024x608.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/02/wmi_explorer-300x178.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/02/wmi_explorer-768x456.png 768w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p>So SQL versus WMI for SCCM administration, why use one over the other? Why not just pick the best method and build the toolset around that?</p>
+<p>In order to interact with the WMI classes on a remote SCCM server, 9 times out of 10 the account context you&#8217;re querying information from will need to have administrative rights on the remote system. In some environments the permissions for the SCCM SQL database are delegated more granularly, so the connection method you choose may be influenced by the privileges of the user context you&#8217;re operating in.</p>
+<p>For querying interesting information we want (like installed services or applications) the exact results returned can also vary between the WMI and SQL methods. The SQL Schema has various prebuilt views that pull from different tables, and we can also execute joins to pull together additional information for a query. An example in PowerSCCM is pulling in the stored IP addresses for computers that show up in query results. We can execute these joins through the SQL statement itself, reducing the amount of post-processing we need to do by offloading some of the work onto the SCCM SQL server itself.</p>
+<p>With the WMI Query Language (WQL) you&#8217;re restricted to basic filters and the data contained within each WMI class, i.e. you can not execute the equivalent of JOIN. And since the SQL Schema and WMI Namespace do not line up perfectly, you will get differing results, so which connection method you use will be situation-dependent. We generally like SQL connections for defense and WMI connections for offense.</p>
+<p>PowerSCCM implements both the SQL query and the WMI query for cmdlets where possible. This means you can pass a session from Get-SccmSession to a cmdlet like Get-SccmService and you will get results regardless of the connection method.</p>
+<h2>Tuning SCCM for Defense</h2>
+<p>In order to get the most defensive value out an SCCM installation, it helps to enable additional hardware and software inventory settings as several interesting things (like drivers) are not inventoried by default.</p>
+<p>In the System Center Configuration Manager interface go to Administration -&gt; &#8216;Client Settings&#8217; and open the properties of the client settings you&#8217;re currently pushing out. Under &#8216;Hardware Inventory&#8217; click &#8216;Set Classes&#8217; and make sure the following classes are enabled:</p>
+<ul>
+<li>AutoStart Software &#8211; Asset Intelligence (SMS_AutoStartSoftware)</li>
+<li>Browser Helper Object &#8211; Asset Intelligence (SMS_BrowserHelperObject)</li>
+<li>Driver &#8211; VxD (Win32_DriverVXD)</li>
+<li>Process (Win32_Process)</li>
+<li>Recently Used Applications (CCM_RecentlyUsedApps)</li>
+<li>Shares (Win32_Share)</li>
+<li>System Console Usage &#8211; Asset Intelligence (SMS_SystemConsoleUsage)</li>
+<li>System Console User &#8211; Asset Intelligence (SMS_SystemConsoleUser)</li>
+</ul>
+<p>You can also modify the &#8216;Hardware inventory schedule&#8217; if desired, which changes the inventorying interval (default of 7 days).</p>
+<p>Next, ensure that under Settings, &#8216;Software Metering&#8217; is enabled and the schedule is what you want for your environment:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-2359" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/02/software_metering-1024x792.png" alt="software_metering" width="640" height="495" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/02/software_metering-1024x792.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/02/software_metering-300x232.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/02/software_metering-768x594.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/02/software_metering.png 1574w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p>Finally, under &#8216;Software Inventory&#8217; consider setting &#8216;Inventory these file types&#8217; to all .exe&#8217;s on all hard disks:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-2360" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/02/software_inventory-1024x787.png" alt="software_inventory" width="640" height="492" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/02/software_inventory-1024x787.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/02/software_inventory-300x231.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/02/software_inventory-768x591.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/02/software_inventory.png 1580w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<h2>Defensive Cmdlets</h2>
+<p>Now, on to what you can do with all this inventoried information!</p>
+<h4>Query Functions</h4>
+<p>
+<table id="tablepress-1" class="tablepress tablepress-id-1">
+<thead>
+<tr class="row-1">
+	<th class="column-1">Cmdlet</th><th class="column-2">Description</th>
+</tr>
+</thead>
+<tbody class="row-striping row-hover">
+<tr class="row-2">
+	<td class="column-1"><strong>Get-SccmService</strong></td><td class="column-2">Information about the current set of running services on Sccm clients</td>
+</tr>
+<tr class="row-3">
+	<td class="column-1"><strong>Get-SccmServiceHistory</strong></td><td class="column-2">Information about the historical set of running services on Sccm clients</td>
+</tr>
+<tr class="row-4">
+	<td class="column-1"><strong>Get-SccmAutoStart</strong></td><td class="column-2">Information about programs registered in various autostart locations on Sccm clients</td>
+</tr>
+<tr class="row-5">
+	<td class="column-1"><strong>Get-SccmProcess</strong></td><td class="column-2">Information about the current set of running processes on Sccm clients</td>
+</tr>
+<tr class="row-6">
+	<td class="column-1"><strong>Get-SccmProcessHistory</strong></td><td class="column-2">Information about the historical set of running processes on Sccm clients</td>
+</tr>
+<tr class="row-7">
+	<td class="column-1"><strong>Get-SccmRecentlyUsedApplication</strong></td><td class="column-2">Information on recently launched applications on Sccm clients</td>
+</tr>
+<tr class="row-8">
+	<td class="column-1"><strong>Get-SccmDriver</strong></td><td class="column-2">Information on drivers installed on Sccm clients</td>
+</tr>
+<tr class="row-9">
+	<td class="column-1"><strong>Get-SccmConsoleUsage</strong></td><td class="column-2">Information on console usage on Sccm clients, complete with user information</td>
+</tr>
+<tr class="row-10">
+	<td class="column-1"><strong>Get-SccmSoftwareFile</strong></td><td class="column-2">Information on inventoried software files</td>
+</tr>
+<tr class="row-11">
+	<td class="column-1"><strong>Get-SccmBrowserHelperObject</strong></td><td class="column-2">Information on browser helper objects installed on Sccm clients</td>
+</tr>
+</tbody>
+</table>
+<!-- #tablepress-1 from cache --></p>
+<h4>&#8216;Meta&#8217;-Functions</h4>
+<p>
+<table id="tablepress-2" class="tablepress tablepress-id-2">
+<thead>
+<tr class="row-1">
+	<th class="column-1">Cmdlet</th><th class="column-2">Description</th>
+</tr>
+</thead>
+<tbody class="row-striping row-hover">
+<tr class="row-2">
+	<td class="column-1"><strong>Find-SccmRenamedCMD</strong></td><td class="column-2">Finds renamed cmd.exe executables using Get-SccmRecentlyUsedApplication and appropriate filters</td>
+</tr>
+<tr class="row-3">
+	<td class="column-1"><strong>Find-SccmUnusualEXE</strong></td><td class="column-2">Finds recently launched applications that don't end in *.exe using Get-SccmRecentlyUsedApplication and appropriate filters</td>
+</tr>
+<tr class="row-4">
+	<td class="column-1"><strong>Find-SccmRareApplication</strong></td><td class="column-2">Finds the rarest -Limit <X> recently launched applications that don't end in *.exe using Get-SccmRecentlyUsedApplication and appropriate filters</td>
+</tr>
+<tr class="row-5">
+	<td class="column-1"><strong>Find-SccmPostExploitation</strong></td><td class="column-2">Finds recently launched applications commonly used in post-exploitation</td>
+</tr>
+<tr class="row-6">
+	<td class="column-1"><strong>Find-SccmPostExploitationFile</strong></td><td class="column-2">Finds indexed .exe's commonly used in post-exploitation</td>
+</tr>
+<tr class="row-7">
+	<td class="column-1"><strong>Find-SccmMimikatz</strong></td><td class="column-2">Finds launched mimikatz instances by searching the 'FileDescription' and 'CompanyName' fields of recently launched applications</td>
+</tr>
+<tr class="row-8">
+	<td class="column-1"><strong>Find-SccmMimikatzFile</strong></td><td class="column-2">Finds inventoried mimikatz.exe instances by searching the 'FileDescription' field of inventoried .exe's</td>
+</tr>
+</tbody>
+</table>
+<!-- #tablepress-2 from cache --></p>
+<h2>Wrapup</h2>
+<p>SCCM has great potential for incident response/hunt applications and deserves a spot in the defensive tool belt. Hopefully PowerSCCM can provide defenders with a flexible interface for interfacing with SCCM installations and spark ideas for what else the information from SCCM can be used for. The cmdlets in the project are just a start, so if you can think of any other interesting ideas for finding &#8216;likely bad&#8217; let us know! And be sure to check out <a href="https://enigma0x3.wordpress.com/2016/02/29/offensive-operations-with-powersccm/">Matt Nelson&#8217;s post</a> for the offensive capabilities of PowerSCCM.</p>

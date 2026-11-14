@@ -1,0 +1,12 @@
+{
+  "id": 32,
+  "name": "EmPyre",
+  "slug": "empyre",
+  "folder": "EmPyre",
+  "url": "https://blog.harmj0y.net/category/empyre/",
+  "reported_count": 2,
+  "articles": [
+    "os-x-office-macros-with-empyre",
+    "building-an-empyre-with-python"
+  ]
+}

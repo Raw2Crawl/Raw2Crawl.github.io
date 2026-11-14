@@ -1,0 +1,32 @@
+{
+  "id": 3,
+  "name": "Powershell",
+  "slug": "powershell",
+  "folder": "Powershell",
+  "url": "https://blog.harmj0y.net/category/powershell/",
+  "reported_count": 22,
+  "articles": [
+    "the-powerview-powerusage-series-5",
+    "the-powerview-powerusage-series-4",
+    "the-powerview-powerusage-series-3",
+    "the-powerview-powerusage-series-2",
+    "the-powerview-powerusage-series-1",
+    "make-powerview-great-again",
+    "kerberoasting-without-mimikatz",
+    "command-and-control-using-active-directory",
+    "powershell-rc4",
+    "upgrading-powerup-with-psreflect",
+    "running-laps-with-powerview",
+    "gpp-and-powerview",
+    "invoke-bypassuac",
+    "powerquinsta",
+    "mining-a-domains-worth-of-data-with-powershell",
+    "dumping-a-domains-worth-of-passwords-with-mimikatz-pt-2",
+    "powershell-and-win32-api-access",
+    "derbycon-powershell-weaponization",
+    "veil-powerview-a-usage-guide",
+    "powerup-a-usage-guide",
+    "powerup-v1-1-beyond-service-abuse",
+    "powerup"
+  ]
+}

@@ -1,0 +1,36 @@
+<p>Every language needs an RC4 implementation. Despite <a href="https://en.wikipedia.org/wiki/RC4#Security">its insecurities</a>, RC4 is widely used due to its <a href="https://en.wikipedia.org/wiki/RC4#Description">simple algorithm</a> and the minimal amount of code it takes to implement it. Some people have even tried to fit implementations <a href="https://twitter.com/matthew_d_green/status/524966294492577792">into single tweets</a>. It&#8217;s commonly used by malware due to its low overhead, and I&#8217;m actually shocked that <a href="http://rosettacode.org/">RosettaCode</a> doesn&#8217;t have an entry for RC4.</p>
+<p>The only PowerShell implementation I&#8217;m aware of is Remko Weijnen&#8217;s <a href="http://www.remkoweijnen.nl/blog/2013/04/05/rc4-encryption-in-powershell/">code here</a>, and as far as I know .NET doesn&#8217;t include an RC4 implementation that we can take advantage of. This post will cover a &#8216;proper&#8217;-(esque) implementation of RC4, a practical &#8216;minimized&#8217; version, and a version that I collaborated with some PowerShell madmen on in the quest to get it under 140 characters for a tweet.</p>
+<h2>RC4 Background</h2>
+<p><a href="https://en.wikipedia.org/wiki/RC4#Description">Read the Wikipedia page</a> if you&#8217;re actually curious.</p>
+<h2>Proper Implementation</h2>
+<p>Without further ado:</p>
+<p>https://gist.github.com/HarmJ0y/4edc5bf4cccb0aef5553a860a3e433e3</p>
+<p>Yes, there&#8217;s not a completely proper PRGA implementation, but this was partly to take advantage of PowerShell&#8217;s pipelining. This was the approach that made the most sense to me. It requires byte arrays for the <strong>-InputObject</strong> and <strong>-Key,</strong> so here&#8217;s how you use it:</p>
+<pre class="wrap:true lang:ps decode:true">$Enc = [System.Text.Encoding]::ASCII
+$Data = $Enc.GetBytes('This is a test! This is only a test.')
+$Key = $Enc.GetBytes('SECRET')
+($Data | ConvertTo-Rc4ByteStream -Key $Key | ForEach-Object { "{0:X2}" -f $_ }) -join ' '</pre>
+<p>Note that it can accept an <strong>-InputObject</strong> byte array on the pipeline, or by calling the parameter, your choice.</p>
+<h2>Minimization Take 1</h2>
+<p>The minimization idea came about from doing <a href="https://www.blackhat.com/us-16/training/advanced-powershell-for-offensive-operations.html">training prep</a>, where we wanted a practical RC4 implementation for decrypting, or executing, malware communications. For malware staging, space and (some) obfuscation matters, so proper script &#8216;etiquette&#8217; can mostly be thrown out the window. The optimization for this function is heavily due to <a href="https://twitter.com/Lee_Holmes">@lee_holmes</a>, <a href="https://twitter.com/mattifestation">@mattifestation</a>, <a href="https://twitter.com/secabstraction">@secabstraction</a>, and <a href="https://twitter.com/tifkin_">@tifkin_</a>, which will come to properly crazy fruition in the last section.</p>
+<p>Here&#8217;s the code:</p>
+<pre class="wrap:true lang:ps decode:true ">$R={$D,$K=$Args;$S=0..255;0..255|%{$J=($J+$S[$_]+$K[$_%$K.Length])%256;$S[$_],$S[$J]=$S[$J],$S[$_]};$D|%{$I=($I+1)%256;$H=($H+$S[$I])%256;$S[$I],$S[$H]=$S[$H],$S[$I];$_-bxor$S[($S[$I]+$S[$H])%256]}}</pre>
+<p>For the optimization, we&#8217;re taking advantage of a few things- I&#8217;ll try to outline a few here as it was an interesting thought exercise:</p>
+<ul>
+<li>Uninitialized variables are assumed to be $Null/0 &#8211; <strong>$J</strong> in the KSA, <strong>$I</strong> and <strong>$H</strong> (replacing $J) in the PRGA.</li>
+<li>We obviously dropped pipeline support, and used nameless/lambda functions (<a href="https://twitter.com/mattifestation">@mattifestation</a>&#8216;s idea) to cut down a bit more.</li>
+<li>Spaces? Who need spaces?</li>
+</ul>
+<p>PowerShell has its own form of <a href="https://en.wikipedia.org/wiki/Anonymous_function">Lambda functions</a> &#8211; anonymous script blocks that can serve as functions without a formal name. There&#8217;s <a href="http://www.powershellmagazine.com/2013/12/23/simplifying-data-manipulation-in-powershell-with-lambda-functions/">more information on PowerShell and Lambda functions</a> from <a href="https://twitter.com/mattifestation">@mattifestation</a>. These functions can be invoked with the call operator (&amp;) like the following:</p>
+<pre class="wrap:true lang:ps decode:true ">$Enc = [System.Text.Encoding]::ASCII
+$Data = $Enc.GetBytes('This is a test! This is only a test.')
+$Key = $Enc.GetBytes('SecretPassword')
+
+(&amp; $R $data $key | ForEach-Object { "{0:X2}" -f $_ }) -join ' '</pre>
+<h2>Getting Weird With PowerShell</h2>
+<p>So how can we cut this down even more to fit into a tweet? Matt had the great idea of converting the ASCII representation of our logic to bytes and then repacking those bytes as UNICODE. Since an ASCII character is encoded as 8 bits/1 byte and UNICODE is encoded with 16 bits/2 bytes, we can pack two ASCII characters into a single UNICODE encoding. Here&#8217;s how we can accomplish this in PowerShell:</p>
+<pre class="wrap:true lang:ps decode:true">$Bytes = ([System.Text.Encoding]::ASCII).GetBytes("dir C:\ ")
+$UnicodeBytes = ([System.Text.Encoding]::UNICODE).GetString($Bytes)</pre>
+<p>So we can cut our script down to len(script)/2 + len(decoding logic). Unfortunately, we were only able to get the logic down to 141 characters with piping to IEX, so I <a href="https://twitter.com/harmj0y/status/745349726334156800">tweeted out the version</a> that just echoed the V3+ algorithm (if anyone can shave another few characters off, let us know). Before running, $D needs to be initialized as the data array and $K initialized as the key array. The weird <strong>% *es</strong> bit is a PowerShell v3.0+ shortcut for <strong>ForEach-Object -MemberName *es</strong>, which returns the GetBytes() method for the [Text.Encoding]::Unicode instantiation. This is a quick way to call <strong>[System.Text.Encoding]::Unicode.GetBytes(&#8216;UNICODE&#8217;)</strong>.</p>
+<pre class="wrap:true lang:ps decode:true">-join[Char[]]([Text.Encoding]::Unicode|% *es '匤〽⸮㔲㬵⠤匤簩笥䨤⠽䨤␫孓弤⭝䬤⑛╟䬤䌮畯瑮⥝㈥㘵␻孓弤ⱝ匤⑛嵊␽孓䨤ⱝ匤⑛嵟㭽䐤╼⑻㵉⬫䤤㈥㘵␻㵈␨⭈匤⑛嵉┩㔲㬶匤⑛嵉␬孓䠤㵝匤⑛嵈␬孓䤤㭝弤戭潸⑲孓␨孓䤤⭝匤⑛嵈┩㔲崶⁽')|IEX</pre>
+<p>The UNICODE packing technique seems like it might have additional use cases for offensive obfuscation, but this is an exercise left to the reader.</p>

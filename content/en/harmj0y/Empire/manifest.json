@@ -1,0 +1,21 @@
+{
+  "id": 21,
+  "name": "Empire",
+  "slug": "empire",
+  "folder": "Empire",
+  "url": "https://blog.harmj0y.net/category/empire/",
+  "reported_count": 11,
+  "articles": [
+    "empire-fails",
+    "the-empire-strikes-back",
+    "empires-restful-api",
+    "empire-1-5",
+    "empires-cli",
+    "nothing-lasts-forever-persistence-with-empire",
+    "expanding-your-empire",
+    "empire-1-4",
+    "empire-1-3",
+    "empire-1-2",
+    "empire-1-1"
+  ]
+}

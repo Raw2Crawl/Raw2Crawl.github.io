@@ -1,0 +1,17 @@
+{
+  "id": 8,
+  "name": "Penetesting",
+  "slug": "penetesting",
+  "folder": "Penetesting",
+  "url": "https://blog.harmj0y.net/category/penetesting/",
+  "reported_count": 7,
+  "articles": [
+    "push-it-push-it-real-good",
+    "i-hunt-sysadmins",
+    "mining-a-domains-worth-of-data-with-powershell",
+    "dumping-a-domains-worth-of-passwords-with-mimikatz-pt-2",
+    "the-case-of-a-stubborn-ntds-dit",
+    "finding-local-admin-with-the-veil-framework",
+    "pass-the-hash-is-dead-long-live-pass-the-hash"
+  ]
+}

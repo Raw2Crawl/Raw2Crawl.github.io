@@ -1,0 +1,99 @@
+<p><a href="https://github.com/PowerShellEmpire/PowerTools/tree/master/PowerView">PowerView</a> is a tool that I&#8217;ve spoken frequently about on this blog. It debuted as part of the Veil-Framework in March of 2014, and has gone through a <a href="http://www.harmj0y.net/blog/powershell/powershell-and-win32-api-access/">huge</a> number of <a href="https://twitter.com/harmj0y/status/630497039495860228">changes</a> over the <a href="https://github.com/PowerShellEmpire/PowerTools/commits/master">last year and a half</a>. It is now a part of the <a href="https://github.com/PowerShellEmpire/PowerTools/">PowerTools repository</a> under the PowerShellEmpire GitHub account, and may be integrated soon into the central PowerSploit repository.</p>
+<p>Today marks probably the biggest change to PowerView and how people use it since its inception. PowerView v2.0 is a major refactor that eliminates some code components, renames others, absorbs some functions into existing ones, and adds a chunk of new functionality. As this is a pretty substantial change that breaks backwards compatibility, we wanted to put together a guide on converting your usage of PowerView from 1.X to 2.0.</p>
+<p>There is a <a href="https://github.com/PowerShellEmpire/PowerTools/releases/tag/1.9">tagged release of PowerView 1.9 here</a>, and we will also keep the previous code under the <a href="https://github.com/PowerShellEmpire/PowerTools/tree/version_1.9">&#8220;version_1.9&#8221; branch</a> for a few months. I will also be going through past posts on this blog and making edits where appropriate at the top of each post with new function syntax, however any relevant <a href="http://www.harmj0y.net/blog/presentations/">presentation slide decks</a> will remain in their original states. And finally, to facilitate the transition, there are a series of aliases for *most* old cmdlets <a href="https://github.com/PowerShellEmpire/PowerTools/blob/03fb4f797e75e074f3d07660b82c54ec19c56a2c/PowerView/powerview.ps1#L10018-L10053">at the bottom of the powerview.ps1</a> file (though this is far from perfect). This will remain in place for a few months, and will eventually be removed at some point down the line.</p>
+<h2>Removed Cmdlets</h2>
+<p>We realized that PowerView had started to become a bit bloated as we tried to integrate several interesting PowerShell network/domain scripts into its functionality. We wanted to hit the restart button and start fresh with a reduced set of cmdlets to fight code and feature bloat. Also, some of the cmdlets removed had functionality covered by other cmdlets. If specific cmdlets from v1.9 are strongly requested back into 2.0, we will consider it.</p>
+<ul>
+<li><strong>Invoke-Ping</strong> and <strong>Test-Server</strong> were removed, and their functionality replaced with <strong>Test-Connection</strong> combined with <strong>Invoke-ThreadedFunction</strong></li>
+<li><strong>Get-NetLocalServices </strong>as it was rarely (if ever) used</li>
+<li><strong>Get-NetConnections</strong> as it was rarely (if ever) used</li>
+<li><strong>Get-NetFiles </strong>as it was rarely (if ever) used</li>
+<li><strong>Get-NetFileSessions </strong>as it was rarely (if ever) used</li>
+<li><strong>Invoke-Netview </strong>as its functionality is duplicated with <strong>Invoke-ShareFinder</strong> and <strong>Invoke-UserHunter</strong>, and shares/found users are fundamentally different object types</li>
+<li><strong>Invoke-FileDownloader </strong>as we do more targeted triage/downloads</li>
+<li><strong>Get-LAPSPasswords</strong> as it makes more sense for this project to <a href="https://github.com/kfosaaen/Get-LAPSPasswords/blob/master/Get-LAPSPasswords.ps1">be maintained and used separately</a></li>
+<li><strong>Invoke-HostEnum </strong>was it was rarely (if ever) used</li>
+</ul>
+<h2>Renamed and Combined Cmdlets</h2>
+<p>We&#8217;ve also renamed and/or combined several move cmdlets. Many of the changes are simple plural to singular name changes, and others are a move to a more &#8216;correct&#8217; and descriptive naming convention:</p>
+<ul>
+<li><strong>Invoke-CopyFile</strong> was renamed to <strong>Copy-ClonedFile</strong></li>
+<li><strong>Export-CSV</strong> was revamped to be thread-safe and renamed to <strong>Export-PowerViewCSV</strong></li>
+<li><strong>Get-HostIP</strong> was renamed to <strong>Get-IPAddress</strong></li>
+<li><strong>Translate-NT4Name</strong> was renamed to <strong>Convert-NT4toCanonical</strong></li>
+<li><strong>Invoke-NetUserAdd</strong> was renamed to <strong>Add-NetUser</strong></li>
+<li><strong>Get-NetForestDomains</strong> was renamed to <strong>Get-NetForestDomain</strong></li>
+<li><strong>Get-NetDomainControllers</strong> was renamed to <strong>Get-NetDomainController</strong></li>
+<li><strong>Get-NetComputer</strong> was renamed to <strong>Get-NetComputer</strong></li>
+<li><strong>Get-NetOUs</strong> has been renamed to <strong>Get-NetOU</strong></li>
+<li><strong>Get-NetGroups</strong> was renamed to <strong>Get-NetGroup</strong> and the old <strong>Get-NetGroup</strong> was renamed to <strong>Get-NetGroupMember</strong>
+<ul>
+<li>This will likely be the biggest hangup for PowerView users, but we feel that the new scheme makes for much less confusion.</li>
+</ul>
+</li>
+<li><strong>Invoke-NetGroupUserAdd </strong>was renamed to <strong>Add-NetGroupUser</strong></li>
+<li><strong>Get-NetFileServers</strong> was renamed to <strong>Get-NetFileServer</strong></li>
+<li><strong>Get-NetSessions</strong> was renamed to <strong>Get-NetSession</strong></li>
+<li><strong>Get-NetRDPSessions</strong> was renamed to <strong>Get-NetRDPSession</strong></li>
+<li><strong>Get-NetProcesses</strong> was renamed to <strong>Get-NetProcess</strong></li>
+<li><strong>Get-UserProperties</strong> was renamed to <strong>Get-UserProperty</strong></li>
+<li><strong>Invoke-UserFieldSearch</strong> was renamed to <strong>Find-UserField</strong></li>
+<li><strong>Get-ComputerProperties</strong> was renamed to <strong>Get-ComputerProperty</strong></li>
+<li><strong>Invoke-ComputerFieldSearch</strong> was renamed to <strong>Find-ComputerField</strong></li>
+<li><strong>Invoke-SearchFiles</strong> was renamed to <strong>Find-InterestingFile</strong></li>
+<li><strong>Invoke-FindLocalAdminAccess</strong> was renamed to <strong>Find-LocalAdminAccess</strong></li>
+<li><strong>Get-ExploitableSystems</strong> was renamed to <strong>Get-ExploitableSystem</strong></li>
+<li><strong>Invoke-UserEventHunter</strong> was renamed to <strong>Invoke-EventHunter</strong></li>
+<li><strong>Invoke-EnumerateLocalAdmins</strong> was renamed to <strong>Invoke-EnumerateLocalAdmin</strong></li>
+<li><strong>Get-NetDomainTrusts</strong> was renamed to <strong>Get-NetDomainTrust</strong></li>
+<li><strong>Get-NetForestTrusts</strong> was renamed to <strong>Get-NetForestTrust</strong></li>
+<li><strong>Invoke-FindUserTrustGroups</strong> was renamed to <strong>Find-ForeignUser</strong></li>
+<li><strong>Invoke-FindGroupTrustUsers</strong> was renamed to <strong>Find-ForeignGroup</strong></li>
+<li><strong>Invoke-MapDomainTrusts</strong> was renamed to <strong>Invoke-MapDomainTrust</strong></li>
+</ul>
+<p>Additionally, several cmdlets were combined into others:</p>
+<ul>
+<li><strong>Get-NetUserSPNs</strong> has been combined into <strong>Get-NetUser -SPN</strong></li>
+<li><strong>Get-NetPrinters</strong> has been combined into <strong>Get-NetComputer -Printers</strong></li>
+<li><strong>Get-NetGUIDOUs</strong> has been combined into <strong>Get-NetOU -GUID &lt;guid&gt;</strong></li>
+<li><strong>Get-UserLogonEvents</strong> and <strong>Get-UserTGTEvents</strong>  have been combined into to <strong>Get-UserEvent -EventType &#8216;logon&#8217;</strong> and <strong>Get-UserEvent -EventType &#8216;logon&#8217;</strong>, respectively</li>
+<li><strong>Get-NetLocalGroups</strong> has been combined into <strong>Get-NetLocalGroup -ListGroups</strong></li>
+<li><strong>Invoke-UserView</strong> has been combined into <strong>Invoke-UserHunter -ShowAll</strong></li>
+<li><strong>Invoke-UserProcessHunter</strong> has been combined into <strong>Invoke-ProcessHunter -Username X</strong></li>
+<li><strong>Get-NetDomainTrustsLDAP </strong>has been combined into <strong>Get-NetDomainTrust -LDAP</strong></li>
+<li><strong>Invoke-FindAllUserTrustGroups</strong> has been combined into <strong>Find-ForeignUser -Recurse</strong></li>
+<li><strong>Invoke-FindAllGroupTrustUsers</strong> has been combined into <strong>Find-ForeignGroup -Recurse</strong></li>
+<li><strong>Invoke-EnumerateLocalTrustGroups</strong> has been combined into <strong>Invoke-EnumerateLocalAdmin -TrustGroups</strong></li>
+<li><strong>Invoke-MapDomainTrustsLDAP</strong> has been combined into <strong>Invoke-MapDomainTrust -LDAP</strong></li>
+</ul>
+<h2>New Cmdlets and Functionality</h2>
+<p>There are also a few new cmdlets and functionality that have been integrated into v2.0:</p>
+<ul>
+<li>Many components of the LDAP querying functionality have been optimized and the code streamlined.</li>
+<li>Most LDAP functions that accepted a -Domain flag also now accept a -DomainController flag to specify a DC to reflect queries through.</li>
+<li><strong>Get-Proxy</strong> is a start at a function to enumerate local user and SYSTEM proxy settings. We will be expanding on this soon.</li>
+<li><strong>Convert-SidToName</strong> now properly resolves most builtin SIDs.</li>
+<li><strong>Get-DFSshare</strong> will retrieve all fault tolerant distributed file systems in the domain (thanks to <a href="https://twitter.com/@meatballs__">@meatballs__ </a>). This has also been integrated into <strong>Invoke-UserHunter -Stealth</strong> (and <strong>Invoke-StealthUserHunter</strong>) as a server search source.</li>
+<li><strong>Get-ObjectAcl</strong> will return the ACLs associated with specific active directory objects.</li>
+<li><strong>Add-ObjectAcl</strong> allows you to add additional ACLs/ACEs to active directory objects (thanks to <a href="https://twitter.com/PyroTek3">@PyroTek3</a> for the ACL cmdlet ideas)</li>
+<li><strong>Get-GUIDMap</strong> is a helper that maps GUID values to their display names.</li>
+<li><strong>Get-ADObject</strong> will take an object SID and return the domain object (group, user, etc.) associated with it.</li>
+<li><strong>Get-NetSite</strong> will return all sites for a specified domain, filterable by GPO -GUID if desired.</li>
+<li><strong>Get-NetSubnet</strong> will give you all current subnets for a given domain, filterable by -SiteName.</li>
+<li><strong>Get-NetGroup</strong> now accepts a -UserName parameter, and will recurse up a user&#8217;s group memberships, yielding all groups a given user is effectively a part of. It also now accepts a -AdminCount flag as well.</li>
+<li><strong>Get-NetGPO</strong> will enumerate all current Group Policy objects for a given domain.</li>
+<li><strong>Get-NetGPOGroup</strong> is a cool new cmdlet that returns all GPOs in a domain that set local group memberships through <a href="http://social.technet.microsoft.com/wiki/contents/articles/20402.active-directory-group-policy-restricted-groups.aspx">Restricted Groups</a> or groups.xml (Group Policy Preferences).</li>
+<li><strong>Find-GPOLocation</strong> is my favorite new cmdlet. It&#8217;s the start of an approach to take a user or group name and map out where the user/group has local administrator or RDP rights (&#8220;-LocalGroup Administrators&#8221; and &#8220;-LocalGroup RDP&#8221;)  on the domain. It does this by wrapping <strong>Get-NetGPOGroup</strong>, matching target user/group SIDs, and enumerating back to OUs/computers. We&#8217;ll have a more in depth post on this later.</li>
+<li><strong>Find-GPOComputerAdmin</strong> is similar to <strong>Find-GPOLocation</strong>, but takes a computer name and determines what users/groups have administrative access to it.</li>
+<li><strong>Get-DomainPolicy</strong> will enumerate the default -Domain or -DomainController policy (things like the default Kerberos policy, etc.).</li>
+<li><strong>Invoke-UserHunter</strong> now has a -Stealth option that integrates the old Invoke-StealthUserHunter functionality. A basic wrapper was left for Invoke-StealthUserHunter.</li>
+<li><strong>Find-InterestingFile</strong> and <strong>Invoke-FileFinder</strong> now accept a -Credential argument for a PSCredential. This allows you to data mine with alternate credential sets.</li>
+<li><strong>Invoke-UserHunter</strong> now has a -SearchForest flag (useful when you&#8217;re attempting to <a href="http://www.harmj0y.net/blog/redteaming/the-trustpocalypse/">hop up a forest trust</a> with Mimikatz and SID histories)</li>
+</ul>
+<p>All <strong>Invoke-XThreaded</strong> commands are now implemented in their &#8216;normal&#8217; functions with the &#8220;-Threads X&#8221; flag implementing the old threading code. For example, <strong>Invoke-ShareFinder</strong> will execute normal share finding behavior, while <strong>Invoke-ShareFinder -Threads 10</strong> will execute the same functionality in a threaded fashion.</p>
+<h2>Pester Tests</h2>
+<p><a href="https://github.com/pester/Pester">Pester</a> is a unit testing framework written in and for PowerShell. <a href="http://www.powershellmagazine.com/2014/03/12/get-started-with-pester-powershell-unit-testing-framework/">PowerShellMagazine has a great getting started guide</a> for Pester which I highly recommend. PowerView 2.0 includes the start of a suite of Pester unit tests that attempt to cover all cmdlets and associated arguments. These tests are located in <a href="https://github.com/PowerShellEmpire/PowerTools/tree/master/PowerView/Tests">./Tests/</a> if you&#8217;re interested, and can be run with <strong>Invoke-Pester</strong> once Pester is installed. As many functions for PowerView are meant for domain enumeration and abuse, these tests have ended up being tweaked for the test environment I have in my home lab. I&#8217;m hoping to move to <a href="http://www.powershellmagazine.com/2014/09/30/pester-mock-and-testdrive/">mocking</a> soon in order to eliminate test environment dependence. These tests cases should hopefully increase stability in the project going forward.</p>
+<p><a href="http://www.harmj0y.net/blog/wp-content/uploads/2015/10/invoke_pester.png"><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-1813" src="http://www.harmj0y.net/blog/wp-content/uploads/2015/10/invoke_pester-1024x657.png" alt="invoke_pester" width="640" height="411" srcset="https://blog.harmj0y.net/wp-content/uploads/2015/10/invoke_pester-1024x657.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2015/10/invoke_pester-300x192.png 300w, https://blog.harmj0y.net/wp-content/uploads/2015/10/invoke_pester.png 1063w" sizes="(max-width: 640px) 100vw, 640px" /></a></p>
+<h2>Wrapup</h2>
+<p>A big thanks to everyone who&#8217;s helped the project along the way- <a href="https://twitter.com/obscuresec">@obscuresec</a>, <a href="https://twitter.com/mattifestation">@mattifestation</a>, <a href="https://twitter.com/Carlos_Perez">darkoperator</a>, everyone at the <a href="http://www.verisgroup.com/adaptive-threat-division/meet-the-team/">Adaptive Threat Division</a>, <a href="https://twitter.com/meatballs__">@meatballs__</a> (for a ton of great ideas, code fixes, and LDAP optimization), <a href="https://twitter.com/gentilkiwi">@gentilkiwi</a>, <a href="https://twitter.com/pyrotek3">@pyrotek3</a> (for some great ideas and direction), <a href="https://github.com/tomsteele">tomsteele</a> (who <a href="https://github.com/tomsteele/domain-trust-grapher">also did a cool version</a> of <a href="https://twitter.com/sixdub">@sixdub</a>&#8216;s <a href="https://github.com/sixdub/DomainTrustExplorer/">DomainTrustExplorer</a>), <a href="https://twitter.com/armitagehacker">@armitagehacker</a> for being a major advocate of the project, and the rest of the offensive PowerShell community!</p>
+<p>There have also been numerous other tweaks, modifications, and bug fixes for the code base that I&#8217;ve sure have introduced new issues. If you encounter a problem, hit us up in #psempire on Freenode or <a href="https://github.com/powershellempire/powertools/issues">open up a GitHub issue</a>, and we will try to be extra-responsive over the next few weeks as everyone transitions.</p>

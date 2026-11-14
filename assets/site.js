@@ -38,7 +38,8 @@
   const normalize = value => new URL(value, location.href).pathname.replace(/\/index\.html$|\/$/g, '');
   const navLinks = [...nav.querySelectorAll('a[data-nav-url]')];
   const current = normalize(location.href);
-  const active = navLinks.find(a => normalize(a.href) === current && !new URL(a.href).hash);
+  const active = navLinks.find(a => a.getAttribute('aria-current') === 'page' && normalize(a.href) === current)
+    || navLinks.find(a => normalize(a.href) === current && !new URL(a.href).hash);
   if (active) {
     active.setAttribute('aria-current', 'page');
     let ancestor = active.parentElement;
@@ -106,7 +107,7 @@
   const pages = [...nav.querySelectorAll('a[data-nav-url]')].filter(a => !new URL(a.href).hash);
   const index = pages.findIndex(a => normalize(a.href) === current);
   const pager = document.querySelector('.page-navigation');
-  if (pager && index >= 0) {
+  if (pager && !pager.children.length && index >= 0) {
     for (const [label, link] of [['Previous', pages[index - 1]], ['Next', pages[index + 1]]]) {
       if (!link) continue;
       const a = document.createElement('a'); a.href = link.href;

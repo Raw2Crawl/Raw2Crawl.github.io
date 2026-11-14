@@ -1,0 +1,187 @@
+<p><span style="font-weight: 400;">We generally try to keep off of disk as much as possible on engagements- there&#8217;s less to clean up and fewer chances of being caught. However, occasionally we have a need to store data on disk on a target system, and we want to try to do this in a secure way in case any incident responders start to catch on. Examples would be reboot-persistent keyloggers, something that monitors locations for specific files and clones/exfiltrates them, and the pilfering of KeePass files (see the </span><b>Example: KeePass + EncryptedStore</b><span style="font-weight: 400;"> section below).</span></p>
+<p><span style="font-weight: 400;">If we have to write a file to disk, we want to do it in a way that prevents the recovery of the data as best we can and uses only built-in tools to do so. This post will detail one of our solutions to this problem. The code detailed in this post is </span><a href="https://github.com/harmj0y/EncryptedStore"><span style="font-weight: 400;">live on GitHub</span></a><span style="font-weight: 400;">.</span></p>
+<h2>An Encrypted Store Design</h2>
+<p>We have a few specific design requirements for our encrypted datastore. We want something with:</p>
+<ul>
+<li>reasonably strong crypto &#8211; we chose AES with cipher block chaining (CBC) and a randomized IV, as well as RSA + AES to use a public key to encrypt a random AES key per encrypted unit (more on this below)</li>
+<li>doesn&#8217;t leave the password with the file (in order to prevent easy recovery)</li>
+<li>accepts multiple files, and doesn&#8217;t require decrypting/re-encrypting the entire store on each addition to it</li>
+<li>accepts arbitrary data like keystrokes as well as files</li>
+<li>&#8216;platform independent&#8217; decryption on a variety of platforms with a variety of languages</li>
+</ul>
+<p>The storage format we came up with is &#8216;packetized&#8217;, with discrete units of a specific format appended to a single file. This way the store can be appended to easily without constant encryption/decryption. The store format is as follows:</p>
+<pre class="lang:default decode:true">[4 bytes representing size of next block to decrypt]
+[0] (indicating straight AES)
+[16 byte IV]
+[AES-CBC encrypted file block]
+    [compressed stream]
+        [260 characters/bytes indicating original path]
+        [file contents]
+...
+
+[4 bytes representing size of next block to decrypt]
+[1] (indicating RSA+AES)
+[128 bytes random AES key encrypted with the the RSA public key]
+[16 byte IV]
+[AES-CBC encrypted file block]
+    [compressed stream]
+        [260 characters/bytes indicating original path]
+        [file contents]
+...</pre>
+<p>To encrypt a file for ENCSTORE.bin:</p>
+<ul>
+<li>Read raw file contents</li>
+<li>Pad original full file PATH to 260 Bytes</li>
+<li>Compress [PATH + file] using IO.Compression.DeflateStream</li>
+<li>If using RSA+AES, generate a random AES key and encrypt using the RSA public key</li>
+<li>Generate random 16 Byte IV</li>
+<li>Encrypt compressed stream with AES-CBC using the predefined key and generated IV</li>
+<li>Calculate length of encrypted block + IV</li>
+<li>Append 4 Byte representation of length to ENCSTORE.bin</li>
+<li>Append 0 byte if straight AES used, 1 if RSA+AES used</li>
+<li>Optionally append 128 bytes of RSA encrypted random AES key if RSA+AES scheme used</li>
+<li>Append IV to ENCSTORE.bin</li>
+<li>Append encrypted file to ENCSTORE.bin</li>
+</ul>
+<p>Decryption happens in reverse:</p>
+<ul>
+<li>While there is more data to decrypt:
+<ul>
+<li>Read first 4 bytes of ENCSTORE.bin and calculate length value X</li>
+<li>Read next X bytes of encrypted file</li>
+<li>Read the first byte of the encrypted block to see if AES or RSA decryption is specified</li>
+<li>If RSA-AES is specified (byte == 1):
+<ul>
+<li>Read the next 128 bytes of encrypted block and decrypt the random AES key using the RSA private key</li>
+</ul>
+</li>
+<li>Read the next 16 bytes of block and extract the IV</li>
+<li>Read remaining block and decrypt AES-CBC compressed stream using specified key and extracted IV</li>
+<li>Decompress [PATH + file]</li>
+<li>Split path by \ and create nested folder structure to mirror original path</li>
+<li>Write original file\data to mirrored path</li>
+</ul>
+</li>
+</ul>
+<p>To implement the integration of arbitrary data into the same container format, a &#8216;data tag&#8217; string (like &#8216;keylog&#8217;) is used in lieu of the file path, and the arbitrarily passed data is used instead of extracting the file contents.</p>
+<p>The AES/RSA &#8220;packets&#8221; are also stackable and any number of both types of packets can be appended to the same write location.</p>
+<h2>EncryptedStore.ps1</h2>
+<p>The PowerShell code to do this is currently <a href="https://github.com/harmj0y/EncryptedStore">on GitHub</a>. The EncryptedStore.ps1 script is PowerShell version 2.0 compatible, and uses <a href="https://msdn.microsoft.com/en-us/library/system.security.cryptography.aescryptoserviceprovider(v=vs.110).aspx">[System.Security.Cryptography.AesCryptoServiceProvider]</a> for the AES implementation, <a href="https://msdn.microsoft.com/en-us/library/system.security.cryptography.rsacryptoserviceprovider(v=vs.110).aspx">[System.Security.Cryptography.RSACryptoServiceProvider]</a> for the RSA implementation, and <a href="https://msdn.microsoft.com/en-us/library/system.io.compression.deflatestream(v=vs.110).aspx">[System.IO.Compression.DeflateStream]</a> for the compression implementation.</p>
+<p>If you want to use RSA encryption for the store, you first need to generate an RSA public/private key pair with <strong>$Key = New-RSAKeyPair</strong>. <em>Be sure to save the key object if you want to be able to decrypt any of your data!</em></p>
+<p><strong>Write-EncryptedStore</strong> will create an encrypted store and accepts data/file paths on the pipeline. <span style="font-weight: 400;">There&#8217;s also a 1 gigabyte default storage limit which can be modified with </span><b>-StoreSizeLimit 100MB</b><span style="font-weight: 400;">. </span>It requires a <strong>-StorePath</strong> and <strong>-Key</strong>, which is MD5 hashed for an AES password if not 32 characters. If the key string is of the format &#8216;<em>^&lt;RSAKeyValue&gt;&lt;Modulus&gt;.*&lt;/Modulus&gt;&lt;Exponent&gt;.*&lt;/Exponent&gt;&lt;/RSAKeyValue&gt;$</em>&#8216;, the public key format generated by <strong>New-RSAKeyPair</strong>, then the RSA+AES scheme is used instead of straight AES. <a href="https://social.technet.microsoft.com/wiki/contents/articles/4546.working-with-passwords-secure-strings-and-credentials-in-windows-powershell.aspx">SecureStrings</a> are also usable with the <strong>-SecureKey</strong> parameter.</p>
+<p>Here&#8217;s how to store off a set of target files into C:\Temp\debug.bin:</p>
+<pre class="wrap:true lang:ps decode:true">'secret.txt','secret2.txt' | Write-EncryptedStore -StorePath C:\Temp\debug.bin -Key 'Password123!'</pre>
+<p>If you have arbitrary data to store, the function also takes a <strong>-DataTag X</strong> argument to pretag the saved data with something like &#8220;keylog&#8221;. Here&#8217;s an example:</p>
+<pre class="wrap:true lang:ps decode:true">"keystrokes" | Write-EncryptedStore -StorePath C:\Temp\debug.bin -Key 'Password123!' -DataTag 'keylog'</pre>
+<p>Since the atomic storage unit is indifferent to tagged data or files, you can store both in the same container. <strong>Write-EncryptedStore</strong> actually wraps the more generic <strong>Out-EncryptedStore</strong> function, which takes the types of input specified above and outputs the set of encrypted bytes containing the encrypted data. <strong>Out-EncryptedStore</strong> also has a -Base64Encode flag that will return everything as a base64-encoded string. This can be useful in some situations for transport (like in a RAT).</p>
+<p><strong>-StorePath</strong> defaults to $Env:Temp\debug.bin if a value is not specified. It also accepts \\UNC\file.bin paths, registry paths (&#8220;HKLM:\SOFTWARE\\something\key\valuename&#8221;), and WMI namespaces (&#8220;ROOT\Software\namespace:ClassName&#8221;) for additional storage options. A remote computer is specifiable for all three storage options with <strong>-ComputerName &lt;Computer&gt; </strong>with a separate <strong>-Credential &lt;X&gt;</strong> being specifiable as well. All of these options are present with <strong>Read-EncryptedStore</strong> as well (described below).</p>
+<p>Here are all the local/remote storage options available:</p>
+<pre class="height-set:true lang:default decode:true" data-url="https://gist.githubusercontent.com/HarmJ0y/5be70ff94c0d6720ac198e46a0d61fd7/raw/2176fb88ffc3a368d650d3c5774b8553ad5193f6/EncryptedStoreTests.ps1">$RSA = New-RSAKeyPair
+
+# local tests
+$ComputerName = 'localhost'
+$StorePath = 'C:\Temp\temp.bin'
+Write-Host "`n[$ComputerName] AES Storepath : $StorePath"
+".\secret.txt" | Write-EncryptedStore -StorePath $StorePath -Key 'Password123!'
+Read-EncryptedStore -StorePath $StorePath -Key 'Password123!' -List
+Get-EncryptedStoreData -StorePath $StorePath | Remove-EncryptedStore
+Start-Sleep -Seconds 1
+
+Write-Host "`n[$ComputerName] RSA Storepath : $StorePath"
+".\secret.txt" | Write-EncryptedStore -StorePath $StorePath -Key $RSA.Pub
+Read-EncryptedStore -StorePath $StorePath -Key $RSA.Priv -List
+Get-EncryptedStoreData -StorePath $StorePath | Remove-EncryptedStore
+Start-Sleep -Seconds 1
+
+$StorePath = 'HKLM:\SOFTWARE\Microsoft\SystemCertificates\DomainCertificate'
+Write-Host "`n[$ComputerName] AES Storepath : $StorePath"
+".\secret.txt" | Write-EncryptedStore -StorePath $StorePath -Key 'Password123!'
+Read-EncryptedStore -StorePath $StorePath -Key 'Password123!' -List
+Get-EncryptedStoreData -StorePath $StorePath | Remove-EncryptedStore
+Start-Sleep -Seconds 1
+
+Write-Host "`n[$ComputerName] RSA Storepath : $StorePath"
+".\secret.txt" | Write-EncryptedStore -StorePath $StorePath -Key $RSA.Pub
+Read-EncryptedStore -StorePath $StorePath -Key $RSA.Priv -List
+Get-EncryptedStoreData -StorePath $StorePath | Remove-EncryptedStore
+Start-Sleep -Seconds 1
+
+
+$StorePath = 'ROOT\Software:WindowsUpdate'
+Write-Host "`n[$ComputerName] AES Storepath : $StorePath"
+".\secret.txt" | Write-EncryptedStore -StorePath $StorePath -Key 'Password123!'
+Read-EncryptedStore -StorePath $StorePath -Key 'Password123!' -List
+Get-EncryptedStoreData -StorePath $StorePath | Remove-EncryptedStore
+Start-Sleep -Seconds 1
+
+$StorePath = 'ROOT\Software:WindowsUpdate'
+Write-Host "`n[$ComputerName] RSA Storepath : $StorePath"
+".\secret.txt" | Write-EncryptedStore -StorePath $StorePath -Key $RSA.Pub
+Read-EncryptedStore -StorePath $StorePath -Key $RSA.Priv -List
+Get-EncryptedStoreData -StorePath $StorePath | Remove-EncryptedStore
+Start-Sleep -Seconds 1
+
+
+# remote tests
+$ComputerName = 'PRIMARY.testlab.local'
+$Credential = Get-Credential 'TESTLAB\administrator'
+$StorePath = 'C:\Temp\temp2.bin'
+Write-Host "`n[$ComputerName] AES Storepath : $StorePath"
+".\secret.txt" | Write-EncryptedStore -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath -Key 'Password123!'
+Read-EncryptedStore -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath -Key 'Password123!' -List
+Get-EncryptedStoreData -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath | Remove-EncryptedStore -ComputerName $ComputerName -Credential $Credential
+Start-Sleep -Seconds 1
+
+Write-Host "`n[$ComputerName] RSA Storepath : $StorePath"
+".\secret.txt" | Write-EncryptedStore -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath -Key $RSA.Pub
+Read-EncryptedStore -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath -Key $RSA.Priv -List
+Get-EncryptedStoreData -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath | Remove-EncryptedStore -ComputerName $ComputerName -Credential $Credential
+Start-Sleep -Seconds 1
+
+
+$StorePath = 'HKLM:\SOFTWARE\Microsoft\SystemCertificates\DomainCert'
+Write-Host "`n[$ComputerName] AES Storepath : $StorePath"
+".\secret.txt" | Write-EncryptedStore -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath -Key 'Password123!'
+".\u2.txt" | Write-EncryptedStore -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath -Key 'Password123!'
+Read-EncryptedStore -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath -Key 'Password123!' -List
+Get-EncryptedStoreData -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath | Remove-EncryptedStore -ComputerName $ComputerName -Credential $Credential
+Start-Sleep -Seconds 1
+
+Write-Host "`n[$ComputerName] RSA Storepath : $StorePath"
+".\secret.txt" | Write-EncryptedStore -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath -Key $RSA.Pub
+".\u2.txt" | Write-EncryptedStore -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath -Key $RSA.Pub
+Read-EncryptedStore -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath -Key $RSA.Priv -List
+Get-EncryptedStoreData -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath | Remove-EncryptedStore -ComputerName $ComputerName -Credential $Credential
+Start-Sleep -Seconds 1
+
+
+$StorePath = 'ROOT\Software:WindowsUpdate2'
+Write-Host "`n[$ComputerName] AES Storepath : $StorePath"
+".\secret.txt" | Write-EncryptedStore -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath -Key 'Password123!'
+Read-EncryptedStore -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath -Key 'Password123!' -List
+Get-EncryptedStoreData -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath | Remove-EncryptedStore -ComputerName $ComputerName -Credential $Credential
+Start-Sleep -Seconds 1
+
+Write-Host "`n[$ComputerName] RSA Storepath : $StorePath"
+".\secret.txt" | Write-EncryptedStore -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath -Key $RSA.Pub
+Read-EncryptedStore -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath -Key $RSA.Priv -List
+Get-EncryptedStoreData -ComputerName $ComputerName -Credential $Credential -StorePath $StorePath | Remove-EncryptedStore -ComputerName $ComputerName -Credential $Credential
+Start-Sleep -Seconds 1</pre>
+<p><strong>Read-EncryptedStore</strong> will recover the data from a specified encrypted store. It also requires <strong>-StorePath</strong> and <strong>-Key/-SecureKey</strong>. If you want to just list the files in a store, use the <strong>-List</strong> parameter:</p>
+<pre class="wrap:true lang:ps decode:true">Read-EncryptedStore -StorePath C:\Temp\debug.bin -Key 'Password123!' -List</pre>
+<p>If you want to extract the data leave off the -List parameter, and <strong>Read-EncryptedStore</strong> will extract out all the data to the local folder, cloning the original paths. If there&#8217;s a filename conflict, additional files are appended with a counter:</p>
+<pre class="wrap:true lang:ps decode:true">Read-EncryptedStore -StorePath C:\Temp\debug.bin -Key 'Password123!'</pre>
+<p>As shown in the <a href="https://gist.github.com/HarmJ0y/5be70ff94c0d6720ac198e46a0d61fd7">test examples</a>, the <strong>Get-EncryptedStoreData</strong> and <strong>Remove-EncryptedStore</strong> functions can be used to retrieve/remove encrypted store data, again from all three storage options, local or remote.</p>
+<h2>EncryptedStore.py</h2>
+<p>There&#8217;s also a Python version of <strong>Read-EncryptedStore</strong>. It uses <a href="https://pypi.python.org/pypi/pycrypto">pycrypto</a> for the crypto implementations and <a href="https://docs.python.org/2/library/zlib.html">zlib</a> for the decompression implementation. It currently only supports AES containers.</p>
+<p>To list the files for a given store:</p>
+<p><strong>./EncryptedStore.py &#8211;store debug.bin &#8211;key &#8216;password&#8217; &#8211;list</strong></p>
+<p>To extract the files:</p>
+<p><strong>./EncryptedStore.py &#8211;store debug.bin &#8211;key &#8216;password&#8217;</strong></p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3128" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/07/python_decrypt_store-1024x387.png" alt="python_decrypt_store" width="640" height="242" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/07/python_decrypt_store-1024x387.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/07/python_decrypt_store-300x113.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/07/python_decrypt_store-768x290.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/07/python_decrypt_store.png 1447w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<h2>Example Use Case: KeePass + EncryptedStore</h2>
+<p>A while back I released a <a href="http://www.harmj0y.net/blog/redteaming/a-case-study-in-attacking-keepass/">post detailing how to operationally &#8220;attack&#8221;</a> KeePass databases. As a follow up <a href="https://gist.github.com/HarmJ0y/e9daa76c7888e24b5e3943b82f1d1d4f">I wrote a script</a> that searches for any KeePass.ini (version 1.X) or KeePass.config.xml (version 2.X) configuration files in C:\Users\, C:\Program Files\, and C:\Program Files (x86)\. This script is also included with EncryptedStore. Any found configurations are parsed and a custom PSObject is output with relevant information detailing database/keyfile locations, as well as information like the 2.X SecureDesktop setting, and whether a Windows user account was used to create the composite master key. In the situation where a user account is used as a mixin, user name/SID/domain information is output along with user master key locations:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3131" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/07/find_keepass_config2-1024x395.png" alt="find_keepass_config2" width="640" height="247" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/07/find_keepass_config2-1024x395.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/07/find_keepass_config2-300x116.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/07/find_keepass_config2-768x296.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/07/find_keepass_config2.png 1498w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p>This made a great candidate to pair with the EncryptedStore approach. <strong>Write-EncryptedStore</strong> and <strong>Out-EncryptedStore</strong> can take the output from <strong>Find-KeePassconfig</strong> on the pipeline and encrypt all found KeePass files into a single datastore:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3132" src="http://www.harmj0y.net/blog/wp-content/uploads/2016/07/keepass_encrypted_store-1024x984.png" alt="keepass_encrypted_store" width="640" height="615" srcset="https://blog.harmj0y.net/wp-content/uploads/2016/07/keepass_encrypted_store-1024x984.png 1024w, https://blog.harmj0y.net/wp-content/uploads/2016/07/keepass_encrypted_store-300x288.png 300w, https://blog.harmj0y.net/wp-content/uploads/2016/07/keepass_encrypted_store-768x738.png 768w, https://blog.harmj0y.net/wp-content/uploads/2016/07/keepass_encrypted_store.png 1495w" sizes="(max-width: 640px) 100vw, 640px" /></p>
+<p>Hopefully others find this of use. The storage format is simple enough that other language implementations should be possible as well if anyone has any interest.</p>

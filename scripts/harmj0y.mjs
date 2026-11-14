@@ -4,12 +4,13 @@ import crypto from 'node:crypto';
 import { ROOT, DIST, write } from './paths.mjs';
 import { page } from './layout.mjs';
 
-export const HARMJOY = '/en/harmj0y/ActiveDirectory';
-const SOURCE = path.join(ROOT, 'content/en/harmj0y/ActiveDirectory');
+export const HARMJOY = '/en/harmj0y';
+const SOURCE = path.join(ROOT, 'content/en/harmj0y');
 const escape = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 const text = s => s.replace(/<[^>]*>/g, '').replace(/&#(x[0-9a-f]+|\d+);/gi, (_, n) => String.fromCodePoint(n[0].toLowerCase() === 'x' ? parseInt(n.slice(1), 16) : Number(n))).replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ');
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
-const postUrl = post => `${HARMJOY}/${post.slug}/`;
+const postUrl = post => post.local_url;
+const categoryUrl = category => `${HARMJOY}/${category.folder}/`;
 
 function canonical(value, base) {
   const u = new URL(value.replace(/&amp;/g, '&'), base);
@@ -38,7 +39,8 @@ export function renderHarmj0yArticle(original, post, manifest) {
       const target = posts.get(slug);
       // Comments are not part of the article archive.
       if (target && !/^#(?:comment|respond)/.test(u.hash)) return `${attr}="${postUrl(target)}${u.search}${u.hash}"`;
-      if (u.pathname === '/category/activedirectory/') return `${attr}="${HARMJOY}/"`;
+      const category = manifest.categories.find(c => u.pathname === `/category/${c.slug}/`);
+      if (category) return `${attr}="${categoryUrl(category)}"`;
     }
     return `${attr}="${escape(u.href)}"`;
   });
@@ -60,20 +62,32 @@ function outline(html) {
   return headings.map(([, level, id, title]) => `<a href="#${encodeURIComponent(id)}"${Number(level) > min ? ' class="toc-sub"' : ''}>${escape(text(title))}</a>`).join('');
 }
 
-function sidebar(manifest, current) {
-  const link = (url, title) => `<li class="wstg-nav-item" data-title="${escape(title)}"><a data-nav-url="${url}" href="${url}"${url === current ? ' aria-current="page"' : ''}>${escape(title)}</a></li>`;
-  return `<aside id="doc-sidebar" class="sidebar" aria-label="Blog contents"><div class="sidebar-book"><span class="eyebrow">harmj0y</span><a href="/en/harmj0y/">Blog archive</a><span class="edition">ActiveDirectory · ${manifest.articles.length} articles</span></div><nav class="wstg-nav series-nav" aria-label="ActiveDirectory articles"><label for="harmjoy-filter" class="wstg-nav-filter-label">Search contents</label><input id="harmjoy-filter" type="search" class="wstg-nav-filter" placeholder="Find an article…" autocomplete="off"><div class="wstg-nav-filter-controls"><button type="button" class="wstg-nav-filter-clear" hidden>Clear</button><p class="wstg-nav-filter-count" aria-live="polite" hidden></p></div><ul class="wstg-nav-list">${link(HARMJOY + '/', 'ActiveDirectory')}${manifest.articles.map(p => link(postUrl(p), p.title)).join('')}</ul></nav></aside>`;
+function sidebar(manifest, current, category) {
+  const link = (url, title, selected = true) => `<li class="wstg-nav-item" data-title="${escape(title)}"><a data-nav-url="${url}" href="${url}"${url === current && selected ? ' aria-current="page"' : ''}>${escape(title)}</a></li>`;
+  const groups = manifest.categories.filter(c => c.reported_count).map(c => `<li class="wstg-nav-item" data-title="${escape(c.name)}"><details${category?.id === c.id ? ' open' : ''}><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="${categoryUrl(c)}" href="${categoryUrl(c)}"${current === categoryUrl(c) ? ' aria-current="page"' : ''}>${escape(c.name)} (${c.reported_count})</a></span></summary><ul>${manifest.articles.filter(p => c.articles.includes(p.slug)).map(p => link(postUrl(p), p.title, category?.id === c.id)).join('')}</ul></details></li>`).join('');
+  return `<aside id="doc-sidebar" class="sidebar" aria-label="Blog contents"><div class="sidebar-book"><span class="eyebrow">harmj0y</span><a href="${HARMJOY}/">Blog archive</a><span class="edition">${manifest.articles.length} articles · ${manifest.categories.filter(c => c.reported_count).length} categories</span></div><nav class="wstg-nav series-nav" aria-label="Blog categories and articles"><label for="harmjoy-filter" class="wstg-nav-filter-label">Search contents</label><input id="harmjoy-filter" type="search" class="wstg-nav-filter" placeholder="Find an article…" autocomplete="off"><div class="wstg-nav-filter-controls"><button type="button" class="wstg-nav-filter-clear" hidden>Clear</button><p class="wstg-nav-filter-count" aria-live="polite" hidden></p></div><div class="wstg-nav-controls"><button type="button" data-wstg-expand>Expand all</button><button type="button" data-wstg-collapse>Collapse all</button></div><ul class="wstg-nav-list">${link(HARMJOY + '/', 'All categories')}${groups}</ul></nav></aside>`;
 }
 
-function document(title, url, article, manifest) {
+function pager(manifest, post, category) {
+  if (!post) return '';
+  const posts = manifest.articles.filter(p => category.articles.includes(p.slug));
+  const index = posts.findIndex(p => p.id === post.id);
+  const links = [['Previous', posts[index - 1]], ['Next', posts[index + 1]]].filter(([, p]) => p).map(([label, p]) => `<a href="${postUrl(p)}" rel="${label === 'Previous' ? 'prev' : 'next'}"><small>${label}</small>${escape(p.title)}</a>`).join('');
+  return links ? `<nav class="page-navigation" aria-label="Previous and next page">${links}</nav>` : '';
+}
+
+function document(title, url, article, manifest, category = null, post = null) {
   const toc = outline(article);
-  const body = `<div class="mobile-toolbar"><button id="contents-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Contents</button><span>harmj0y / ActiveDirectory</span></div><div class="docs-layout">${sidebar(manifest, url)}<main id="main-content" class="reading-pane"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/harmj0y/">harmj0y</a><span>/</span><a href="${HARMJOY}/">ActiveDirectory</a></nav><article class="doc-content">${article}</article><nav class="page-navigation" aria-label="Previous and next page"></nav></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc">${toc || '<a href="#article-title">Article</a><a href="#original-source">Original source</a>'}</nav><a class="back-top" href="#top">Back to top ↑</a></aside></div>`;
+  const body = `<div class="mobile-toolbar"><button id="contents-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Contents</button><span>harmj0y${category ? ' / ' + escape(category.name) : ''}</span></div><div class="docs-layout">${sidebar(manifest, url, category)}<main id="main-content" class="reading-pane"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="${HARMJOY}/">harmj0y</a>${category ? `<span>/</span><a href="${categoryUrl(category)}">${escape(category.name)}</a>` : ''}</nav><article class="doc-content">${article}</article>${pager(manifest, post, category)}</main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc">${toc || '<a href="#article-title">Article</a><a href="#original-source">Original source</a>'}</nav><a class="back-top" href="#top">Back to top ↑</a></aside></div>`;
   return page({ title, url, document: true, body }).replace('<body class="documentation">', '<body id="top" class="documentation blog-document">');
 }
 
 export async function buildHarmj0y() {
   const manifest = JSON.parse(await fs.readFile(path.join(SOURCE, 'manifest.json'), 'utf8'));
-  if (manifest.articles.length !== manifest.category.reported_count) throw Error('Incomplete harmj0y category snapshot');
+  if (manifest.articles.length !== manifest.reported_article_count) throw Error('Incomplete harmj0y snapshot');
+  for (const category of manifest.categories) {
+    if (category.articles.length !== category.reported_count || manifest.articles.filter(p => p.categories.includes(category.id)).length !== category.reported_count) throw Error('Incomplete harmj0y category: ' + category.name);
+  }
   for (const asset of manifest.assets) {
     const source = path.join(SOURCE, asset.file);
     const bytes = await fs.readFile(source);
@@ -83,16 +97,25 @@ export async function buildHarmj0y() {
     await fs.copyFile(source, target);
   }
   for (const post of manifest.articles) {
-    const original = await fs.readFile(path.join(SOURCE, post.source), 'utf8');
-    if (hash(original) !== post.sha256) throw Error('Changed harmj0y source: ' + post.slug);
-    const rendered = renderHarmj0yArticle(original, post, manifest);
-    const article = `<h1 id="article-title">${escape(post.title)}</h1><p class="article-meta">${escape(post.author)} · <time datetime="${post.date.slice(0, 10)}">${post.date.slice(0, 10)}</time> · ActiveDirectory</p><div class="blog-article-body">${rendered}</div><footer class="article-source" id="original-source"><p>Original article by ${escape(post.author)}</p><a href="${escape(post.url)}" rel="author external">${escape(post.title)} — blog.harmj0y.net ↗</a></footer>`;
-    await write(HARMJOY.slice(1) + '/' + post.slug + '/index.html', document(post.title, postUrl(post), article, manifest));
+    const original = post.archive_status === 'source-link' ? null : await fs.readFile(path.join(SOURCE, post.source), 'utf8');
+    if (original !== null && hash(original) !== post.sha256) throw Error('Changed harmj0y source: ' + post.slug);
+    const category = manifest.categories.find(c => c.id === post.primary_category);
+    const categories = manifest.categories.filter(c => post.categories.includes(c.id)).map(c => `<a href="${categoryUrl(c)}">${escape(c.name)}</a>`).join(' · ');
+    const rendered = original === null
+      ? '<p class="archive-notice">The full text of this article is not included in this local archive. Read it on the author’s website using the original source link below.</p>'
+      : renderHarmj0yArticle(original, post, manifest);
+    const article = `<h1 id="article-title">${escape(post.title)}</h1><p class="article-meta">${escape(post.author)} · <time datetime="${post.date.slice(0, 10)}">${post.date.slice(0, 10)}</time> · ${categories}</p><div class="blog-article-body">${rendered}</div><footer class="article-source" id="original-source"><p>Original article by ${escape(post.author)}</p><a href="${escape(post.url)}" rel="author external">${escape(post.title)} — blog.harmj0y.net ↗</a></footer>`;
+    await write(postUrl(post).slice(1) + 'index.html', document(post.title, postUrl(post), article, manifest, category, post));
   }
-  const list = manifest.articles.map(p => `<li><a href="${postUrl(p)}">${escape(p.title)}</a> <span class="article-meta">(${p.date.slice(0, 10)})</span></li>`).join('');
-  const intro = `<h1 id="article-title">ActiveDirectory</h1><p>Articles by harmj0y, preserved in English with their original publication dates, images, and source links.</p><h2 id="articles">Articles</h2><ol class="archive-list">${list}</ol><h2 id="about-this-archive">About this archive</h2><p>This collection contains all ${manifest.articles.length} posts assigned to the <a href="${manifest.category.url}">ActiveDirectory category</a> at the time of import. Other categories can be added separately.</p><p>Copyright remains with the original author. The original source is linked at the end of each article.</p>`;
-  await write(HARMJOY.slice(1) + '/index.html', document('ActiveDirectory | harmj0y', HARMJOY + '/', intro, manifest));
-  const body = `<main id="main-content" class="catalog"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><span>harmj0y</span></nav><div class="catalog-heading"><span class="eyebrow">BLOG ARCHIVE</span><h1>harmj0y</h1><p>Security research by Will Schroeder.</p></div><div class="catalog-grid"><a class="catalog-card" href="${HARMJOY}/"><span class="card-meta">CATEGORY</span><h2>ActiveDirectory</h2><p>Active Directory security research, Kerberos, domain trusts, and certificate services.</p><span class="card-bottom"><span>${manifest.articles.length} articles · English</span><span aria-hidden="true">→</span></span></a></div></main>`;
-  await write('en/harmj0y/index.html', page({ title: 'harmj0y', url: '/en/harmj0y/', body }));
+  for (const category of manifest.categories) {
+    const posts = manifest.articles.filter(p => category.articles.includes(p.slug));
+    const list = posts.map(p => `<li><a href="${postUrl(p)}">${escape(p.title)}</a> <span class="article-meta">(${p.date.slice(0, 10)})${p.archive_status === 'source-link' ? ' · Original source only' : ''}</span></li>`).join('');
+    const intro = `<h1 id="article-title">${escape(category.name)}</h1><p>Articles by harmj0y, preserved in English with their original publication dates, images, and source links.</p><h2 id="articles">Articles</h2>${list ? `<ol class="archive-list">${list}</ol>` : '<p>No published articles in this category.</p>'}<h2 id="about-this-archive">About this archive</h2><p>This collection contains all ${posts.length} posts assigned to the <a href="${category.url}">${escape(category.name)} category</a> at the time of import.</p><p>Copyright remains with the original author. The original source is linked at the end of each article.</p>`;
+    await write(categoryUrl(category).slice(1) + 'index.html', document(category.name + ' | harmj0y', categoryUrl(category), intro, manifest, category));
+  }
+  const cards = manifest.categories.filter(c => c.reported_count).map(c => `<a class="catalog-card" href="${categoryUrl(c)}"><span class="card-meta">CATEGORY</span><h2>${escape(c.name)}</h2><span class="card-bottom"><span>${c.reported_count} articles · English</span><span aria-hidden="true">→</span></span></a>`).join('');
+  const sourceOnly = manifest.articles.filter(p => p.archive_status === 'source-link').length;
+  const intro = `<h1 id="article-title">harmj0y</h1><p>Security research by Will Schroeder. ${manifest.articles.length} articles across ${manifest.categories.filter(c => c.reported_count).length} categories.</p>${sourceOnly ? `<p class="article-meta">${manifest.articles.length - sourceOnly} full articles are available locally. ${sourceOnly} entries link to their original publication.</p>` : ''}<h2 id="categories">Categories</h2><div class="blog-category-grid">${cards}</div>`;
+  await write('en/harmj0y/index.html', document('harmj0y', HARMJOY + '/', intro, manifest));
   return { pages: manifest.articles.length, assets: manifest.assets.length };
 }

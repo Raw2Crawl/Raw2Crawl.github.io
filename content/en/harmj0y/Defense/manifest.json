@@ -1,0 +1,12 @@
+{
+  "id": 25,
+  "name": "Defense",
+  "slug": "defense",
+  "folder": "Defense",
+  "url": "https://blog.harmj0y.net/category/defense/",
+  "reported_count": 2,
+  "articles": [
+    "hunting-with-active-directory-replication-metadata",
+    "powersccm"
+  ]
+}
